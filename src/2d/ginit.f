@@ -59,6 +59,9 @@ c :::::::::::::::::::::::::::::::::::::::;::::::::::::::::::::
                 node(store2,mptr) = loc2
               endif
               rnode(timemult, mptr) = start_time
+!             TESTING SAVING DOMFLAGS SO NEED TO INITIALIZE
+              node(domflags_base,mptr) = -1
+              node(domflags2,mptr) = -1
               go to 30
  20       continue
 c

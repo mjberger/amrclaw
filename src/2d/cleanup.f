@@ -25,7 +25,20 @@ c      ## done after the checkpoint so pointers sitll work on restart
             if (level .lt. mxnest) 
      .         call reclam(node(store2, mptr), nwords)
             if (naux .gt. 0) 
-     .         call reclam(node(storeaux, mptr), mitot*mjtot*naux)
+           call reclam(node(storeaux, mptr), mitot*mjtot*naux)
+c
+c          TESTING NEW SAVINGS OF DOMFLAGS
+             locdomflags = node(domflags_base,mptr)
+             if (locdomflags .ne. -1) then
+               mbuff = max(nghost,ibuff+1)
+               mibuff = nx + 2*mbuff
+               mjbuff = ny + 2*mbuff
+               ibytesPerDP = 8
+               nwords = (mibuff*mjbuff)/ibytesPerDP+1
+               locdom2 = node(domflags2,mptr)
+                call reclam(locdomflags, nwords)
+                call reclam(locdom2, nwords)
+             endif
         mptr = node(levelptr, mptr)
         if (mptr .ne. 0) go to 110
 120    continue 

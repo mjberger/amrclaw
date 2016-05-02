@@ -39,6 +39,19 @@ c
               if (level .lt. mxnest) 
      .           call reclam(node(store2, mptr), nwords)
               node(store2, mptr) = 0
+c TESTING SAVING DOMFLAGS, SO NEED TO RECLAM THAT SPACE TOO NOW
+             mbuff = max(nghost,ibuff+1)
+             mibuff = nx + 2*mbuff
+             mjbuff = ny + 2*mbuff
+             ibytesPerDP = 8
+             nwords = (mibuff*mjbuff)/ibytesPerDP+1
+             locdomflags = node(domflags_base,mptr)
+             locdom2 = node(domflags2,mptr)
+             if (locdomflags .ne. -1) then
+                call reclam(locdomflags, nwords)
+                call reclam(locdom2, nwords)
+             endif
+
               mptr          = node(levelptr, mptr)
           go to 2
  3        level   = level + 1
@@ -175,6 +188,11 @@ c
             mjtot = ny + 2*nghost
             nwords = mitot*mjtot*nvar
             node(store2,mptr) = igetsp(nwords)
+c
+c  INITIALIZE LOCDOM FOR NEW GRID TO TEST SAVING DOMFLAGS
+            node(domflags_base,mptr) = -1
+            node(domflags2,mptr) = -1
+
          mptr = node(levelptr,mptr)
          go to 105
  110   continue

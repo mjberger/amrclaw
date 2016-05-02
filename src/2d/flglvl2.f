@@ -88,8 +88,9 @@ c
 
              ibytesPerDP = 8
              nwords = (mibuff*mjbuff)/ibytesPerDP+1
-             call reclam(locdomflags, nwords)
-             call reclam(locdom2, nwords)
+             ! TESTING SAVING DOMAIN FLAGS 
+             !call reclam(locdomflags, nwords)
+             !call reclam(locdom2, nwords)
              call reclam(locamrflags,mibuff*mjbuff)
 
         mptr = node(levelptr, mptr)

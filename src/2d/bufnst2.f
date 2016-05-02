@@ -161,14 +161,20 @@ c     write(outunit,116) numflagged, mptr
 c ADD WORK THAT USED TO BE IN FLGLVL2 FOR MORE PARALLEL WORK WITHOUT JOINING AND SPAWNING AGAIN
 c in effect this is domgrid, but since variables already defined just need half of it, inserted here
       ibytesPerDP = 8      
-c     bad names, for historical reasons. they are both smae size now
-      locdomflags = igetsp( (mibuff*mjbuff)/ibytesPerDP+1)
-      locdom2 = igetsp( (mibuff*mjbuff)/ibytesPerDP+1)
+c     bad names, for historical reasons. they are both same size now
+c     if not -1 then was previously computed and saved for this grid
+      if (node(domflags_base,mptr) .eq. -1) then
+        locdomflags = igetsp( (mibuff*mjbuff)/ibytesPerDP+1)
+        locdom2 = igetsp( (mibuff*mjbuff)/ibytesPerDP+1)
 
-      node(domflags_base,mptr) = locdomflags
-      node(domflags2,mptr) = locdom2
-      call setdomflags(mptr,alloc(locdomflags),ilo,ihi,jlo,jhi,
+        node(domflags_base,mptr) = locdomflags
+        node(domflags2,mptr) = locdom2
+        call setdomflags(mptr,alloc(locdomflags),ilo,ihi,jlo,jhi,
      .                 mbuff,lbase,lcheck,mibuff,mjbuff)
+        else 
+          locdomflags = node(domflags_base,mptr)
+          locdom2 = node(domflags2,mptr) 
+       endif
 
 
       end do

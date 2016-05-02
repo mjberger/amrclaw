@@ -146,8 +146,9 @@ c  done colating - safe to reclam
 
         ibytesPerDP = 8
         iflagsize =  (mibuff*mjbuff)/ibytesPerDP+1
-        call reclam(node(domflags_base,mptr),iflagsize)
-        call reclam(node(domflags2,mptr),iflagsize)
+        !TESTING SAVING FLAGS FOR REUSE
+        !call reclam(node(domflags_base,mptr),iflagsize)
+        !call reclam(node(domflags2,mptr),iflagsize)
 
 c
         mptr = node(levelptr, mptr)

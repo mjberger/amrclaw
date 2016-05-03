@@ -25,7 +25,7 @@ c      ## done after the checkpoint so pointers sitll work on restart
             if (level .lt. mxnest) 
      .         call reclam(node(store2, mptr), nwords)
             if (naux .gt. 0) 
-           call reclam(node(storeaux, mptr), mitot*mjtot*naux)
+     .        call reclam(node(storeaux, mptr), mitot*mjtot*naux)
 c
 c          TESTING NEW SAVINGS OF DOMFLAGS
              locdomflags = node(domflags_base,mptr)

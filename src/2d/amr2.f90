@@ -453,6 +453,7 @@ program amr2
         print *, ' '
         ! Call user routine to set up problem parameters:
         call setprob()
+        call initTimers()
 
     else
 

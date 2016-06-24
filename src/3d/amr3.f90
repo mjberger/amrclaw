@@ -472,7 +472,7 @@ program amr3
         print *, ' '
         ! Call user routine to set up problem parameters:
         call setprob()
-
+        call initTimers()
     else
 
         open(outunit, file=outfile, status='unknown', form='formatted')

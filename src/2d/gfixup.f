@@ -80,7 +80,7 @@ c
 !$OMP PARALLEL DO 
 !$OMP&            PRIVATE(j,mptr,nx,ny,mitot,mjtot,corn1,corn2,loc)
 !$OMP&            PRIVATE(locaux,time,mic,mjc,xl,xr,yb,yt,ilo,ihi)
-!$OMP&            PRIVATE(jlo,jhi,sp_over_h,thisSetauxTime)
+!$OMP&            PRIVATE(jlo,jhi,sp_over_h)
 !$OMP&            SHARED(newnumgrids,listnewgrids,nghost,node,hx,hy)
 !$OMP&            SHARED(rnode,intratx,intraty,lcheck,nvar,alloc,naux)
 !$OMP&            SCHEDULE(dynamic,1)

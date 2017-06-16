@@ -55,13 +55,14 @@ module amr_module
     integer, parameter :: iinfinity = 999999999
     integer, parameter :: horizontal = 1
     integer, parameter :: vertical = 2
-    integer, parameter :: maxgr = 15000
+    integer, parameter :: maxgr = 400000
     integer, parameter :: maxlv = 10
-    integer, parameter :: maxcl = 5000
+    integer, parameter :: maxcl = 10000
 
     ! The max1d parameter should be changed if using OpenMP grid based 
     ! looping, usually set to max1d = 60
     integer, parameter :: max1d = 60 
+    !integer, parameter :: max1d =  10000
 
     integer, parameter :: maxvar = 10
     integer, parameter :: maxaux = 20
@@ -104,7 +105,8 @@ module amr_module
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\
     ! :::::   for space management of alloc array
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    integer, parameter :: lfdim=5000
+    integer, parameter :: lfdim=15000   ! used for westport
+    !integer, parameter :: lfdim=5000
     integer lfree(lfdim,2),lenf
 
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::

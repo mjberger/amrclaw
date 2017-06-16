@@ -24,7 +24,8 @@ c
              r = dsqrt(xcell**2 + ycell**2)
 
              if (dabs(r-0.5d0) .le. width) then
-                 pressure = 1.d0 + dcos(pi*(r - 0.5d0)/width)
+                 !pressure = 1.d0 + dcos(pi*(r - 0.5d0)/width)
+                 pressure =  dcos(pi*(r - 0.5d0)/width)
                else
                  pressure = 0.d0
                endif

@@ -8,7 +8,7 @@ function setplot is called to set the plot parameters.
 """ 
 
 from __future__ import absolute_import
-from .mapc2p import mapc2p
+from mapc2p import mapc2p
 import numpy as np
 
 #--------------------------
@@ -48,7 +48,7 @@ def setplot(plotdata):
     plotitem.pcolor_cmax = 1.
     plotitem.add_colorbar = True
     plotitem.celledges_show = 0
-    plotitem.patchedges_show = 0
+    plotitem.patchedges_show = 1
     plotitem.MappedGrid = True
     plotitem.mapc2p = mapc2p
     plotitem.show = True       # show on plot?

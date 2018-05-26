@@ -222,7 +222,7 @@ module amr_module
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\
     ! :::::   for space management of alloc array
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-    integer, parameter :: lfdim=15000   ! used for westport
+    integer, parameter :: lfdim=50000   ! used for westport
     !integer, parameter :: lfdim=5000
     integer lfree(lfdim,2),lenf
 

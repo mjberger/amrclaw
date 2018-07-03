@@ -1,3 +1,5 @@
+!! consider using this whole routine to replace bound if any direction is periodic
+!!
 !  :::::::::::::: PREFILRECUR :::::::::::::::::::::::::::::::::::::::::::
 !>     For periodic boundary conditions more work needed to fill the
 !!     piece of the boundary. This routine was
@@ -16,115 +18,105 @@
 !
 ! :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 recursive subroutine prefilrecur(level,nvar,valbig,auxbig,naux,time,mitot,mjtot,  &  
-                                 nrowst,ncolst,ilo,ihi,jlo,jhi,iglo,ighi,jglo,jghi,patchOnly)
+     nrowst,ncolst,ilo,ihi,jlo,jhi,iglo,ighi,jglo,jghi,patchOnly)
 
 
 
-    use amr_module, only: iregsz, jregsz, nghost, xlower, ylower, xperdom, yperdom
-    use amr_module, only: spheredom, hxposs, hyposs, NEEDS_TO_BE_SET, alloc
-    
-    implicit none
+  use amr_module, only: iregsz, jregsz, nghost, xlower, ylower, xperdom, yperdom
+  use amr_module, only: spheredom, hxposs, hyposs, NEEDS_TO_BE_SET, alloc
 
-    ! Input
-    integer, intent(in) :: level, nvar, naux, mitot, mjtot
-    integer, intent(in) :: ilo,ihi,jlo,jhi,iglo,ighi,jglo,jghi
-    real(kind=8), intent(in) :: time
-    ! false when called from bound, when valbig is whole grid but only filling patch.
-    ! true for recursive coarse sub-patches - grid is patch
-    logical  :: patchOnly  
+  implicit none
 
-    ! Output
-    real(kind=8), intent(in out) :: valbig(nvar,mitot,mjtot)
-    real(kind=8), intent(in out) :: auxbig(naux,mitot,mjtot)
-    
-    ! Local storage
-    integer :: i, j, ii, jj, ivar, ng, i1, i2, j1, j2, nrowst, ncolst
-    integer :: iputst, jputst, mi, mj, locpatch, locpaux
-    integer :: jbump, iwrap1, iwrap2, jwrap1, tmp, locflip, rect(4)
-    real(kind=8) :: xlwrap, ybwrap
-    integer ::  msrc    ! this signifies not a real grid, no bndry list with it
-    ! it is possible to preprocess in the periodic case, just more complicated, so postponing
+  ! Input
+  integer, intent(in) :: level, nvar, naux, mitot, mjtot
+  integer, intent(in) :: ilo,ihi,jlo,jhi,iglo,ighi,jglo,jghi
+  real(kind=8), intent(in) :: time
+  ! false when called from bound, when valbig is whole grid but only filling patch.
+  ! true for recursive coarse sub-patches - grid is patch
+  logical  :: patchOnly  
 
-    integer :: ist(3), iend(3), jst(3), jend(3), ishift(3), jshift(3)
-    real(kind=8) :: scratch(max(mitot,mjtot)*nghost*nvar)
-    real(kind=8) :: scratchaux(max(mitot,mjtot)*nghost*naux)
+  ! Output
+  real(kind=8), intent(in out) :: valbig(nvar,mitot,mjtot)
+  real(kind=8), intent(in out) :: auxbig(naux,mitot,mjtot)
 
-    ! dimension at largest possible
-    real(kind=8) :: valPatch((ihi-ilo+1) * (jhi-jlo+1) * nvar)  
-    real(kind=8) :: auxPatch((ihi-ilo+1) * (jhi-jlo+1) * naux)  
-    
+  ! Local storage
+  integer :: i, j, ii, jj, ivar, ng, i1, i2, j1, j2, nrowst, ncolst
+  integer :: iputst, jputst, mi, mj, locpatch, locpaux
+  integer :: jbump, iwrap1, iwrap2, jwrap1, tmp, locflip, rect(4)
+  real(kind=8) :: xlwrap, ybwrap
+  integer ::  msrc    ! this signifies not a real grid, no bndry list with it
+  ! it is possible to preprocess in the periodic case, just more complicated, so postponing
 
-!     # will divide patch  (from ilo,jlo to ihi,jhi)  into 9 possibilities (some empty): 
-!       x sticks out left, x interior, x sticks out right
-!       same for y. for example, the max. would be
-!       i from (ilo,-1), (0,iregsz(level)-1), (iregsz(level),ihi)
-!     # this patch lives in a grid with soln array valbig, which goes from
-!       (iglo,jglo) to (ighi,jghi).
+  integer :: ist(3), iend(3), jst(3), jend(3), ishift(3), jshift(3)
+  real(kind=8) :: scratch(max(mitot,mjtot)*nghost*nvar)
+  real(kind=8) :: scratchaux(max(mitot,mjtot)*nghost*naux)
 
-    msrc = -1   ! iitialization indicating whether real src grid so can use faster bc list
+  ! dimension at largest possible
+  real(kind=8) :: valPatch((ihi-ilo+1) * (jhi-jlo+1) * nvar)  
+  real(kind=8) :: auxPatch((ihi-ilo+1) * (jhi-jlo+1) * naux)  
 
-    if (xperdom) then       
-       ist(1)    = ilo
-       ist(2)    = 0
-       ist(3)    = iregsz(level)
-       iend(1)   = -1
-       iend(2)   = iregsz(level)-1
-       iend(3)   = ihi
-       ishift(1) = iregsz(level)
-       ishift(2) = 0
-       ishift(3) = -iregsz(level)
-    else  ! if not periodic, set vals to only have nonnull intersection for interior regoin
-       ist(1)    = iregsz(level)
-       ist(2)    = ilo
-       ist(3)    = iregsz(level)
-       iend(1)   = -1
-       iend(2)   = ihi
-       iend(3)   = -1
-       ishift(1) = 0
-       ishift(2) = 0
-       ishift(3) = 0
-    endif
 
-    if (yperdom .or. spheredom) then
-       jst(1)  = jlo
-       jst(2)  = 0
-       jst(3)  = jregsz(level)
-       jend(1) = -1
-       jend(2) = jregsz(level)-1
-       jend(3) = jhi
-       jshift(1) = jregsz(level)
-       jshift(2) = 0
-       jshift(3) = -jregsz(level)
-    else
-       jst(1)    = jregsz(level)
-       jst(2)    = jlo
-       jst(3)    = jregsz(level)
-       jend(1)   = -1
-       jend(2)   = jhi
-       jend(3)   = -1
-       jshift(1) = 0
-       jshift(2) = 0
-       jshift(3) = 0
-    endif
+  !     # will divide patch  (from ilo,jlo to ihi,jhi)  into 9 possibilities (some empty): 
+  !       x sticks out left, x interior, x sticks out right
+  !       same for y. for example, the max. would be
+  !       i from (ilo,-1), (0,iregsz(level)-1), (iregsz(level),ihi)
+  !     # this patch lives in a grid with soln array valbig, which goes from
+  !       (iglo,jglo) to (ighi,jghi).
 
-!   ## loop over the 9 regions (in 2D) of the patch - the interior is i=j=2 plus
-!   ## the ghost cell regions.  If any parts stick out of domain and are periodic
-!   ## map indices periodically, but stick the values in the correct place
-!   ## in the orig grid (indicated by iputst,jputst.
-!   ## if a region sticks out of domain  but is not periodic, not handled in (pre)-icall 
-!   ## but in setaux/bcamr (not called from here).
-    do 20 i = 1, 3
-        i1 = max(ilo,  ist(i))
-        i2 = min(ihi, iend(i))
-        if (i1 .gt. i2) go to 20
+  msrc = -1   ! iitialization indicating whether real src grid so can use faster bc list
 
-        do 10 j = 1, 3
-            j1 = max(jlo,  jst(j))
-            j2 = min(jhi, jend(j))
+  ist(1)    = -nghost
+  ist(2)    = 0
+  ist(3)    = iregsz(level)
+  iend(1)   = -1
+  iend(2)   = iregsz(level)-1
+  iend(3)   = iregsz(level) + nghost - 1
+  if (xperdom) then       
+     ishift(1) = iregsz(level)
+     ishift(2) = 0
+     ishift(3) = -iregsz(level)
+  else  ! no shifting for periodic regions
+     ishift(1) = 0
+     ishift(2) = 0
+     ishift(3) = 0
+  endif
+  jst(1)    = -nghost
+  jst(2)    = 0
+  jst(3)    = jregsz(level)
+  jend(1)   = -1
+  jend(2)   = jregsz(level)-1
+  jend(3)   = jregsz(level) + nghost - 1
+  if (yperdom) then       
+     jshift(1) = jregsz(level)
+     jshift(2) = 0
+     jshift(3) = -jregsz(level)
+  else  ! no shifting for periodic regions
+     jshift(1) = 0
+     jshift(2) = 0
+     jshift(3) = 0
+  endif
 
-            ! part of patch in this region
-            if (j1 <= j2) then 
-                if (.not. spheredom .or. j .eq. 2) then
+
+
+  !   ## loop over the 9 regions (in 2D) of the patch - the interior is i=j=2 plus
+  !   ## there are  ghost cell regions.  If any parts stick out of domain and are periodic
+  !   ## map indices periodically, but stick the values in the correct place
+  !   ## in the orig grid (indicated by iputst,jputst.
+  !   ## if a region sticks out of domain  but is not periodic, not handled in (pre)-icall 
+  !   ## but in setaux/bcamr (not called from here).
+  do 20 i = 1, 3
+     i1 = max(ilo,  ist(i))
+     i2 = min(ihi, iend(i))
+     if (i1 .gt. i2) go to 20  ! nothing in this region`
+
+     do 10 j = 1, 3
+        j1 = max(jlo,  jst(j))
+        j2 = min(jhi, jend(j))
+
+        ! part of patch in this region
+        if (j1 <= j2) then 
+           !spherical wrapping handled next. Dont do corners here if not both periodic
+                if (.not. spheredom .and. ((i.eq. 2 .or. xperdom) .and. (j .eq. 2 .or. yperdom))) then
                     ! make temp patch of just the right size. 
                     mi = i2 - i1 + 1
                     mj = j2 - j1 + 1
@@ -141,56 +133,57 @@ recursive subroutine prefilrecur(level,nvar,valbig,auxbig,naux,time,mitot,mjtot,
                     call patchCopyOut(nvar,valPatch,mi,mj,valbig,mitot,mjtot,i1,i2,j1,j2,   &
                                       iglo,jglo)
  
-                else
+                else  if (spheredom) then
                    
-                    mi = i2 - i1 + 1
-                    mj = j2 - j1 + 1
-                    ng = 0    ! no ghost cells in this little patch. fill everything.
+                        mi = i2 - i1 + 1
+                        mj = j2 - j1 + 1
+                        ng = 0    ! no ghost cells in this little patch. fill everything.
 
-                    jbump = 0
-                    if (j1 < 0)   jbump = abs(j1)  ! bump up so new bottom is 0
-                    if (j2 >= jregsz(level)) jbump = -(j2+1-jregsz(level)) ! bump down
+                        jbump = 0
+                        if (j1 < 0)   jbump = abs(j1)  ! bump up so new bottom is 0
+                        if (j2 >= jregsz(level)) jbump = -(j2+1-jregsz(level)) ! bump down
 
-                    ! next 2 lines would take care of periodicity in x
-                    iwrap1 = i1 + ishift(i)
-                    iwrap2 = i2 + ishift(i)
-                    ! next 2 lines take care of mapped sphere bcs
-                    iwrap1 = iregsz(level) - iwrap1 -1
-                    iwrap2 = iregsz(level) - iwrap2 -1
-                    ! swap so that smaller one is left index, etc since mapping reflects
-                    tmp = iwrap1
-                    iwrap1 = iwrap2
-                    iwrap2 = tmp
+                        ! next 2 lines would take care of periodicity in x
+                        iwrap1 = i1 + ishift(i)
+                        iwrap2 = i2 + ishift(i)
+                        ! next 2 lines take care of mapped sphere bcs
+                        iwrap1 = iregsz(level) - iwrap1 -1
+                        iwrap2 = iregsz(level) - iwrap2 -1
+                        ! swap so that smaller one is left index, etc since mapping reflects
+                        tmp = iwrap1
+                        iwrap1 = iwrap2
+                        iwrap2 = tmp
+    
+                        jwrap1 = j1 + jbump
+                        xlwrap = xlower + iwrap1*hxposs(level)
+                        ybwrap = ylower + jwrap1*hyposs(level)
 
-                    jwrap1 = j1 + jbump
-                    xlwrap = xlower + iwrap1*hxposs(level)
-                    ybwrap = ylower + jwrap1*hyposs(level)
+                        if (naux>0) then
+                            scratchaux = NEEDS_TO_BE_SET  !flag all cells with signal since dimensioned strangely
+                            call setaux(ng,mi,mj,xlwrap,ybwrap,hxposs(level),hyposs(level),naux,scratchaux)
+                        endif 
 
-                    if (naux>0) then
-                        scratchaux = NEEDS_TO_BE_SET  !flag all cells with signal since dimensioned strangely
-                        call setaux(ng,mi,mj,xlwrap,ybwrap,hxposs(level),hyposs(level),naux,scratchaux)
-                    endif 
+                        rect = [iwrap1,iwrap2,j1+jbump,j2+jbump]
+                        call filrecur(level,nvar,scratch,scratchaux,naux,time,mi, &
+                                      mj,1,1,iwrap1,iwrap2,j1+jbump,j2+jbump,.false.,msrc)
 
-                    rect = [iwrap1,iwrap2,j1+jbump,j2+jbump]
-                    call filrecur(level,nvar,scratch,scratchaux,naux,time,mi, &
-                                  mj,1,1,iwrap1,iwrap2,j1+jbump,j2+jbump,.false.,msrc)
+                        ! copy back using weird mapping for spherical folding (so cant call copy subr below)
+                        do ii = i1, i2
+                            do jj = j1, j2
+                                ! write(dbugunit,'(" filling loc ",2i5," with ",2i5)') & 
+                                ! nrowst+ii-fill_indices(1),ncolst+jj-fill_indices(3),mi-(ii-i1),mj-jj+j1
 
-                    ! copy back using weird mapping for spherical folding (so cant call copy subr below)
-                    do ii = i1, i2
-                        do jj = j1, j2
-                            ! write(dbugunit,'(" filling loc ",2i5," with ",2i5)') & 
-                            ! nrowst+ii-fill_indices(1),ncolst+jj-fill_indices(3),mi-(ii-i1),mj-jj+j1
-
-                            do ivar = 1, nvar
-                                valbig(ivar,nrowst+(ii-ilo),ncolst+(jj-jlo)) = &
-                                    scratch(iaddscratch(ivar,mi-(ii-i1),mj-(jj-j1)))
+                                do ivar = 1, nvar
+                                    valbig(ivar,nrowst+(ii-ilo),ncolst+(jj-jlo)) = &
+                                        scratch(iaddscratch(ivar,mi-(ii-i1),mj-(jj-j1)))
+                                end do
+                                ! write(dbugunit,'(" new val is ",4e15.7)')(valbig(ivar,  &
+                                ! nrowst+(ii-fill_indices(1)),ncolst+(jj-fill_indices(3))),ivar=1,nvar)
                             end do
-                            ! write(dbugunit,'(" new val is ",4e15.7)')(valbig(ivar,  &
-                            ! nrowst+(ii-fill_indices(1)),ncolst+(jj-fill_indices(3))),ivar=1,nvar)
-                        end do
-                    end do 
-                endif ! end if not spherical or j == 2
-            endif ! end if region not empty
+                        end do 
+
+                endif ! end if not spherical or complicated domain test with 2s
+        endif ! end if region not empty
 
  10     continue
  20 continue
@@ -216,31 +209,31 @@ end subroutine prefilrecur
 ! ============================================================================================
 
 subroutine patchCopyOut(nvar,valpatch,mi,mj,valbig,mitot,mjtot,i1,i2,j1,j2,iglo,jglo)
- 
-    ! the patch was filled from a possibly periodically wrapped place.
-    ! put it back where it should go in original grids solution array
-          
-    use amr_module
-    implicit none
 
-    ! Input
-    integer :: mi, mj, nvar, mitot, mjtot, i1, i2,j1, j2, iglo, ighi, jglo, jghi
+  ! the patch was filled from a possibly periodically wrapped place.
+  ! put it back where it should go in original grids solution array
 
-    ! Output
-    real(kind=8), intent(in out) :: valbig(nvar,mitot,mjtot)
-    real(kind=8), intent(in out) :: valpatch(nvar,mi,mj)
+  use amr_module
+  implicit none
 
-    ! Local storage
-    integer :: ist, jst 
+  ! Input
+  integer :: mi, mj, nvar, mitot, mjtot, i1, i2,j1, j2, iglo, ighi, jglo, jghi
+
+  ! Output
+  real(kind=8), intent(in out) :: valbig(nvar,mitot,mjtot)
+  real(kind=8), intent(in out) :: valpatch(nvar,mi,mj)
+
+  ! Local storage
+  integer :: ist, jst 
 
 
-    ! this ghost cell patch subset goes from (i1,j1) to (i2,j2) in integer index space
-    ! the grid (including ghost cells) is from (iglo,jglo) to (ighi,jghi)
-    ! figure out where to copy
-    ist = i1 - iglo + 1   ! offset 1 since soln array is 1-based
-    jst = j1 - jglo + 1
+  ! this ghost cell patch subset goes from (i1,j1) to (i2,j2) in integer index space
+  ! the grid (including ghost cells) is from (iglo,jglo) to (ighi,jghi)
+  ! figure out where to copy
+  ist = i1 - iglo + 1   ! offset 1 since soln array is 1-based
+  jst = j1 - jglo + 1
 
-    valbig(:,ist:ist+mi-1, jst:jst+mj-1) = valpatch
+  valbig(:,ist:ist+mi-1, jst:jst+mj-1) = valpatch
 
 end subroutine patchCopyOut
 

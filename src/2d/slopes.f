@@ -29,13 +29,10 @@ c
 c
 c  initialize all slopes to 0 first
 c
-       write(*,*)" slopes "
-       do 5 j = 1, mjtot
-       do 5 i = 1, mitot
-       do 5 m = 1, nvar 
-          qx(m,i,j) = 0.d0
-          qy(m,i,j) = 0.d0
- 5     continue
+
+c      initialize all slopes to zero first
+       qx = 0.d0
+       qy = 0.d0
        if (ssw .eq. 0.d0) go to 99
 c
        do 10 j = 1, mjtot
@@ -68,7 +65,6 @@ c
          fl = dmax1(0.d0,dsign(1.d0, dupc*dumc))*ssw
          qx(m,i,j) = du*dsign(1.d0,ducc)*fl/hx
  11    continue
-       write(*,*) i,j,(qx(m,i,j),m=1,nvar)
  10    continue
 c
        do 20 j = 2, mjtot-1

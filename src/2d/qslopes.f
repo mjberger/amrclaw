@@ -24,8 +24,8 @@ c
       logical   nolimiter, ghost_ccg/.false./
       logical ALL_NBORS_EXIST
 c
-c     outside(x,y) = ((x.lt.0) .or. (y.lt.0.) .or. 
-c    .                (x.gt.xprob) .or. (y.gt.yprob))
+      outside(i,j) = ((i.lt.1) .or. (j.lt.1.) .or. 
+     .                (i.gt.mitot) .or. (j.gt.mjtot))
 
       ALL_NBORS_EXIST(i,j) = (i .gt. 1 .and. i .lt.mitot .and.
      .                        j .gt. 1 .and. j .lt. mjtot)
@@ -102,6 +102,7 @@ c     if (outside(x0,y0)) go to 110   ! to match cart3d, no gradients in ghost c
          nlist(1,2) = iy0
          nst        = 1  
          nend       = 1  
+         write(*,*)" qslopes calling addneighbors for cell ",ix0,iy0
          call addneighbors(irr,nlist,nst,nend,newend,mitot,mjtot,
      .        lstgrd,quad,xlow,ylow,hx,hy)
          if (.not. quad .and. newend .gt. 3) go to 16
@@ -112,8 +113,13 @@ c     first have to find diag nbor. this code doesnt test for thin bodies,etc
          if (nlist(2,1) .eq. ix0) ixn = nlist(3,1)
          if (nlist(2,2) .eq. iy0) iyn = nlist(3,2)
          newend = newend + 1
-         nlist(newend,1) = ixn 
-         nlist(newend,2) = iyn
+         write(*,*)" qslopes testing diag neighbors ",ixn,iyn
+         write(*,*)" qslopes with outside ",outside(ixn,iyn)
+         if (.not. outside(ixn,iyn)) then
+           nlist(newend,1) = ixn 
+           nlist(newend,2) = iyn
+         write(*,*)" qslopes adding diag neighbor ",ixn,iyn
+         endif
          go to 16
 
 c     cell itself in 1st row, 2-6 is 5 more rows. see if sufficient.
@@ -124,6 +130,7 @@ c     cell itself in 1st row, 2-6 is 5 more rows. see if sufficient.
 
 c        ::: not enough neighbors for quadratic fit
 c        ::: add neighbors of neighbors    
+        if (quad) then
          nst        = 2  
          nend       = newend  
          call addneighbors(irr,nlist,nst,nend,newend,mitot,mjtot,
@@ -137,6 +144,7 @@ c        write(6,*) ix0, iy0, " only have ", newend-1
 c        write(6,*) "not sufficient "
 c        stop
          enufNbor = .FALSE.
+         endif
 c
  16      irow = 0
          if (quad .and. enufNbor) then
@@ -148,6 +156,7 @@ c
             irow = irow + 1
             ixn = nlist(n,1)
             iyn = nlist(n,2)
+            write(*,*) "qslopes using nlist cell ",ixn,iyn
             kn =  irr(ixn,iyn)
             if (kn .ne. lstgrd) then
                xn = xcirr(kn)

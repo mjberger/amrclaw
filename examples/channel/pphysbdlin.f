@@ -14,7 +14,7 @@ c
       use amr_module
       implicit double precision (a-h,o-z)
 
-      common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob
+      common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                ismp,gradThreshold
       dimension val(nvar,nrow,ncol)
       data  pi/3.1415926535d0/
@@ -26,8 +26,8 @@ c
       u = .1d0
       v = .01d0
       rho = 1.d0
-c     u = .0d0
-c     v = .00d0
+      u = .0d0
+      v = .00d0
 c
       hxmarg = hx*.01
       hymarg = hy*.01

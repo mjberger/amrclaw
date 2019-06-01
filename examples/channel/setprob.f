@@ -13,6 +13,9 @@ c     # open the unit with new routine from Clawpack 4.4 to skip over
 c     # comment lines starting with #:
       call opendatafile(iunit, fname)
 
+      read(7,*) ismp
+      write(*,*)"Using stabilization ismp ",ismp
+
       read(7,*) nloops
       write(*,*) " This geometry has ", nloops," loops"
 

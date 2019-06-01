@@ -38,12 +38,12 @@ def setrun(claw_pkg='amrclaw'):
     #------------------------------------------------------------------
 
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
+    probdata.add_param('ismp',    0,  ' stabilization method')
     probdata.add_param('nloops',     2,  '# closed loops or segments')
     probdata.add_param('xloop1',    0.,  ' starting pt x')
     probdata.add_param('yloop1',    .11, ' starting pt y')
     probdata.add_param('xloop2',    .999999,  ' starting pt x')
     probdata.add_param('yloop2',    .91,  ' starting pt y')
-    probdata.add_param('ismp',    1,  ' stabilization method')
     ## 1 = SRD
     ## 2 = DRD
 
@@ -75,8 +75,8 @@ def setrun(claw_pkg='amrclaw'):
     # Number of grid cells:
     #clawdata.num_cells[0] = 44      # mx
     #clawdata.num_cells[1] = 44      # my
-    clawdata.num_cells[0] = 14      # mx
-    clawdata.num_cells[1] = 14      # my
+    clawdata.num_cells[0] = 12      # mx
+    clawdata.num_cells[1] = 12      # my
 
     # ---------------
     # Size of system:
@@ -132,9 +132,9 @@ def setrun(claw_pkg='amrclaw'):
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
         clawdata.output_step_interval = 1
-        clawdata.total_steps = 0
-        clawdata.output_t0 = True  # output at initial (or restart) time?
-        #clawdata.output_t0 = False  # output at initial (or restart) time?
+        clawdata.total_steps = 1
+        #clawdata.output_t0 = True  # output at initial (or restart) time?
+        clawdata.output_t0 = False  # output at initial (or restart) time?
 
 
     clawdata.output_format = 'ascii'       # 'ascii', 'binary', 'netcdf'

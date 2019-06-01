@@ -10,12 +10,9 @@ c
 
       logical  rest
 
-c      iadd(i,j,ivar)  = loc + i - 1 + mitot*((ivar-1)*mjtot+j-1) OLD INDEXING
-c      iaddaux(i,j) = locaux + i - 1 + mitot*(j-1) +
-c     .                        mitot*mjtot*(mcapa-1)
-
 c ## indexing into mcapa assumes cell volume is in mcapa location
       iadd(ivar,i,j)  = loc + ivar - 1 + nvar*((j-1)*mitot+i-1)
+      iaddirr(i,j)  = locirr +  ((j-1)*mitot+i-1)
       iaddaux(i,j) = locaux + mcapa - 1 + naux*(i-1) +
      .                                    naux*mitot*(j-1)
 c
@@ -38,16 +35,22 @@ c
       mptr = lstart(level)
  20   if (mptr .eq. 0) go to 85
          loc    = node(store1,mptr)
+         locirr = node(permstore,mptr)
          locaux = node(storeaux,mptr)
          nx     = node(ndihi,mptr) - node(ndilo,mptr) + 1
          ny     = node(ndjhi,mptr) - node(ndjlo,mptr) + 1
          mitot  = nx + 2*nghost
          mjtot  = ny + 2*nghost
+         lstgrd = node(lstptr,mptr)
+         ar(lstgrd) = hx * hy
 c
          if (mcapa .eq. 0) then
+           ar(-1) = 0.d0 ! so solid cells dont count
            do 50 j  = nghost+1, mjtot-nghost
            do 50 i  = nghost+1, mitot-nghost
-              totmass = totmass + alloc(iadd(1,i,j)) 
+              k =  kget(mitot,mjtot,i,j,alloc(locirr)) 
+              area = ar(k)
+              totmass = totmass + area*alloc(iadd(1,i,j)) 
  50           continue
           else
 c          # with capa array:
@@ -60,7 +63,7 @@ c
        mptr = node(levelptr,mptr)
        go to 20
 c
- 85    totmass = totmass * hx * hy
+ 85    continue
        if (time.eq. t0 .and. (level.eq.1) .and. .not. rest) then
            tmass0 = totmass
            write(6,*) 'Total mass at initial time: ',tmass0
@@ -70,4 +73,12 @@ c
      &         e11.4)
 c
  99   return
+      end
+c
+c ----------------------------------------------
+c
+      integer function kget(mitot,mjtot,i,j,irr)
+      dimension irr(mitot,mjtot)
+      kget = irr(i,j)
+      return 
       end

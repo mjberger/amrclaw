@@ -19,6 +19,7 @@ c
       use amr_module
       implicit double precision (a-h,o-z)
       logical first
+      common /order2/ ssw, quad, nolimiter
       
 
 c ::::::::::::::::::::::::::::: GINIT ::::::::::::::::::::::::
@@ -51,12 +52,20 @@ c :::::::::::::::::::::::::::::::::::::::;::::::::::::::::::::
                    alloc(locaux+k-1) = NEEDS_TO_BE_SET ! needs val, wasnt copied from other grids
                 end do
                 
-                call setaux(nghost,nx,ny,corn1,corn2,hx,hy,
+               call setaux(nghost,nx,ny,corn1,corn2,hx,hy,
      &                    naux,alloc(locaux))
+
               else 
                 locaux = 1
               endif
               node(storeaux,mptr) = locaux
+              ! get space for irr, and for ncount and numhoods too
+              node(permstore,mptr) = igetsp(3*mitot*mjtot) 
+              locirr = node(permstore,mptr)
+              gradThreshold = 1.d-7
+              call setirr(mitot,mjtot,mptr,quad,
+     &                    gradThreshold,alloc(locirr))
+              lstgrd = node(lstptr,mptr)
               if (level .lt. mxnest) then
                 loc2              = igetsp(mitot*mjtot*nvar)
                 node(store2,mptr) = loc2
@@ -69,12 +78,15 @@ c  if 2nd time through, put initial values in store2 so finer grids
 c  can be advanced with interpolation of their boundary values.
 c  new time soln should still be in location store1.
 c
-          loc     = node(store2,mptr)
-          locaux  = node(storeaux,mptr)
+          loc    = node(store2,mptr)
+          locaux = node(storeaux,mptr)
+          locirr = node(permstore,mptr)
+          lstgrd = node(lstptr,mptr)
 c
    30     continue
           call qinit(nvar,nghost,nx,ny,corn1,corn2,hx,hy,
-     &               alloc(loc),naux,alloc(locaux))
+     &               alloc(loc),naux,alloc(locaux),
+     &               lstgrd,alloc(locirr))
 
 c
           mptr  = node(levelptr, mptr)

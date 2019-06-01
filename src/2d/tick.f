@@ -2,7 +2,7 @@ c
 c  -------------------------------------------------------------
 c
       subroutine tick(nvar,cut,nstart,vtime,time,naux,start_time,
-     &                rest,dt_max)
+     &                rest,dt_max,nplot)
 c
       use amr_module
       use gauges_module, only: setbestsrc, num_gauges
@@ -236,7 +236,6 @@ c integrate all grids at level 'level'.
 c
  90       continue
 
-
           call advanc(level,nvar,dtlevnew,vtime,naux)
 
 c         # rjl modified 6/17/05 to print out *after* advanc and print cfl
@@ -329,8 +328,9 @@ c          make sure not to exceed largest permissible dt
        endif
 
        if ((mod(ncycle,iout).eq.0) .or. dumpout) then
-         call valout(1,lfine,time,nvar,naux)
-         if (printout) call outtre(mstart,.true.,nvar,naux)
+c        call valout(1,lfine,time,nvar,naux)
+c        if (printout) call outtre(mstart,.true.,nvar,naux)
+         call dumptec(1,lfine,nvar,naux,nplot,time)
        endif
 
       go to 20

@@ -89,6 +89,13 @@ c
       go to 70
  80   continue
 
+c the linked list of irregular areas and indices will be 
+c threaded through the ix/iy arrays.
+      do  i = 1, irrsize-1
+        nxtirr(i) = i+1
+      end do
+      nxtirr(irrsize) = 0
+      lhead = 1
 
       return
       end

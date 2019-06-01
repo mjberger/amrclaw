@@ -103,12 +103,13 @@ program amr2
     implicit none
 
     ! Local variables
-    integer :: i, iaux, mw, level
+    integer :: i, iaux, mw, level, nplot
     integer :: ndim, nvar, naux, mcapa1, mindim
     integer :: nstart, nsteps, nv1, nx, ny, lentotsave, num_gauge_SAVE
     integer :: omp_get_max_threads, maxthreads
-    real(kind=8) :: time, ratmet, cut, dtinit, dt_max
+    real(kind=8) :: time, ratmet, cut, dtinit, dt_max, ssw
     logical :: vtime, rest, output_t0    
+    logical :: quad, nolimiter
 
     ! Timing variables
     integer ::  ttotal
@@ -129,8 +130,14 @@ program amr2
 
     ! Common block variables
     real(kind=8) :: dxmin, dymin
+    real(kind=8) :: gamma,gamma1,xprob,yprob,alpha,Re,gradThreshold
+    integer      :: iprob,ismp
 
     common /comfine/ dxmin,dymin
+
+    common /order2/ ssw, quad, nolimiter
+    common   /userdt/ cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,    &
+                      ismp,gradThreshold
 
     character(len=364) :: format_string
     character(len=*), parameter :: clawfile = 'claw.data'
@@ -145,6 +152,7 @@ program amr2
     open(parmunit,file=parmfile,status='unknown',form='formatted')
 
     maxthreads = 1    !! default, if no openmp
+
 
     ! Open AMRClaw primary parameter file
     call opendatafile(inunit,clawfile)
@@ -255,6 +263,13 @@ program amr2
 
     read(inunit,*) method(2)  ! order
     iorder = method(2)
+    quad = .false.  !not implemented in this version
+    !! put in my cut cell code too until mesh variables
+    if (iorder .eq. 2) then
+       ssw = 1.d0
+    else
+       ssw = 0.d0
+    endif
     read(inunit,*) method(3)  ! order_trans
 
     read(inunit,*) dimensional_split
@@ -271,6 +286,9 @@ program amr2
     read(inunit,*) use_fwaves
     allocate(mthlim(mwaves))
     read(inunit,*) (mthlim(mw), mw=1,mwaves)
+    if (mthlim(1) == 0) then
+      nolimiter = .true.
+    endif
 
     ! Boundary conditions
     read(inunit,*) nghost
@@ -611,8 +629,10 @@ program amr2
     call outtre (mstart,printout,nvar,naux)
     write(outunit,*) "  original total mass ..."
     call conck(1,nvar,naux,time,rest)
+    nplot = 0
     if (output_t0) then
-        call valout(1,lfine,time,nvar,naux)
+        !call valout(1,lfine,time,nvar,naux)
+        call dumptec(1,lfine,nvar,naux,nplot,time)
     endif
     close(parmunit)
 
@@ -624,10 +644,12 @@ program amr2
     !  Tick is the main routine which drives the computation:
     ! --------------------------------------------------------
 
-    call tick(nvar,cut,nstart,vtime,time,naux,t0,rest,dt_max)
+    call tick(nvar,cut,nstart,vtime,time,naux,t0,rest,dt_max,nplot)
     ! --------------------------------------------------------
 
     call cpu_time(cpu_finish)
+
+    call dumptec(1,lfine,nvar,naux,nplot,time)
 
     !output timing data
     open(timing_unit, file=timing_base_name//"txt", status='unknown',       &

@@ -28,7 +28,8 @@ module amr_module
     ! :::::   data structure info.
     ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
     integer, parameter :: rsize = 5
-    integer, parameter :: nsize = 19
+    !integer, parameter :: nsize = 19
+    integer, parameter :: nsize = 21
 
     !  :::::::   integer part of node descriptor
     !> node number (index) of next grid on the same level
@@ -137,6 +138,12 @@ module amr_module
 
     !> number of grids (on the same level) that border this grid
     integer, parameter :: bndListNum = 19
+
+    !> pointer to start of irregular list for that grid
+    integer, parameter :: lstptr = 20
+
+    !> pointer to irr array for that grid
+    integer, parameter :: permstore = 21
 
     ! :::::::  real part of node descriptor
     !> x-coordinate of the left border of this grid
@@ -322,4 +329,20 @@ module amr_module
     character(len=200) :: rstfile
     logical :: check_a
 
+    ! cut cell stuff (using old way, not rewritten or updated)
+    !  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+    !  :::::   data structure  for irregular cell info.
+    !  ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+ 
+      integer irrsize
+      parameter (irrsize=9533)
+
+     real(kind=8) :: poly(10,2,irrsize),ar(-1:irrsize),           &
+                     points(24,2,irrsize),wt(24,-1:irrsize),      &
+                     xcirr(irrsize),ycirr(irrsize)
+     
+     integer ::     ixg(irrsize), iyg(irrsize), nxtirr(irrsize)
+
+     real(kind=8)   xloops(10), yloops(10)
+     integer     :: nloops, lhead
 end module amr_module

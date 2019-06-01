@@ -96,7 +96,7 @@ c save coarse level values if there is a finer level for wave fixup
       endif
 c
       dtlevnew = rinfinity
-      cfl_level = 0.d0    !# to keep track of max cfl seen on each level
+c     cfl_level = 0.d0    !# to keep track of max cfl seen on each level
 
 c 
       call system_clock(clock_startStepgrid,clock_rate)
@@ -120,7 +120,8 @@ c
          mitot  = nx + 2*nghost
          mjtot  = ny + 2*nghost
 c
-          call par_advanc(mptr,mitot,mjtot,nvar,naux,dtnew)
+          call par_advanc(mptr,mitot,mjtot,nvar,naux,dtnew,vtime)
+          write(*,*)"advanc dtlevnew,dtnew",dtlevnew,dtnew
 !$OMP CRITICAL (newdt)
           dtlevnew = dmin1(dtlevnew,dtnew)
 !$OMP END CRITICAL (newdt)    
@@ -135,7 +136,7 @@ c
       timeStepgrid = timeStepgrid +clock_finish-clock_startStepgrid
       timeStepgridCPU=timeStepgridCPU+cpu_finish-cpu_startStepgrid      
       
-      cflmax = dmax1(cflmax, cfl_level)
+c     cflmax = dmax1(cflmax, cfl_level)
 
 c
       return
@@ -167,7 +168,7 @@ c
 c --------------------------------------------------------------
 c
 !> Integrate grid **mptr**. grids are done in parallel.
-      subroutine par_advanc (mptr,mitot,mjtot,nvar,naux,dtnew)
+      subroutine par_advanc (mptr,mitot,mjtot,nvar,naux,dtnew,vtime)
 c
       use amr_module
       use gauges_module, only: update_gauges, num_gauges
@@ -179,6 +180,8 @@ c
 
       double precision fp(nvar,mitot,mjtot),fm(nvar,mitot,mjtot)
       double precision gp(nvar,mitot,mjtot),gm(nvar,mitot,mjtot)
+
+      logical vtime
 
 
 c
@@ -226,6 +229,9 @@ c
 
 
          locaux = node(storeaux,mptr)
+         locirr = node(permstore,mptr)
+         locncount = locirr + mitot*mjtot
+         locnumHoods = locncount + mitot*mjtot
 c
          if (node(ffluxptr,mptr) .ne. 0) then
             lenbc  = 2*(nx/intratx(level-1)+ny/intraty(level-1))
@@ -255,10 +261,15 @@ c     no more,  each gauge has own array.
 c
          if (dimensional_split .eq. 0) then
 c           # Unsplit method
+         write(*,*)"paradvanc 0 dtnew",dtnew
          call stepgrid(alloc(locnew),fm,fp,gm,gp,
      2                  mitot,mjtot,nghost,
      3                  delt,dtnew,hx,hy,nvar,
-     4                  xlow,ylow,time,mptr,naux,alloc(locaux))
+     4                  xlow,ylow,time,mptr,naux,alloc(locaux),
+     5                  alloc(locirr),node(lstptr,mptr),
+     6                  alloc(locncount),alloc(locnumHoods),vtime)
+         write(*,*)"paradvanc 1 dtnew",dtnew
+         else if (dimensional_split .eq. 1) then
          else if (dimensional_split .eq. 1) then
 c           # Godunov splitting
          call stepgrid_dimSplit(alloc(locnew),fm,fp,gm,gp,

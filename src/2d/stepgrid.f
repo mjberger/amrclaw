@@ -15,6 +15,8 @@ c
 !! \param[in] dt incoming time step
 !! \param[in] dx mesh size in x direction for this grid
 !! \param[in] dx mesh size in y direction for this grid
+!! \param[in] irr irregular cell array
+!! \param[in] lstgrd  indicates which cell index is regular on this grid
 !! \param[in,out] q solution array
 !! \param[out] dtnew  return suggested new time step for this grid's soln.
 !! \param[out] fm fluxes on the left side of each vertical edge
@@ -22,10 +24,13 @@ c
 !! \param[out] gm fluxes on the lower side of each horizontal edge
 !! \param[out] gp fluxes on the upper side of each horizontal edge
       subroutine stepgrid(q,fm,fp,gm,gp,mitot,mjtot,mbc,dt,dtnew,dx,dy,
-     &                  nvar,xlow,ylow,time,mptr,maux,aux)
+     &                    nvar,xlow,ylow,time,mptr,maux,aux,irr,lstgrd,
+     &                    ncount,numHoods,vtime)
 c
 c          
-c ::::::::::::::::::: STEPGRID ::::::::::::::::::::::::::::::::::::
+c ::::::::::::::::::: STEPGRID   ::::::::::::::::::::::::::::::::::::
+c  was stepgrid, now in a  for cut cell version
+c  calls method ( not step2 ) to do the real work
 c take a time step on a single grid. overwrite solution array q. 
 c A modified version of the clawpack routine step2 is used.
 c
@@ -48,16 +53,15 @@ c :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
       common /comxyt/ dtcom,dxcom,dycom,tcom,icom,jcom
 
-      parameter (msize=max1d+4)
-      parameter (mwork=msize*(maxvar*maxvar + 13*maxvar + 3*maxaux +2))
-
       dimension q(nvar,mitot,mjtot)
       dimension fp(nvar,mitot,mjtot),gp(nvar,mitot,mjtot)
       dimension fm(nvar,mitot,mjtot),gm(nvar,mitot,mjtot)
       dimension aux(maux,mitot,mjtot)
-c 	  dimension work(mwork)
+      integer   irr(mitot,mjtot), ncount(mitot,mjtot)
+      integer   numHoods(mitot,mjtot)
 
-      logical    debug,  dump
+
+      logical    debug,  dump, vtime
       data       debug/.false./,  dump/.false./
 
 c
@@ -65,6 +69,7 @@ c     # set tcom = time.  This is in the common block comxyt that could
 c     # be included in the Riemann solver, for example, if t is explicitly
 c     # needed there.
 
+      write(*,*)"stepgrid 0 vtime ",vtime
       tcom = time
 
       if (dump) then
@@ -91,86 +96,26 @@ c     #    are set in the amr2ez file (read by amr)
 c
       method(1) = 0
 c
-c
-c     # fluxes initialized in step2
-c
-C       mwork0 = (maxm+2*mbc)*(12*meqn + mwaves + meqn*mwaves + 2) 
-c
-C       if (mwork .lt. mwork0) then
-C          write(outunit,*) 'CLAW2 ERROR... mwork must be increased to ',
-C      &               mwork0
-C          write(*      ,*) 'CLAW2 ERROR... mwork must be increased to ',
-C      &               mwork0
-C          stop
-C       endif
-c  
-c
-c     # partition work array into pieces needed for local storage in 
-c     # step2 routine. Find starting index of each piece:
-c
-C       i0faddm = 1
-C       i0faddp = i0faddm + (maxm+2*mbc)*meqn
-C       i0gaddm = i0faddp + (maxm+2*mbc)*meqn
-C       i0gaddp = i0gaddm + 2*(maxm+2*mbc)*meqn
-C       i0q1d   = i0gaddp + 2*(maxm+2*mbc)*meqn 
-C       i0dtdx1 = i0q1d + (maxm+2*mbc)*meqn  
-C       i0dtdy1 = i0dtdx1 + (maxm+2*mbc)
-C       i0aux1 = i0dtdy1 + (maxm+2*mbc)
-C       i0aux2 = i0aux1 + (maxm+2*mbc)*maux
-C       i0aux3 = i0aux2 + (maxm+2*mbc)*maux
-c
-c
-C       i0next = i0aux3 + (maxm+2*mbc)*maux    !# next free space
-C       mused  = i0next - 1                    !# space already used
-C       mwork1 = mwork - mused              !# remaining space (passed to step2)
-
-c
-c
+c  in case anything need adjusting in aux arrays
       call b4step2(mbc,mx,my,nvar,q,
      &             xlowmbc,ylowmbc,dx,dy,time,dt,maux,aux)
 c
 c
-c     # take one step on the conservation law:
+c     # take one step (2 stages)  on the conservation law:
 c
-      call step2(mbig,nvar,maux,
-     &           mbc,mx,my,
-     &              q,aux,dx,dy,dt,cflgrid,
-     &              fm,fp,gm,gp,rpn2,rpt2)
+      write(*,*)"stepgrid 1 vtime ",vtime
+      call mymethod(q,fm,fp,gm,gp,mitot,mjtot,mbc,dt,dtnew,dx,dy,
+     &            nvar,xlow,ylow,mptr,maux,aux,irr,lstgrd,
+     &            ncount,numHoods,vtime)
+      write(*,*)"stepgrid after mymethod dt,dtnew ",dt,dtnew
 c
 c
-c       write(outunit,1001) mptr, node(nestlevel,mptr),cflgrid
-c1001   format(' Courant # of grid', i4,
-c    &        ' on level', i3, ' is  ', e10.3)
-c
+c!$OMP  CRITICAL (cflm)
 
-!$OMP  CRITICAL (cflm)
+c        cfl_level = dmax1(cfl_level,cflgrid)
 
-        cfl_level = dmax1(cfl_level,cflgrid)
+c!$OMP END CRITICAL (cflm)
 
-!$OMP END CRITICAL (cflm)
-
-c
-c       # update q
-        dtdx = dt/dx
-        dtdy = dt/dy
-        do 50 j=mbc+1,mjtot-mbc
-        do 50 i=mbc+1,mitot-mbc
-        do 50 m=1,nvar
-         if (mcapa.eq.0) then
-c
-c            # no capa array.  Standard flux differencing:
-
-           q(m,i,j) = q(m,i,j) 
-     &           - dtdx * (fm(m,i+1,j) - fp(m,i,j)) 
-     &           - dtdy * (gm(m,i,j+1) - gp(m,i,j)) 
-         else
-c            # with capa array.
-           q(m,i,j) = q(m,i,j) 
-     &          - (dtdx * (fm(m,i+1,j) - fp(m,i,j))
-     &          +  dtdy * (gm(m,i,j+1) - gp(m,i,j))) / aux(mcapa,i,j)
-         endif
-
- 50      continue
 c
 c
       if (method(5).eq.1) then
@@ -203,22 +148,23 @@ c For variable time stepping, use max speed seen on this grid to
 c choose the allowable new time step dtnew.  This will later be 
 c compared to values seen on other grids.
 c
-       if (cflgrid .gt. 0.d0) then
-           dtnew = dt*cfl/cflgrid
-         else
+c      cflgrid = cfl  ! not really should fix this but just want dtnew
+c      if (cflgrid .gt. 0.d0) then
+c          dtnew = dt*cfl/cflgrid
+c        else
 c          # velocities are all zero on this grid so there's no 
 c          # time step restriction coming from this grid.
-            dtnew = rinfinity
-          endif
+c           dtnew = rinfinity
+c         endif
 
 c     # give a warning if Courant number too large...
 c
-      if (cflgrid .gt. cflv1) then
-            write(*,810) cflgrid
-            write(outunit,810) cflgrid, cflv1
-  810       format('*** WARNING *** Courant number  =', d12.4,
-     &              '  is larger than input cfl_max = ', d12.4)
-            endif
+c     if (cflgrid .gt. cflv1) then
+c           write(*,810) cflgrid
+c           write(outunit,810) cflgrid, cflv1
+c 810       format('*** WARNING *** Courant number  =', d12.4,
+c    &              '  is larger than input cfl_max = ', d12.4)
+c           endif
 c
       if (dump) then
          write(outunit,*) "dumping grid ",mptr," after stepgrid"
@@ -228,6 +174,7 @@ c
          end do
          end do
       endif
+      write(*,*)"stepgrid at end dt,dtnew ",dt,dtnew
       return
       end
 

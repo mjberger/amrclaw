@@ -151,6 +151,7 @@ c
           mitot = nx + 2*nghost
           mjtot = ny + 2*nghost
           call reclam(node(store1,mptr),mitot*mjtot*nvar)
+          call lstput(node(lstptr,mptr))
           if (naux .gt. 0) then
             call reclam(node(storeaux,mptr),mitot*mjtot*naux)
           endif

@@ -4,7 +4,7 @@
       implicit real*8 (a-h,o-z)
       character(len=25) fname
 c
-      common /userdt/ cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
+      common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                ismp,gradThreshold
 c
       iunit = 7

@@ -11,7 +11,7 @@ c
      &          qy(nvar,mitot,mjtot),irr(mitot,mjtot)
 
       common /order2/ ssw, quad, nolimiter
-      common   /userdt/ cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
+      common   /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                ismp,gradThreshold
 
       dimension rhsmax(nvar), rhsmin(nvar)

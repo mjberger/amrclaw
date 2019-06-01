@@ -12,7 +12,6 @@ c
 
 c ## indexing into mcapa assumes cell volume is in mcapa location
       iadd(ivar,i,j)  = loc + ivar - 1 + nvar*((j-1)*mitot+i-1)
-      iaddirr(i,j)  = locirr +  ((j-1)*mitot+i-1)
       iaddaux(i,j) = locaux + mcapa - 1 + naux*(i-1) +
      .                                    naux*mitot*(j-1)
 c

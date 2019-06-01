@@ -5,7 +5,7 @@ c
 c
       use amr_module
       implicit double precision (a-h,o-z)
-      common /userdt/ cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
+      common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                ismp,gradThreshold
       logical         flag
       character*23  filename 

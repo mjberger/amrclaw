@@ -30,7 +30,6 @@ c        ::: add neighbors of this point to nlist
            if (ioff .eq. 0 .and. joff .eq. 0) go to 20
 c           ::: prerequisite for edge sharing if one of the offsets = 0
 c           ## if next line commented out, then diagonal nbors are allwoed
-c           if (ioff.ne.0 .and. joff.ne.0) go to 20 
            ixn = ix0 + ioff
            iyn = iy0 + joff
            if (outside(ixn,iyn)) go to 20
@@ -78,8 +77,6 @@ c          if (xn .gt. xprob .or. xn .lt. 0.) go to 20
 c          ### dont use new cell if area way too small (same test for no gradients in this cell)
 c          in irreg3hbox
            if (verbose .and. ar(kn)/ar(lstgrd).lt.gradThreshold) then
-            write(*,*)"not using ",ixn,iyn," volfrac ",ar(kn)/ar(lstgrd)
-            write(*,*)"    in neighbor stencil for cell",ix0,iy0
             go to 20
            endif
            newend = newend + 1

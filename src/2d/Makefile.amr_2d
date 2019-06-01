@@ -24,6 +24,7 @@ COMMON_SOURCES += \
   $(AMRLIB)/bound.f90 \
   $(AMRLIB)/stepgrid.f \
   $(AMRLIB)/mymethod.f \
+  $(AMRLIB)/cellsClose.f \
   $(AMRLIB)/DRD_cellMerge.f \
   $(AMRLIB)/SRD_cellMerge.f \
   $(AMRLIB)/getCellCentroid.f \

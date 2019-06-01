@@ -24,13 +24,13 @@
      .                  ismp,gradThreshold
 
       logical    debug, vtime  
-      logical    inside
       dimension  firreg(nvar,-1:irrsize)
       dimension  resid(nvar)
       dimension fakeState(nvar)
+      character ch
 
       integer    xrp, yrp
-      data       debug/.false./
+      data       debug/.true./
       data       xrp/1/, yrp/0/
       data       pi/3.14159265357989d0/
 
@@ -38,16 +38,13 @@ c      dimension coeff(3)
 c      data       mstage/3/
 c      data       coeff/.21d0,.5d0,1.d0/  
 
-       dimension coeff(2)
-       data mstage/2/
-       data      coeff/0.5d0,1.d0/
+c      dimension coeff(2)
+c      data mstage/2/
+c      data      coeff/0.5d0,1.d0/
 
-c     dimension coeff(1)
-c     data      mstage/1/
-c     data      coeff/1.d0/
-
-c      inside(i,j) = (i .gt. 4 .and. i .lt. mitot-3 .and.
-c    .                j .gt. 4 .and. j .lt. mjtot-3)
+      dimension coeff(1)
+      data      mstage/1/
+      data      coeff/1.d0/
 
 c
 c
@@ -58,8 +55,6 @@ c     #
 c
 c cell (i,j) owns the fluxes to the left and bottom
 c
-      write(*,*)"mymethod 0 vtime dtn dtnewn ",vtime,dtn,dtnewn
-
       msize = max(mitot,mjtot)
       if ( msize .lt. max(mitot,mjtot) ) then
           write(6,*) 'Not enough memory allocated for rowwise flux'
@@ -73,7 +68,7 @@ c
        fakeState(1) = 1.d0
        fakeState(2) = 0.d0
        fakeState(3) = 0.d0
-       fakeState(4) = 2.5d0
+       fakeState(4) = 1.0d0
 
 c
       ix1 = lwidth + 1
@@ -92,15 +87,11 @@ c
 c
 c     # initialize fluxes:
 c
-      do 10 m = 1, nvar
-      firreg(m,-1)  = 0.d0
-         do 10 j = 1, mjtot
-         do 10 i = 1, mitot
-             f(m,i,j) = 0.d0
-             g(m,i,j) = 0.d0
-             qx(m,i,j) = 0.d0
-             qy(m,i,j) = 0.d0
-   10    continue
+      firreg(:,-1)  = 0.d0
+      f = 0.d0
+      g = 0.d0
+      qx = 0.d0
+      qy = 0.d0
 
 c need routine to set face lengths and  midpoints
          call getirrlen(irr,mitot,mjtot,dtn,dx,dy,lstgrd,
@@ -136,12 +127,8 @@ c     ### call for exterior bcs at each stage so can use slopes
 
       if (istage .eq. 1) then  ! moved to here so that bcs in q from new bc routine not phsybd
 c        copy q to qtemp for multi-stage RK
-         do 142 m = 1, nvar
-         do 142 i = 1, mitot
-         do 142 j = 1, mjtot
-             qtemp(m,i,j) = q(m,i,j)
- 142     continue
-c        need to convert to conserved vars for updating below
+         qtemp = q
+c        need to convert back to conserved vars for updating below
          call vprmtoc(qtemp,mitot,mjtot,nvar)
        endif
 c
@@ -178,7 +165,6 @@ c
 c
          do 720 i = lwidth-2, mitot-lwidth+3
          do 720 m = 1, nvar
-         
             g(m,i,jcol+1) = ff(m,i)
   720    continue
 c
@@ -235,11 +221,10 @@ c
 c  multiply fluxes by mesh spacing. 
 c  this zeros out unused fluxes so solid vals dont get updated.
 c
-         do 580 m = 1, nvar
          do 580 i = 2, mitot
          do 580 j = 2, mjtot
-            f(m,i,j) = f(m,i,j) * ffluxlen(i,j)
-            g(m,i,j) = g(m,i,j) * gfluxlen(i,j)
+            f(:,i,j) = f(:,i,j) * ffluxlen(i,j)
+            g(:,i,j) = g(:,i,j) * gfluxlen(i,j)
  580     continue
 c 
         if (istage .eq. mstage .and. iprob .ne. 20) then
@@ -255,7 +240,7 @@ c
          do 917 i = ix1-lwidth+istage, ixn+lwidth-istage
          do 917 m = 1, nvar
             k = irr(i,j)
-            resid(m) = (f(m,i+1,j) -f(m,i,j) +g(m,i,j+1) -g(m,i,j))
+            resid(m) = (f(m,i+1,j)-f(m,i,j)+g(m,i,j+1)-g(m,i,j))
      &                 - firreg(m,k)
             res(m,i,j) = resid(m)
             if (istage .eq. 1) then
@@ -267,10 +252,24 @@ c    &                        - dtn/ar(k)*resid(m))
             endif
  917     continue
 
+        do j = iy1, iyn
+        do i = ix1, ixn
+           k = irr(i,j)
+           if (k .eq. -1) cycle
+           ch = ' '
+           if (k .ne. lstgrd) ch = '+'
+           write(*,333)ch,i,j,f(2,i,j),f(2,i+1,j),g(2,i,j),g(2,i,j+1)
+           write(*,333)ch,i,j,f(3,i,j),f(3,i+1,j),g(3,i,j),g(3,i,j+1)
+           if (k .ne. lstgrd) write(*,*) firreg(2:3,k)
+           write(*,333)
+ 333       format(a1,2i4,4d12.4)
+        end do
+        end do
+
 c  postprocess for stability of cut cells. c
 c  do it in conserved variables for conservation purposes, (but maybe prim better?)
 c
-         ismp = 1
+         write(*,*)"my method 1 ismp ",ismp
          if (ismp .eq. 1) then
             call srd_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,dx,
      .                  dy,lwidth,xlow,ylow,istage,ncount,numHoods)

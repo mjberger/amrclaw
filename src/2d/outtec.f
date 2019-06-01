@@ -38,7 +38,7 @@ c    ## NOTE THAT BNDRY CELLS FROM OTHER GRIDS NOT SET
        qy = 0.d0
 
 c  set pwconst true for piecewise constant plots, set to false for slopes in tec output
-c     pwconst =  .true.
+      pwconst =  .true.
       pwconst =  .false.
       if (pwconst) go to 8
 
@@ -154,7 +154,8 @@ c            valprim(4) = valprim(4)
              write(14,1022) xc,yc,(valprim(ivar),ivar=1,nvar),
      &                  xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
      &                  kirr,volFrac,perim
-             write(*,*) ch,xc,yc,(valprim(ivar),ivar=1,nvar)
+c            write(*,345) ch,i,j,xc,yc,(valprim(ivar),ivar=1,nvar)
+345          format(a1,2i3,2f6.3,4e15.7)
 
           else if (iprob .eq. 19) then  
             if (kirr .eq. lstgrd) then

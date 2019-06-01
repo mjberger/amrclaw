@@ -52,7 +52,6 @@ c        !pl = gamma1*(El-.5d0*(rhoul*rhoul+rhoutl*rhoutl)/rhol)
          cr = dsqrt(gamma * pr / rhor)
          sr = max(dabs(rhour/rhor + cr), dabs(rhour/rhor - cr) )
 
-
          s = max(sl,sr)
 
          ul(1) = rhol

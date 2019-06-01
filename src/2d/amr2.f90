@@ -650,7 +650,7 @@ program amr2
 
     call cpu_time(cpu_finish)
 
-    call dumptec(1,lfine,nvar,naux,nplot,time)
+    ! last output now done at end of tick, to avoid two at same time
 
     !output timing data
     open(timing_unit, file=timing_base_name//"txt", status='unknown',       &

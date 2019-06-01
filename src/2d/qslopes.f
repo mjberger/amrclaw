@@ -42,11 +42,7 @@ c   all slopes initialized to zero in regular slopes subr.
 c
 c
       quad = .false.
-      if (quad) then 
-         nterms = 5 
-      else 
-         nterms = 2 
-      endif
+      nterms = 2 
 
 
 c      do 110 ix0 = lwidth-2, mitot-lwidth+3
@@ -55,9 +51,6 @@ c      do 110 iy0 = lwidth-2, mjtot-lwidth+3
       do 110 iy0 = 1, mjtot
          k = irr(ix0,iy0)
          if (k .eq. -1) go to 110
-c     ::: next line is so only cut cells done quadratically,
-c     ::: otherwise do their neighbors too
-c     if (k .eq. lstgrd) go to 110
          if (k .eq. lstgrd .and. ALL_NBORS_EXIST(ix0,iy0)) then
            if (irr(ix0+1,iy0) .eq. lstgrd .and. 
      .         irr(ix0,iy0+1) .eq. lstgrd .and. 
@@ -70,9 +63,6 @@ c
             qy(:,ix0,iy0) = 0.d0
             go to 110           ! leave 0 gradient:  more stable for teeny cells w/o slopes
          endif
-c     
-c     ::: use one-sided 2nd order slopes 
-c     if (k .eq. lstgrd .and. .not. quad) go to 110
 c     
 c      # this cell needs a slope
          if (k .ne. lstgrd) then
@@ -102,61 +92,40 @@ c     if (outside(x0,y0)) go to 110   ! to match cart3d, no gradients in ghost c
          nlist(1,2) = iy0
          nst        = 1  
          nend       = 1  
-         write(*,*)" qslopes calling addneighbors for cell ",ix0,iy0
          call addneighbors(irr,nlist,nst,nend,newend,mitot,mjtot,
      .        lstgrd,quad,xlow,ylow,hx,hy)
-         if (.not. quad .and. newend .gt. 3) go to 16
-c     in the linear case only 2 nbors. could be ill conditioned. add diagonal nbor
+         if (newend .gt. 3) go to 16 ! since have at least 2 nbors
+c     in the linear case 2 nbors could be ill conditioned. add diagonal nbor
 c     first have to find diag nbor. this code doesnt test for thin bodies,etc
          ixn = nlist(2,1)
          iyn = nlist(2,2)
          if (nlist(2,1) .eq. ix0) ixn = nlist(3,1)
          if (nlist(2,2) .eq. iy0) iyn = nlist(3,2)
          newend = newend + 1
-         write(*,*)" qslopes testing diag neighbors ",ixn,iyn
-         write(*,*)" qslopes with outside ",outside(ixn,iyn)
          if (.not. outside(ixn,iyn)) then
            nlist(newend,1) = ixn 
            nlist(newend,2) = iyn
-         write(*,*)" qslopes adding diag neighbor ",ixn,iyn
+           go to 16
+         else
+           !not enough neighbors for gradient
+            enufNbor = .false.
+            go to 110
          endif
-         go to 16
 
-c     cell itself in 1st row, 2-6 is 5 more rows. see if sufficient.
-         if (quad .and. newend .gt. 6) then ! want more than 5 nbors (pos. 1 is cell itself)
-            enufNbor = .TRUE.
-            go to 16
-         endif
 
 c        ::: not enough neighbors for quadratic fit
 c        ::: add neighbors of neighbors    
-        if (quad) then
-         nst        = 2  
-         nend       = newend  
-         call addneighbors(irr,nlist,nst,nend,newend,mitot,mjtot,
-     .                     lstgrd,quad,xlow,ylow,hx,hy)
-         if (newend .ge. 6)then
-             enufNbor = .TRUE.
-             go to 16
-         endif
-c        write(6,*)" problem finding neighbors for quadratic fit"
-c        write(6,*) ix0, iy0, " only have ", newend-1
-c        write(6,*) "not sufficient "
-c        stop
-         enufNbor = .FALSE.
-         endif
 c
+c         if ((irow .lt. 2)) then
+c          write(*,*) "no slope for cut cell ",ix0,iy0
+c          go to 110    ! not enough neighbors for gradient recon
+c         endif
+
  16      irow = 0
-         if (quad .and. enufNbor) then
-            shiftxx = poly( 8,1,k)
-            shiftxy = poly( 9,1,k)
-            shiftyy = poly(10,1,k)
-         endif
          do 22 n = 2, newend
             irow = irow + 1
             ixn = nlist(n,1)
             iyn = nlist(n,2)
-            write(*,*) "qslopes using nlist cell ",ixn,iyn
             kn =  irr(ixn,iyn)
             if (kn .ne. lstgrd) then
                xn = xcirr(kn)
@@ -165,81 +134,16 @@ c
                xn = xlow + (ixn-.5d0)*hx
                yn = ylow + (iyn-.5d0)*hy
             endif
-c     # code treating q as pt.wise values
-            if ((.not. quad) .or. (.not. enufNbor)) then
+
+c     # treating q as pt.wise values, wont work for quadratic fit
                a(irow,1) = (xn - x0)
                a(irow,2) = (yn - y0)
-               go to 21
-            endif
-c     a(irow,3) = .5*a(irow,1)*a(irow,1)
-c     a(irow,4) =    a(irow,1)*a(irow,2)
-c     a(irow,5) = .5*a(irow,2)*a(irow,2)
 
-c     # code to do quadratic reconstruction preserving integral avgs.
-            a(irow,1) = 0.d0
-            a(irow,2) = 0.d0
-            a(irow,3) = 0.d0
-            a(irow,4) = 0.d0
-            a(irow,5) = 0.d0
-
-c            # handle cut cells first
-            if (kn .ne. lstgrd) then
-               do 15 index = 1, 24
-                  xp = points(index,1,kn)
-                  yp = points(index,2,kn)
-c     
-                  a(irow,1) = wt(index,kn)*(xp-x0) + a(irow,1)
-                  a(irow,2) = wt(index,kn)*(yp-y0) + a(irow,2)
-                  a(irow,3) = .5*wt(index,kn)*(xp-x0)*(xp-x0)
-     &                 + a(irow,3)
-                  a(irow,4) = wt(index,kn)*(xp-x0)*(yp-y0)
-     &                 + a(irow,4)
-                  a(irow,5) = .5*wt(index,kn)*(yp-y0)*(yp-y0)
-     &                 + a(irow,5)
- 15            continue
-            else
-               do 17 index = 1, 5
- 17               wt(index,kn) = 1.d0/6.d0
-                  wt(3,kn) = 1.d0/3.d0
-                  points(1,1,lstgrd) = xn - hx/2.d0
-                  points(1,2,lstgrd) = yn
-                  points(2,1,lstgrd) = xn 
-                  points(2,2,lstgrd) = yn + hy/2.d0
-                  points(3,1,lstgrd) = xn 
-                  points(3,2,lstgrd) = yn 
-                  points(4,1,lstgrd) = xn + hx/2.d0
-                  points(4,2,lstgrd) = yn
-                  points(5,1,lstgrd) = xn 
-                  points(5,2,lstgrd) = yn - hy/2.d0
-                  do 19 index = 1, 5
-                     xp = points(index,1,kn)
-                     yp = points(index,2,kn)
-                     a(irow,1) = wt(index,kn)*(xp-x0) + a(irow,1)
-                     a(irow,2) = wt(index,kn)*(yp-y0) + a(irow,2)
-                     a(irow,3) = .5*wt(index,kn)*(xp-x0)*(xp-x0)
-     &                    + a(irow,3)
-                     a(irow,4) = wt(index,kn)*(xp-x0)*(yp-y0)
-     &                    + a(irow,4)
-                     a(irow,5) = .5*wt(index,kn)*(yp-y0)*(yp-y0)
-     &                    + a(irow,5)
- 19               continue
-
-               endif
-
-c            #  shift to fit quadratic terms with mean 0 over cell k
-               a(irow,3) = a(irow,3) - shiftxx
-               a(irow,4) = a(irow,4) - shiftxy
-               a(irow,5) = a(irow,5) - shiftyy
-
- 21            do m = 1, nvar
+               do m = 1, nvar
                   b(irow,m) = qp(m,ixn,iyn) - qp(m,ix0,iy0)
                end do
  22         continue
 c
-          if ((irow .lt. 2)) then
-c          write(*,*) "no slope for cut cell ",ix0,iy0
-           go to 110    ! not enough neighbors for gradient recon
-          endif
 c 
           do 30 it = 1, irow
           do 30 jt = 1, nterms
@@ -269,19 +173,36 @@ c
  45                continue
  50             continue
 
+c
+c
+c      #  do linear fit
 
-c     turn off limiting 
+c     # solve C*w = d for least squares slopes. use cholesky
+c     # put factors back in a
+           a(1,1) = dsqrt(c(1,1))
+           a(1,2) = c(1,2)/a(1,1)
+           a(2,2) = dsqrt(c(2,2)-a(1,2)**2)
+c     
+           do 61 m = 1, nvar
+c     
+c     # at*a = c. solve at*b = d, aw = b.  reuse b.
+              b(1,m) = d(1,m) / a(1,1)
+              b(2,m) = (d(2,m) - a(1,2)*b(1,m)) / a(2,2)
+              w2 =   b(2,m)/a(2,2)
+              qy(m,ix0,iy0) =  w2
+              qx(m,ix0,iy0) = (b(1,m)-a(1,2)*w2)/a(1,1)
+ 61        continue
+
+
+c       should we limit?
         if (nolimiter)  go to 110
 
-c
-c
-       go to 63
 c
 
 c      ::: now some kind of limiting of more accurate slope computed above
 c      ::: fix up matrix first - transpose remained
 c     
- 63    do 65 i = 1, irow
+       do 65 i = 1, irow
          a(i,1) = at(1,i)
          a(i,2) = at(2,i)
  65    continue
@@ -316,30 +237,6 @@ c
       endif
 c   
 c do it again to limit against neighboring cell centers. (as in minmod vs previous mc limiter)
-       ! original version
-       if (.false.) then
-       do 96 m = 1, nvar
-          frac = 1.d0
-          do 69 it = 1, irow
-             ixn = nlist(1+it,1)
-             iyn = nlist(1+it,2)
-
-             xdif = a(it,1)  ! (x-x0)
-             ydif = a(it,2)  ! (y-y0)
-
-             dd = xdif*qx(m,ix0,iy0)+ydif*qy(m,ix0,iy0)
-             qdif = qp(m,ixn,iyn) - qp(m,ix0,iy0)
-
-             if (dd*qdif .le. 0.) then
-                frac = 0.d0
-             else
-                frac = dmin1(frac, qdif/dd)
-             endif
- 69       continue
-          qx(m,ix0,iy0) = frac*qx(m,ix0,iy0)
-          qy(m,ix0,iy0) = frac*qy(m,ix0,iy0)
- 96   continue
-      endif
 
        ! BJ limiting
        dumax = 0.0d0
@@ -379,7 +276,7 @@ c
          write(21,*)' qx '
          do 180 i = 2, mitot-1
          do 180 j = 2, mjtot-1
-            if (irr(i,j) .ne. -1) then
+            if (irr(i,j) .ne. -1 .and. irr(i,j).ne.lstgrd) then
                write(21,190)i,j,(qx(m,i,j),m=1,nvar)
  190           format('  i,j  ',2i4,4e14.6)
             endif
@@ -387,7 +284,7 @@ c
          write(21,*)' qy '
          do 181 i = 2, mitot-1
          do 181 j = 2, mjtot-1
-            if (irr(i,j) .ne. -1) then
+            if (irr(i,j) .ne. -1 .and. irr(i,j).ne.lstgrd) then
                write(21,190)i,j,(qy(m,i,j),m=1,nvar)
             endif
  181     continue

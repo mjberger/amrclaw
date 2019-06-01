@@ -8,7 +8,7 @@ c      that may be overwriting conserved variables
 c
        implicit double precision(a-h,o-z)
        dimension q(nvar,mitot,mjtot),qp(nvar,mitot,mjtot)
-       common   /userdt/  gamma,gamma1,xprob,yprob,alpha,Re,iprob,
+       common   /userdt/cfl, gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                ismp,gradThreshold
 c
        gamma1 = .4d0

@@ -14,7 +14,8 @@ c
       use amr_module
       implicit double precision (a-h,o-z)
 
-      common /userdt/ cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,ismp
+      common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob
+     .                ismp,gradThreshold
       dimension val(nvar,nrow,ncol)
       data  pi/3.1415926535d0/
       dimension qx(nvar,nrow,ncol), qy(nvar,nrow,ncol)

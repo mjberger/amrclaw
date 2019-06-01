@@ -14,7 +14,7 @@ c
       dimension qx(nvar,mitot,mjtot),qy(nvar,mitot,mjtot)
       dimension valprim(4)
       dimension exactsoln(1)
-      common /userdt/ cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
+      common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                ismp,gradThreshold
       common /order2/ ssw, quad, nolimiter
       logical  quad, nolimiter

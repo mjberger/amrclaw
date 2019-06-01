@@ -22,7 +22,7 @@ c ###
       logical  debug,quad, nolimiter
       integer  icell,jcell
 
-      common /userdt/ cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
+      common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                ismp,gradThreshold
       common  /order2/  ssw, quad, nolimiter
 

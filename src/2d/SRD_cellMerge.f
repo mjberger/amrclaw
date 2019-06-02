@@ -362,8 +362,10 @@ c     this code below counts on fact that don't need more than
 c     2 cells to a side for a merging neighborhood
       write(*,*)"makeNHood grid  mitot,mjtot,istage ",mptr,mitot,mjtot,
      &           istage
-      do 10 j = 1+2*(istage-1), mjtot-2*(istage-1)
-      do 10 i = 1+2*(istage-1), mitot-2*(istage-1)
+      !do 10 j = 1+2*(istage-1), mjtot-2*(istage-1)
+      !do 10 i = 1+2*(istage-1), mitot-2*(istage-1)
+      do 10 j = lwidth-1, mjtot-lwidth/2
+      do 10 i = lwidth-1, mitot-lwidth/2
          k = irr(i,j)  
          if (k .eq. -1) go to 10
          if (k .eq. lstgrd) then

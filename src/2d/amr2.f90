@@ -628,8 +628,6 @@ program amr2
 
 
     call outtre (mstart,printout,nvar,naux)
-    write(outunit,*) "  original total mass ..."
-    call conck(1,nvar,naux,time,rest)
     nplot = 0
     if (output_t0) then
         !call valout(1,lfine,time,nvar,naux)
@@ -645,6 +643,8 @@ program amr2
     !  Tick is the main routine which drives the computation:
     ! --------------------------------------------------------
 
+    write(outunit,*) "  original total mass ..."
+    call conck(1,nvar,naux,time,rest)
     call tick(nvar,cut,nstart,vtime,time,naux,t0,rest,dt_max,nplot)
     ! --------------------------------------------------------
 

@@ -3,7 +3,7 @@ c ---------------------------------------------------------------------
 c
        subroutine SRD_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,
      .                      dx,dy,lwidth,xlow,ylow,istage,
-     .                      ncount,numHoods)
+     .                      ncount,numHoods,mptr)
 
        use amr_module
        implicit double precision (a-h, o-z)
@@ -21,22 +21,30 @@ c
        dimension graddot(nvar),alpha(nvar),recon(nvar)
        dimension a(2,2),b(2)
        real*8 minmod
+       character ch
 
-       logical IS_GHOST, IS_FAR_GHOST, verbose/.false./
+       logical IS_OUTSIDE,IS_GHOST,IS_FAR_GHOST,verbose/.false./
        logical quad, nolimiter
-       logical BAD_STATE,REG_NBORS
+       logical REG_NBORS,NOT_VALID_VAL
        common /order2/ ssw, quad, nolimiter
+
+c  xlow,ylow   refers to the grid
+c  xlower,ylower refers to the domain
+c  istage will determine how many ghost cells can be trusted:
+c  a1ll in 1st stage, 2 less in 2nd stage
 
 c  this next statement considers a ghost cell to be anything beyond the
 c  loop indices, since they change according to the stage
        IS_GHOST(i,j) = (i .le. lwidth .or. i .gt. mitot-lwidth .or.
      .                  j .le. lwidth .or. j .gt. mjtot-lwidth)
-c      BAD_STATE = ((qm(1) .le. 0.d0) .or. 
-c    .  (.4d0*(qm(4)- 0.5d0*(qm(2)**2+qm(3)**2)/qm(1)) .le.0.d0))
+       IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
+     .                  y .lt. ylower .or. y .gt. yupper)
        REG_NBORS(i,j,lstgrd) = (irr(i+1,j).eq.lstgrd .and. 
      .                          irr(i-1,j).eq.lstgrd .and. 
      .                          irr(i,j+1).eq.lstgrd .and. 
      .                          irr(i,j-1).eq.lstgrd)
+      NOT_VALID_VAL(i,j) = (i>mitot-2*(istage-1) .or. i<2*(istage-1)+1
+     .                .or.  j>mjtot-2*(istage-1) .or. j<2*(istage-1)+1)
 
 c :::::::::::::;:::
 c
@@ -61,7 +69,7 @@ c
 c     first make neighborhoods - need count for each cells, and width (nhood above)
 c     nCount is size of neighborhood, numHoods is number of merged nhoods each cells is in
       call makeNHood(volMerge,xcentMerge,ycentMerge,ncount,irr,numHoods,
-     .               mitot,mjtot,lwidth,lstgrd,xlow,ylow,dx,dy)   
+     .           mitot,mjtot,lwidth,lstgrd,xlow,ylow,dx,dy,istage,mptr)
 
        if (verbose) then
           totmass =  bigconck(q,irr,mitot,mjtot,lwidth,nvar)
@@ -72,8 +80,11 @@ c     nCount is size of neighborhood, numHoods is number of merged nhoods each c
 c       form qMerge vals 
         do 10 j = 1, mjtot
         do 10 i = 1, mitot
-            if (irr(i,j) .eq. -1) go to 10 ! no solid cells
-            if (irr(i,j) .eq. lstgrd .or. IS_GHOST(i,j)) then 
+            k = irr(i,j)
+            if (k .eq. -1) go to 10 ! no solid cells
+            call getCellCentroid(lstgrd,i,j,xc,yc,xlow,ylow,dx,dy,k)
+            !if (k .eq. lstgrd .or. IS_GHOST(i,j)) then 
+            if (k .eq. lstgrd .or. IS_OUTSIDE(xc,yc)) then 
               qMerge(:,i,j) = q(:,i,j)
               go to 10 
             endif
@@ -84,7 +95,11 @@ c
              do 27 ioff = -ncount(i,j), ncount(i,j)
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) go to 27  ! solid cells dont contribute to neighborhood
-                if (IS_GHOST(i+ioff,j+joff)) go to 27  ! nor ghost cells
+                !if (IS_GHOST(i+ioff,j+joff)) go to 27  ! nor ghost cells
+                call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
+     &                               xlow,ylow,dx,dy,koff)
+                if (IS_OUTSIDE(xcn,ycn)) go to 27  ! nor ghost cells
+                if (NOT_VALID_VAL(i+ioff,j+joff)) go to 27  ! cant trust this ghost cell val
 c               count this cell 
                 qMerge(:,i,j) = qMerge(:,i,j) + ar(koff)*
      .                        q(:,i+ioff,j+joff)/numHoods(i+ioff,j+joff)
@@ -126,9 +141,12 @@ c               count this cell
             do 22 joff = -nco, nco
             do 22 ioff = -nco, nco
                 if (ioff .eq. 0 .and. joff .eq. 0) go to 22 ! no eqn to solve
-                if (IS_GHOST(i+ioff,j+joff)) go to 22
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) go to 22
+c               if (IS_GHOST(i+ioff,j+joff)) go to 22
+                call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
+     &                               xlow,ylow,dx,dy,koff)
+                if (IS_OUTSIDE(xcn,ycn)) go to 22
                deltax = xcentMerge(i+ioff,j+joff) - x0
                deltay = ycentMerge(i+ioff,j+joff) - y0
                a(1,1) = a(1,1) + deltax*deltax
@@ -154,7 +172,6 @@ c               count this cell
                gradmx(m,i,j) = (b(1) - c12*gradmy(m,i,j))/c11
              end do
  20     continue
-
 c
 c      apply limiter if requested. Go over all neighbors, do BJ
         if (nolimiter) go to 35
@@ -171,9 +188,12 @@ c      apply limiter if requested. Go over all neighbors, do BJ
             do 31 joff = -nco, nco
             do 31 ioff = -nco, nco
               if (ioff .eq. 0 .and. joff .eq. 0) go to 31
-              if (IS_GHOST(i+ioff,j+joff)) go to 31
               koff = irr(i+ioff,j+joff)
               if (koff .eq. -1) go to 31
+c             if (IS_GHOST(i+ioff,j+joff)) go to 31
+              call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
+     &                             xlow,ylow,dx,dy,koff)
+              if (IS_OUTSIDE(xcn,ycn)) go to 31
               dumax = max(dumax,qmerge(:,i+ioff,j+joff)-qmerge(:,i,j))
               dumin = min(dumin,qmerge(:,i+ioff,j+joff)-qmerge(:,i,j))
  31         continue
@@ -182,18 +202,19 @@ c      apply limiter if requested. Go over all neighbors, do BJ
             do 32 joff = -nco, nco
             do 32 ioff = -nco, nco
                 if (ioff .eq. 0 .and. joff .eq. 0) go to 32 ! no eqn to solve
-                if (IS_GHOST(i+ioff,j+joff)) go to 32
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) go to 32
+c               if (IS_GHOST(i+ioff,j+joff)) go to 32
+                call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
+     &                               xlow,ylow,dx,dy,koff)
+                if (IS_OUTSIDE(xcn,ycn)) go to 32
                 ! use merged val at ioff,joff to limit
                 !diffx = xcentMerge(i+ioff,j+joff)-xcentMerge(i,j)
                 !diffy = ycentMerge(i+ioff,j+joff)-ycentMerge(i,j)
                 ! these next lines limit at cell where will evaluate
                 ! previous lines limit at cells used in making gradient
-                call getCellCentroid(lstgrd,i+ioff,j+joff,xc,yc,xlow,
-     .                          ylow,dx,dy,koff)
-                diffx = xc-xcentMerge(i,j)
-                diffy = yc-ycentMerge(i,j)
+                diffx = xcn-xcentMerge(i,j)
+                diffy = ycn-ycentMerge(i,j)
                 graddot  = gradmx(:,i,j)*diffx + gradmy(:,i,j)*diffy
                 recon = qMerge(:,i,j) + graddot  
                   do m = 1,4
@@ -236,21 +257,26 @@ c
              valnew(:,i,j) = fakeState
              go to 50  ! does not contribute
           endif
-          if (IS_GHOST(i,j)) then
+c         if (IS_GHOST(i,j)) then
+          call getCellCentroid(lstgrd,i,j,xc,yc,
+     &                         xlow,ylow,dx,dy,k)
+          if (IS_OUTSIDE(xc,yc)) then
              valnew(:,i,j) = qMerge(:,i,j)  ! copy what came in
              go to 50 
           endif
 
           do 40 joff = -ncount(i,j), ncount(i,j)
           do 40 ioff = -ncount(i,j), ncount(i,j)
-             if (IS_GHOST(i+ioff,j+joff)) go to 40  
              koff = irr(i+ioff,j+joff)
              if (koff .eq. -1) go to 40  
-             call getCellCentroid(lstgrd,i+ioff,j+joff,xc,yc,xlow,
-     .                            ylow,dx,dy,koff)
-             qm(:) = qMerge(:,i,j) + (xc-xcentMerge(i,j))*gradmx(:,i,j) 
-     .                             + (yc-ycentMerge(i,j))*gradmy(:,i,j)
-             !!if (BAD_STATE) then
+c            if (IS_GHOST(i+ioff,j+joff)) go to 40  
+             call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
+     &                            xlow,ylow,dx,dy,koff)
+             if (IS_OUTSIDE(xcn,ycn)) go to 40  
+c            call getCellCentroid(lstgrd,i+ioff,j+joff,xc,yc,xlow,
+c    .                            ylow,dx,dy,koff)
+             qm(:) = qMerge(:,i,j) + (xcn-xcentMerge(i,j))*gradmx(:,i,j)
+     .                             + (ycn-ycentMerge(i,j))*gradmy(:,i,j)
              pr = .4d0*(qm(4)- 0.5d0*(qm(2)**2+qm(3)**2)/qm(1))
              if ((qm(1) .le. 0.d0) .or. (pr .le. 0.d0)) then
                 write(*,*)" should not happen"
@@ -260,7 +286,6 @@ c
  40       continue
 
  50    continue
-
 c
        q = valnew
 c
@@ -306,7 +331,7 @@ c ----------------------------------------------------------------------------
 c
       subroutine makeNHood(volMerge,xcentMerge,ycentMerge,ncount,irr,
      .                     numHoods,mitot,mjtot,lwidth,lstgrd,xlow,ylow,
-     .                     dx,dy)
+     .                     dx,dy,istage,mptr)
 
       use amr_module
       implicit double precision (a-h, o-z)
@@ -315,9 +340,15 @@ c
       dimension xcentMerge(mitot,mjtot), ycentMerge(mitot,mjtot)
       dimension ncount(mitot,mjtot), irr(mitot,mjtot)
 
-      logical IS_GHOST, firstTimeThru
+      logical IS_GHOST, IS_OUTSIDE, firstTimeThru
+      logical debug/.false./, IS_OUT_OF_RANGE
+      character ch
+
       IS_GHOST(i,j) = (i .le. lwidth .or. i .gt. mitot-lwidth .or.
      .                 j .le. lwidth .or. j .gt. mjtot-lwidth)
+      IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
+     .                   y .lt. ylower .or. y .gt. yupper)
+      IS_OUT_OF_RANGE(i,j)  = (i<1 .or. i>mitot .or. j<1 .or. j>mjtot)
 
       ! merge until vqmerge at least this big (analogous to 1d where left and right nhoods each dx
       !!areaMin = 2.d0*ar(lstgrd)  
@@ -327,9 +358,12 @@ c
       ncount = 0
       ar(-1) = 0.d0  ! reset here to remind us
 
-      do 10 j = lwidth+1, mjtot-lwidth
-      do 10 i = lwidth+1, mitot-lwidth
-
+c     this code below counts on fact that don't need more than
+c     2 cells to a side for a merging neighborhood
+      write(*,*)"makeNHood grid  mitot,mjtot,istage ",mptr,mitot,mjtot,
+     &           istage
+      do 10 j = 1+2*(istage-1), mjtot-2*(istage-1)
+      do 10 i = 1+2*(istage-1), mitot-2*(istage-1)
          k = irr(i,j)  
          if (k .eq. -1) go to 10
          if (k .eq. lstgrd) then
@@ -346,11 +380,14 @@ c
          !endif
 
             do while (vqmerge < areaMin) 
+               write(*,*)"i,j,nco ",i,j,nco
                do 15 joff = -nco, nco
                do 15 ioff = -nco, nco
-                   if (IS_GHOST(i+ioff,j+joff)) go to 15  
+                   write(*,*)"   ioff,joff",ioff,joff
+                   if (IS_OUT_OF_RANGE(i+ioff,j+joff)) go to 15  
                    koff = irr(i+ioff,j+joff)
                    if (koff .eq. -1) go to 15  ! solid cells dont help
+                   if (IS_OUTSIDE(xcn,ycn)) go to 15  
                    vqmerge = vqmerge + ar(koff)
                    if (firstTimeThru) then ! count everybody
                       numHoods(i+ioff,j+joff)=numHoods(i+ioff,j+joff)+1
@@ -370,6 +407,12 @@ c
             end do
              
  10   continue      
+      ! this relies on not using more than 2 stage RK method
+      ! or will need to pass in number of stages
+      if (nco .gt. 2) then
+        write(*,*)"SRD mkNhoods: need more ghost cells for large nhoods"
+        stop
+      endif
 
 
 c     needed number of neighbhoods to compute volMerge = which is not
@@ -381,20 +424,22 @@ c
       xcentMerge = 0.d0      
       ycentMerge = 0.d0
 
-      do 20 j = 1, mjtot
-      do 20 i = 1, mitot
+      do 20 j = 1+2*(istage-1), mjtot-2*(istage-1)
+      do 20 i = 1+2*(istage-1), mitot-2*(istage-1)
          k = irr(i,j)  
          if (k .eq. lstgrd) then
              call getCellCentroid(lstgrd,i,j,xcentMerge(i,j),
-     .                            ycentMerge(i,j),
-     .                            xlow,ylow,dx,dy,k)
+     .                            ycentMerge(i,j),xlow,ylow,dx,dy,k)
              go to 20 ! a full  flow cell is its own merged neighborhood
          endif
-         if (IS_GHOST(i,j)) then
+         if (k .eq. -1) then
             volMerge(i,j) = 0.d0
             go to 20
          endif
-         if (k .eq. -1) then
+         call getCellCentroid(lstgrd,i,j,xcentMerge(i,j),
+     .                        ycentMerge(i,j),xlow,ylow,dx,dy,k)
+c        if (IS_GHOST(i,j)) then
+         if (IS_OUTSIDE(xcentMerge(i,j),ycentMerge(i,j))) then
             volMerge(i,j) = 0.d0
             go to 20
          endif
@@ -405,14 +450,16 @@ c
          nco = ncount(i,j)
          do 25 joff = -nco, nco
          do 25 ioff = -nco, nco
-            if (IS_GHOST(i+ioff,j+joff)) go to 25  
+            if (IS_OUT_OF_RANGE(i+ioff,j+joff)) go to 25
             koff = irr(i+ioff,j+joff)
             if (koff .eq. -1) go to 25 ! solid cells dont help
-            call getCellCentroid(lstgrd,i+ioff,j+joff,xc,yc,xlow,ylow,
+            call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,xlow,ylow,
      .                           dx,dy,koff)
+c           if (IS_GHOST(i+ioff,j+joff)) go to 25  
+            if (IS_OUTSIDE(xcn,ycn)) go to 25  
             vmerge = vmerge +  ar(koff)/numHoods(i+ioff,j+joff)
-            xcent = xcent + xc*ar(koff)/numHoods(i+ioff,j+joff)
-            ycent = ycent + yc*ar(koff)/numHoods(i+ioff,j+joff)
+            xcent = xcent + xcn*ar(koff)/numHoods(i+ioff,j+joff)
+            ycent = ycent + ycn*ar(koff)/numHoods(i+ioff,j+joff)
 
  25      continue
          volMerge(i,j) = vmerge
@@ -421,6 +468,24 @@ c
              
  20   continue
 
+      if (debug) then
+        write(*,*)"makeNhood "
+        do j = 1, mjtot
+        do i = 1, mitot
+            if (irr(i,j) .eq. -1) then
+               ch = "*"
+            else if (irr(i,j) .eq. lstgrd) then
+               ch = " "
+            else
+               ch = "+"
+            endif
+            write(*,888)ch,i,j,ncount(i,j),numHoods(i,j),
+     &                xcentMerge(i,j),ycentMerge(i,j),
+     &                volMerge(i,j)
+ 888        format(A1,4i4,3e15.7)
+        end do
+        end do
+      endif
 
 
       return

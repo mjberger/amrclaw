@@ -6,7 +6,7 @@ c
       use amr_module
       implicit double precision (a-h,o-z)
       integer  irr(mitot,mjtot)
-      logical  debug/.false./,done
+      logical  debug/.true./,done
       character ch
 c
 c lstgrd = starting index into the linked list of irregular info.
@@ -159,7 +159,7 @@ c 70      continue
 cc     endif
 
        if (debug) then
-           write(*,*)" setirr irr"
+           write(*,*)" setirr irr grid ", mptr
            do j = 1, mjtot
            do i = 1, mitot
              k = irr(i,j)

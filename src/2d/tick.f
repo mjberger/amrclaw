@@ -358,8 +358,9 @@ c
           endif
       
       if (dump_final) then
-           call valout(1,lfine,time,nvar,naux)
+           !call valout(1,lfine,time,nvar,naux)
            if (printout) call outtre(mstart,.true.,nvar,naux)
+           call dumptec(1,lfine,nvar,naux,nplot,time)
       endif
 
 c ## tick timing moved here so can be saved in checkpoint file 

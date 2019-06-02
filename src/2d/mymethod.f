@@ -38,13 +38,13 @@ c      dimension coeff(3)
 c      data       mstage/3/
 c      data       coeff/.21d0,.5d0,1.d0/  
 
-       dimension coeff(2)
-       data mstage/2/
-       data      coeff/0.5d0,1.d0/
+c      dimension coeff(2)
+c      data mstage/2/
+c      data      coeff/0.5d0,1.d0/
 
-c     dimension coeff(1)
-c     data      mstage/1/
-c     data      coeff/1.d0/
+      dimension coeff(1)
+      data      mstage/1/
+      data      coeff/1.d0/
 
 c
 c
@@ -264,7 +264,7 @@ c  do it in conserved variables for conservation purposes, (but maybe prim bette
 c
          if (ismp .eq. 1) then
             call srd_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,dx,
-     .                  dy,lwidth,xlow,ylow,istage,ncount,numHoods)
+     .                  dy,lwidth,xlow,ylow,istage,ncount,numHoods,mptr)
          else if (ismp .eq. 2) then
             call drd_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,dx,
      .                  dy,lwidth,xlow,ylow,istage,ncount,numHoods)
@@ -362,7 +362,7 @@ c
       use amr_module, only: ar 
       implicit double precision (a-h,o-z)
 
-      dimension q(mitot,mjtot,nvar), irr(mitot,mjtot)
+      dimension q(nvar,mitot,mjtot), irr(mitot,mjtot)
 
       totmass = 0.d0
       ar(-1)  = 0.d0
@@ -371,7 +371,7 @@ c
       do 10 i = lwidth+1, mitot-lwidth
 
          k = irr(i,j)
-         totmass = totmass + q(i,j,1)*ar(k)
+         totmass = totmass + q(1,i,j)*ar(k)
 
  10   continue
 

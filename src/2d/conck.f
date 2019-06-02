@@ -41,10 +41,10 @@ c
          mitot  = nx + 2*nghost
          mjtot  = ny + 2*nghost
          lstgrd = node(lstptr,mptr)
-         ar(lstgrd) = hx * hy
+         ar(lstgrd) = hx * hy ! regular grid cell area
+         ar(-1) = 0.d0        ! so solid cells dont count
 c
          if (mcapa .eq. 0) then
-           ar(-1) = 0.d0 ! so solid cells dont count
            do 50 j  = nghost+1, mjtot-nghost
            do 50 i  = nghost+1, mitot-nghost
               k =  kget(mitot,mjtot,i,j,alloc(locirr)) 

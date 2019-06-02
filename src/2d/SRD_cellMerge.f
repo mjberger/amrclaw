@@ -387,8 +387,8 @@ c     2 cells to a side for a merging neighborhood
                    if (IS_OUT_OF_RANGE(i+ioff,j+joff)) go to 15  
                    koff = irr(i+ioff,j+joff)
                    if (koff .eq. -1) go to 15  ! solid cells dont help
-                   getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,xlow,
-     &                             ylow,dx,dy,koff)
+                   call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
+     &                             xlow,ylow,dx,dy,koff)
                    if (IS_OUTSIDE(xcn,ycn)) go to 15  
                    vqmerge = vqmerge + ar(koff)
                    if (firstTimeThru) then ! count everybody

@@ -69,7 +69,6 @@ c     # set tcom = time.  This is in the common block comxyt that could
 c     # be included in the Riemann solver, for example, if t is explicitly
 c     # needed there.
 
-      write(*,*)"stepgrid 0 vtime ",vtime
       tcom = time
 
       if (dump) then
@@ -103,11 +102,9 @@ c
 c
 c     # take one step (2 stages)  on the conservation law:
 c
-      write(*,*)"stepgrid 1 vtime ",vtime
       call mymethod(q,fm,fp,gm,gp,mitot,mjtot,mbc,dt,dtnew,dx,dy,
      &            nvar,xlow,ylow,mptr,maux,aux,irr,lstgrd,
      &            ncount,numHoods,vtime)
-      write(*,*)"stepgrid after mymethod dt,dtnew ",dt,dtnew
 c
 c
 c!$OMP  CRITICAL (cflm)
@@ -174,7 +171,7 @@ c
          end do
          end do
       endif
-      write(*,*)"stepgrid at end dt,dtnew ",dt,dtnew
+
       return
       end
 

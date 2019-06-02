@@ -14,10 +14,10 @@ c     # comment lines starting with #:
       call opendatafile(iunit, fname)
 
       read(7,*) ismp
-      write(*,*)"Using stabilization ismp ",ismp
+      write(*,*)"Using stabilization ismp = ",ismp
 
       read(7,*) nloops
-      write(*,*) " This geometry has ", nloops," loops"
+      write(*,*) "This geometry has ", nloops," loops"
 
       do n= 1, nloops
         read(7,*) xloops(n)
@@ -26,11 +26,12 @@ c     # comment lines starting with #:
 
 
       iprob = 16
+      write(*,*)"Setprob is setting iprob = ",iprob
+
       gamma = 1.4d0
       gamma1 = gamma - 1.d0
       xprob = xupper
       yprob = yupper
 
-      write(*,*)"setprob iprob ",iprob
       return
       end

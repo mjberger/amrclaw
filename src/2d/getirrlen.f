@@ -10,6 +10,8 @@ c
       dimension irr(mitot,mjtot)
       dimension ffluxlen(mitot+1,mjtot+1)
       dimension gfluxlen(mitot+1,mjtot+1)
+      character ch
+      logical   debug/.false./
 c
 c     # irregular side modifications to fluxes for length only
 c     # this used to be part of irreg1/2.
@@ -153,5 +155,24 @@ c
 c     
  66    continue
 c     
+       if (debug) then
+         write(*,*)"getirrlen lstgrd ",lstgrd
+         do j = 1, mjtot
+         do i = 1, mitot
+           k = irr(i,j)
+           if (k .eq. -1) then
+              ch = '*'
+           else if (k .eq. lstgrd) then
+              ch = ' '
+           else 
+              ch = '+'
+           endif
+           write(*,222)ch,i,j,ffluxlen(i,j),ffluxlen(i+1,j),
+     .                 gfluxlen(i,j),gfluxlen(i,j+1)
+         end do
+         end do
+ 222     format(A1,2i4,4e15.7)
+       endif
+
        return
        end

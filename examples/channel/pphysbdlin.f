@@ -26,8 +26,8 @@ c
       u = .1d0
       v = .01d0
       rho = 1.d0
-      u = .0d0
-      v = .00d0
+c     u = .0d0
+c     v = .00d0
 c
       hxmarg = hx*.01
       hymarg = hy*.01
@@ -48,8 +48,8 @@ c     left boundary
               ycen = ybot  + (dfloat(j)-.5d0)* hy
               xcen = xleft + (dfloat(i)-.5d0)* hx
             endif
-c           rho =  ycen - .1d0*xcen + .5d0
-            rho = 1.d0
+            rho =  ycen - .1d0*xcen + .5d0
+c           rho = 1.d0
             val(1,i,j) = rho
             val(2,i,j) = u
             val(3,i,j) = v
@@ -99,8 +99,8 @@ c start extrap at bottom of grid, not including ghost cells
               ycen = ybot  + (dfloat(j)-.5d0)* hy
               xcen = xleft + (dfloat(i)-.5d0)* hx
             endif
-c           rho =  ycen - .1d0*xcen + .5d0
-            rho = 1.d0
+            rho =  ycen - .1d0*xcen + .5d0
+c           rho = 1.d0
             val(1,i,j) = rho
             val(2,i,j) = u
             val(3,i,j) = v

@@ -19,10 +19,10 @@ c
 
 c
        pl = 1.0d0
-c      ul = 0.1d0
-c      vl = 0.01d0
-       ul = 0.0d0
-       vl = 0.0d0
+       ul = 0.1d0
+       vl = 0.01d0
+c      ul = 0.0d0
+c      vl = 0.0d0
 
        do 20 i=1,mx
        do 20 j=1,my
@@ -35,8 +35,8 @@ c      vl = 0.01d0
              ycen = ycorn + (j-0.5d0)*dy
           endif
 
-          !rhol = ycen - 0.1d0*xcen + 0.5d0
-          rhol = 1.d0
+          rhol = ycen - 0.1d0*xcen + 0.5d0
+          !rhol = 1.d0
 
           q(1,i,j) = rhol
           q(2,i,j) = rhol * ul

@@ -23,9 +23,9 @@
       common   /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                  ismp,gradThreshold
 
-      logical    debug, vtime  
-      dimension  firreg(nvar,-1:irrsize)
-      dimension  resid(nvar)
+      logical   debug, vtime  
+      dimension firreg(nvar,-1:irrsize)
+      dimension resid(nvar)
       dimension fakeState(nvar)
       character ch
 
@@ -38,13 +38,13 @@ c      dimension coeff(3)
 c      data       mstage/3/
 c      data       coeff/.21d0,.5d0,1.d0/  
 
-c      dimension coeff(2)
-c      data mstage/2/
-c      data      coeff/0.5d0,1.d0/
+       dimension coeff(2)
+       data mstage/2/
+       data      coeff/0.5d0,1.d0/
 
-      dimension coeff(1)
-      data      mstage/1/
-      data      coeff/1.d0/
+c     dimension coeff(1)
+c     data      mstage/1/
+c     data      coeff/1.d0/
 
 c
 c
@@ -62,6 +62,14 @@ c
           write(6,*) 'Space required ',max(mitot,mjtot)
           write(6,*) 'Remember also to allocate the same additional'
           write(6,*) 'space in subroutine vrm '
+          stop
+       endif
+
+       if (2*mstage .gt. lwidth) then
+          write(6,*) 'Need twice as many ghost cells as stages'
+          write(6,*) "or run with single large grid and not parallel"
+          write(6,*) "number of ghost cells: ",lwidth
+          write(6,*) "number of RK stages:   ",mstage
           stop
        endif
 
@@ -86,7 +94,6 @@ c
 
 c
 c     # initialize fluxes:
-c
       firreg(:,-1)  = 0.d0
       f = 0.d0
       g = 0.d0
@@ -252,24 +259,9 @@ c    &                        - dtn/ar(k)*resid(m))
             endif
  917     continue
 
-        do j = iy1, iyn
-        do i = ix1, ixn
-           k = irr(i,j)
-           if (k .eq. -1) cycle
-           ch = ' '
-           if (k .ne. lstgrd) ch = '+'
-           write(*,333)ch,i,j,f(2,i,j),f(2,i+1,j),g(2,i,j),g(2,i,j+1)
-           write(*,333)ch,i,j,f(3,i,j),f(3,i+1,j),g(3,i,j),g(3,i,j+1)
-           if (k .ne. lstgrd) write(*,*) firreg(2:3,k)
-           write(*,333)
- 333       format(a1,2i4,4d12.4)
-        end do
-        end do
-
 c  postprocess for stability of cut cells. c
 c  do it in conserved variables for conservation purposes, (but maybe prim better?)
 c
-         write(*,*)"my method 1 ismp ",ismp
          if (ismp .eq. 1) then
             call srd_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,dx,
      .                  dy,lwidth,xlow,ylow,istage,ncount,numHoods)
@@ -332,7 +324,6 @@ c     # output fluxes for debugging purposes:
 
 c
 c     estimate new time step for next round. even if not used will give cfl 
-      write(*,*)"mymethod 1 vtime dtn cfl ",vtime,dtn,cfl
       if (vtime) then
          arreg = dx*dy  ! get regular cell info  
          rlen = dsqrt(arreg)
@@ -361,7 +352,6 @@ c               ::: dt using muscl cfl limit
          dtnewn = dtn     ! output var, need to return someting
       endif
 
-      write(*,*)"mymethod 2 vtime dtn dtnewn ",vtime,dtn,dtnewn
       return
       end
 c

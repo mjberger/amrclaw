@@ -38,7 +38,7 @@ def setrun(claw_pkg='amrclaw'):
     #------------------------------------------------------------------
 
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
-    probdata.add_param('ismp',    0,  ' stabilization method')
+    probdata.add_param('ismp',    1,  ' stabilization method')
     probdata.add_param('nloops',     2,  '# closed loops or segments')
     probdata.add_param('xloop1',    0.,  ' starting pt x')
     probdata.add_param('yloop1',    .11, ' starting pt y')
@@ -73,10 +73,10 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.upper[1] = 1.000000e+00          # yupper
 
     # Number of grid cells:
-    #clawdata.num_cells[0] = 44      # mx
-    #clawdata.num_cells[1] = 44      # my
-    clawdata.num_cells[0] = 12      # mx
-    clawdata.num_cells[1] = 12      # my
+    clawdata.num_cells[0] = 44      # mx
+    clawdata.num_cells[1] = 44      # my
+    #clawdata.num_cells[0] = 12      # mx
+    #clawdata.num_cells[1] = 12      # my
 
     # ---------------
     # Size of system:
@@ -131,8 +131,8 @@ def setrun(claw_pkg='amrclaw'):
 
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
-        clawdata.output_step_interval = 1
-        clawdata.total_steps = 1
+        clawdata.output_step_interval = 10000
+        clawdata.total_steps = 20
         #clawdata.output_t0 = True  # output at initial (or restart) time?
         clawdata.output_t0 = False  # output at initial (or restart) time?
 
@@ -151,7 +151,7 @@ def setrun(claw_pkg='amrclaw'):
     # The current t, dt, and cfl will be printed every time step
     # at AMR levels <= verbosity.  Set verbosity = 0 for no printing.
     #   (E.g. verbosity == 2 means print only on levels 1 and 2.)
-    clawdata.verbosity = 0
+    clawdata.verbosity = 1
 
 
 

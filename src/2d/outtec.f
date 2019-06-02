@@ -38,7 +38,7 @@ c    ## NOTE THAT BNDRY CELLS FROM OTHER GRIDS NOT SET
        qy = 0.d0
 
 c  set pwconst true for piecewise constant plots, set to false for slopes in tec output
-      pwconst =  .true.
+c     pwconst =  .true.
       pwconst =  .false.
       if (pwconst) go to 8
 
@@ -141,11 +141,11 @@ c
      &                  xcen,ycen,errprim
           else if (iprob .eq. 16) then  ! only output soln
 c for debugging output error instead
-c            rhoex = ycen - .1d0*xcen + .5d0
-             rhoex = 1.d0
+             rhoex = ycen - .1d0*xcen + .5d0
+c            rhoex = 1.d0
 c            uncomment next line to output error
 c            stuffed into w field
-c            valprim(3) = valprim(1) - rhoex
+             valprim(3) = valprim(1) - rhoex
 c            uncomment next line to output density
 c            valprim(1) = valprim(1) 
 c            valprim(2) = valprim(2)
@@ -154,7 +154,6 @@ c            valprim(4) = valprim(4)
              write(14,1022) xc,yc,(valprim(ivar),ivar=1,nvar),
      &                  xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
      &                  kirr,volFrac,perim
-c            write(*,345) ch,i,j,xc,yc,(valprim(ivar),ivar=1,nvar)
 345          format(a1,2i3,2f6.3,4e15.7)
 
           else if (iprob .eq. 19) then  

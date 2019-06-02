@@ -97,20 +97,21 @@ c     if (outside(x0,y0)) go to 110   ! to match cart3d, no gradients in ghost c
          if (newend .gt. 3) go to 16 ! since have at least 2 nbors
 c     in the linear case 2 nbors could be ill conditioned. add diagonal nbor
 c     first have to find diag nbor. this code doesnt test for thin bodies,etc
-         ixn = nlist(2,1)
-         iyn = nlist(2,2)
-         if (nlist(2,1) .eq. ix0) ixn = nlist(3,1)
-         if (nlist(2,2) .eq. iy0) iyn = nlist(3,2)
-         newend = newend + 1
-         if (.not. outside(ixn,iyn)) then
-           nlist(newend,1) = ixn 
-           nlist(newend,2) = iyn
-           go to 16
-         else
+c        ixn = nlist(2,1)
+c        iyn = nlist(2,2)
+c        if (nlist(2,1) .eq. ix0) ixn = nlist(3,1)
+c        if (nlist(2,2) .eq. iy0) iyn = nlist(3,2)
+c        newend = newend + 1
+c        write(*,*)"qslopes ix0,iy0,ixn,iyn ",ix0,iy0,ixn,iyn
+c        if (.not. outside(ixn,iyn)) then
+c          nlist(newend,1) = ixn 
+c          nlist(newend,2) = iyn
+c          go to 16
+c        else
            !not enough neighbors for gradient
             enufNbor = .false.
             go to 110
-         endif
+c        endif
 
 
 c        ::: not enough neighbors for quadratic fit

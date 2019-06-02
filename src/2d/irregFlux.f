@@ -11,7 +11,7 @@ c
 
       dimension q(nvar,mitot,mjtot), irr(mitot,mjtot)
       dimension qx(nvar,mitot,mjtot),qy(nvar,mitot,mjtot)
-      dimension firreg(nvar,irrsize)
+      dimension firreg(nvar,-1:irrsize)
 c
 c     # Compute irregular flux in cut cells. Solve Riemann problems
 c     # assume there are less than mtsize irregular cell sides on 

@@ -121,7 +121,6 @@ c
          mjtot  = ny + 2*nghost
 c
           call par_advanc(mptr,mitot,mjtot,nvar,naux,dtnew,vtime)
-          write(*,*)"advanc dtlevnew,dtnew",dtlevnew,dtnew
 !$OMP CRITICAL (newdt)
           dtlevnew = dmin1(dtlevnew,dtnew)
 !$OMP END CRITICAL (newdt)    
@@ -261,14 +260,12 @@ c     no more,  each gauge has own array.
 c
          if (dimensional_split .eq. 0) then
 c           # Unsplit method
-         write(*,*)"paradvanc 0 dtnew",dtnew
          call stepgrid(alloc(locnew),fm,fp,gm,gp,
      2                  mitot,mjtot,nghost,
      3                  delt,dtnew,hx,hy,nvar,
      4                  xlow,ylow,time,mptr,naux,alloc(locaux),
      5                  alloc(locirr),node(lstptr,mptr),
      6                  alloc(locncount),alloc(locnumHoods),vtime)
-         write(*,*)"paradvanc 1 dtnew",dtnew
          else if (dimensional_split .eq. 1) then
          else if (dimensional_split .eq. 1) then
 c           # Godunov splitting

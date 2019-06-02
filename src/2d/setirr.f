@@ -6,7 +6,8 @@ c
       use amr_module
       implicit double precision (a-h,o-z)
       integer  irr(mitot,mjtot)
-      logical  done
+      logical  debug/.false./,done
+      character ch
 c
 c lstgrd = starting index into the linked list of irregular info.
 c    for grid mptr. In fact, the first entry is the "regular"
@@ -156,6 +157,24 @@ c               done = .true.
 c            endif
 c 70      continue
 cc     endif
+
+       if (debug) then
+           write(*,*)" setirr irr"
+           do j = 1, mjtot
+           do i = 1, mitot
+             k = irr(i,j)
+             if (k .eq. -1) then
+                ch = '*'
+             else if (k .eq. lstgrd) then
+                ch = ' '
+             else
+                ch = '+'
+             endif
+             write(*,222)ch,i,j,irr(i,j)
+ 222        format(A1,2i4,i7)
+           end do
+           end do
+       endif
 
        return
        end

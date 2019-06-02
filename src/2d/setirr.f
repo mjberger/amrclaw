@@ -6,7 +6,7 @@ c
       use amr_module
       implicit double precision (a-h,o-z)
       integer  irr(mitot,mjtot)
-      logical  debug/.true./,done
+      logical  debug/.false./,done
       character ch
 c
 c lstgrd = starting index into the linked list of irregular info.

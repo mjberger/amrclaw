@@ -77,6 +77,8 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.num_cells[1] = 44      # my
     #clawdata.num_cells[0] = 12      # mx
     #clawdata.num_cells[1] = 12      # my
+    #clawdata.num_cells[0] = 88      # mx
+    #clawdata.num_cells[1] = 88      # my
 
     # ---------------
     # Size of system:
@@ -132,7 +134,7 @@ def setrun(claw_pkg='amrclaw'):
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
         clawdata.output_step_interval = 10000
-        clawdata.total_steps = 20
+        clawdata.total_steps = 1
         #clawdata.output_t0 = True  # output at initial (or restart) time?
         clawdata.output_t0 = False  # output at initial (or restart) time?
 

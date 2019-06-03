@@ -114,9 +114,10 @@ c     bottom boundary.
  
       if (ybot .lt. -hymarg) then
         nyb = (hymarg-ybot)/hy
-        nxl = (hxmarg-xleft)/hx
+           write(*,*)"physbd nrow,ncol ",nrow,ncol
            do 200 j = 1,nyb
-           do 200 i = nxl+1,nrow   ! the first cells set in left bc above
+           do 200 i = 1,nrow   ! the first cells set in left bc above
+            write(*,*)"physbd bot nyb nxl ",nyb,nxl
 c$$$               x =  xleft + (dfloat(i)-.5d0)* hx
 c$$$               rho = val(1,i,2*nyb+1-j)
 c$$$               u   = val(2,i,2*nyb+1-j)

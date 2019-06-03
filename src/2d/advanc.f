@@ -108,7 +108,7 @@ c
 !$OMP&            SHARED(rvol,rvoll,level,nvar,mxnest,alloc,intrat)
 !$OMP&            SHARED(nghost,intratx,intraty,hx,hy,naux,listsp)
 !$OMP&            SHARED(node,rnode,dtlevnew,numgrids,listgrids)
-!$OMP&            SHARED(listOfGrids,listStart,levSt)
+!$OMP&            SHARED(listOfGrids,listStart,levSt,vtime)
 !$OMP&            SCHEDULE (DYNAMIC,1)
 !$OMP&            DEFAULT(none)
       do j = 1, numgrids(level)

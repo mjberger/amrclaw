@@ -25,7 +25,7 @@ c
 
        logical IS_OUTSIDE,IS_GHOST,IS_FAR_GHOST,verbose/.false./
        logical quad, nolimiter
-       logical REG_NBORS,NOT_VALID_VAL
+       logical REG_NBORS,NOT_VALID_VAL,NOT_OK_GHOST
        common /order2/ ssw, quad, nolimiter
 
 c  xlow,ylow   refers to the grid
@@ -45,6 +45,10 @@ c  loop indices, since they change according to the stage
      .                          irr(i,j-1).eq.lstgrd)
       NOT_VALID_VAL(i,j) = (i>mitot-2*(istage-1) .or. i<2*(istage-1)+1
      .                .or.  j>mjtot-2*(istage-1) .or. j<2*(istage-1)+1)
+      NOT_OK_GHOST(i,j) = (i .lt. lwidth-1 .or. 
+     .                     i .gt. mitot-lwidth/2 .or.
+     .                     j .lt. lwidth-1 .or. 
+     .                     j .gt. mjtot-lwidth/2)
 
 c :::::::::::::;:::
 c
@@ -84,7 +88,8 @@ c       form qMerge vals
             if (k .eq. -1) go to 10 ! no solid cells
             call getCellCentroid(lstgrd,i,j,xc,yc,xlow,ylow,dx,dy,k)
             !if (k .eq. lstgrd .or. IS_GHOST(i,j)) then 
-            if (k .eq. lstgrd .or. IS_OUTSIDE(xc,yc)) then 
+            if (k.eq.lstgrd .or. IS_OUTSIDE(xc,yc) .or.  
+     &                           NOT_OK_GHOST(i,j)) then 
               qMerge(:,i,j) = q(:,i,j)
               go to 10 
             endif
@@ -260,7 +265,7 @@ c
 c         if (IS_GHOST(i,j)) then
           call getCellCentroid(lstgrd,i,j,xc,yc,
      &                         xlow,ylow,dx,dy,k)
-          if (IS_OUTSIDE(xc,yc)) then
+          if (IS_OUTSIDE(xc,yc) .or. NOT_OK_GHOST(i,j)) then
              valnew(:,i,j) = qMerge(:,i,j)  ! copy what came in
              go to 50 
           endif
@@ -340,34 +345,37 @@ c
       dimension xcentMerge(mitot,mjtot), ycentMerge(mitot,mjtot)
       dimension ncount(mitot,mjtot), irr(mitot,mjtot)
 
-      logical IS_GHOST, IS_OUTSIDE, firstTimeThru
+      logical NOT_OK_GHOST,IS_GHOST, IS_OUTSIDE, firstTimeThru
       logical debug/.false./, IS_OUT_OF_RANGE
       character ch
 
       IS_GHOST(i,j) = (i .le. lwidth .or. i .gt. mitot-lwidth .or.
      .                 j .le. lwidth .or. j .gt. mjtot-lwidth)
+      NOT_OK_GHOST(i,j) = (i .lt. lwidth-1 .or. 
+     .                     i .gt. mitot-lwidth/2 .or.
+     .                     j .lt. lwidth-1 .or. 
+     .                     j .gt. mjtot-lwidth/2)
       IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
      .                   y .lt. ylower .or. y .gt. yupper)
       IS_OUT_OF_RANGE(i,j)  = (i<1 .or. i>mitot .or. j<1 .or. j>mjtot)
 
       ! merge until vqmerge at least this big (analogous to 1d where left and right nhoods each dx
       !!areaMin = 2.d0*ar(lstgrd)  
-      !!areaMin = 0.5d0*ar(lstgrd)  
-      areaMin = ar(lstgrd)  
+      areaMin = 0.5d0*ar(lstgrd)  
+      !!areaMin = ar(lstgrd)  
       numHoods = 0  ! initialize, loop below will add each cell to its own nhood
       ncount = 0
       ar(-1) = 0.d0  ! reset here to remind us
 
 c     this code below counts on fact that don't need more than
 c     2 cells to a side for a merging neighborhood
-      write(*,*)"makeNHood grid  mitot,mjtot,istage ",mptr,mitot,mjtot,
-     &           istage
-      !do 10 j = 1+2*(istage-1), mjtot-2*(istage-1)
-      !do 10 i = 1+2*(istage-1), mitot-2*(istage-1)
       do 10 j = lwidth-1, mjtot-lwidth/2
       do 10 i = lwidth-1, mitot-lwidth/2
          k = irr(i,j)  
          if (k .eq. -1) go to 10
+         call getCellCentroid(lstgrd,i,j,xc,yc,
+     &                         xlow,ylow,dx,dy,k)
+         if (IS_OUTSIDE(xc,yc)) go to 10  
          if (k .eq. lstgrd) then
             numHoods(i,j) =  numHoods(i,j) + 1
             go to 10 ! a full  flow cell is its own merged neighborhood
@@ -382,10 +390,8 @@ c     2 cells to a side for a merging neighborhood
          !endif
 
             do while (vqmerge < areaMin) 
-               write(*,*)"i,j,nco ",i,j,nco
                do 15 joff = -nco, nco
                do 15 ioff = -nco, nco
-                   write(*,*)"   ioff,joff",ioff,joff
                    if (IS_OUT_OF_RANGE(i+ioff,j+joff)) go to 15  
                    koff = irr(i+ioff,j+joff)
                    if (koff .eq. -1) go to 15  ! solid cells dont help
@@ -409,7 +415,6 @@ c     2 cells to a side for a merging neighborhood
                    firstTimeThru = .false.
                 endif
             end do
-             
  10   continue      
       ! this relies on not using more than 2 stage RK method
       ! or will need to pass in number of stages
@@ -417,7 +422,6 @@ c     2 cells to a side for a merging neighborhood
         write(*,*)"SRD mkNhoods: need more ghost cells for large nhoods"
         stop
       endif
-
 
 c     needed number of neighbhoods to compute volMerge = which is not
 c     the real volume of the merging neighborhood
@@ -461,11 +465,14 @@ c        if (IS_GHOST(i,j)) then
      .                           dx,dy,koff)
 c           if (IS_GHOST(i+ioff,j+joff)) go to 25  
             if (IS_OUTSIDE(xcn,ycn)) go to 25  
+            ! see if can trust this ghost cell val
+            if (NOT_OK_GHOST(i+ioff,j+joff)) go to 25  
             vmerge = vmerge +  ar(koff)/numHoods(i+ioff,j+joff)
             xcent = xcent + xcn*ar(koff)/numHoods(i+ioff,j+joff)
             ycent = ycent + ycn*ar(koff)/numHoods(i+ioff,j+joff)
 
  25      continue
+         if (vmerge .eq. 0.d0) vmerge = rinfinity
          volMerge(i,j) = vmerge
          xcentMerge(i,j) = xcent/vmerge
          ycentMerge(i,j) = ycent/vmerge
@@ -490,7 +497,6 @@ c           if (IS_GHOST(i+ioff,j+joff)) go to 25
         end do
         end do
       endif
-
 
       return
       end

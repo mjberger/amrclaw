@@ -114,7 +114,6 @@ c     bottom boundary.
  
       if (ybot .lt. -hymarg) then
         nyb = (hymarg-ybot)/hy
-           write(*,*)"physbd nrow,ncol ",nrow,ncol
            do 200 j = 1,nyb
            do 200 i = 1,nrow   ! the first cells set in left bc above
 c$$$               x =  xleft + (dfloat(i)-.5d0)* hx

@@ -38,13 +38,13 @@ c      dimension coeff(3)
 c      data       mstage/3/
 c      data       coeff/.21d0,.5d0,1.d0/  
 
-c      dimension coeff(2)
-c      data mstage/2/
-c      data      coeff/0.5d0,1.d0/
+       dimension coeff(2)
+       data mstage/2/
+       data      coeff/0.5d0,1.d0/
 
-      dimension coeff(1)
-      data      mstage/1/
-      data      coeff/1.d0/
+c     dimension coeff(1)
+c     data      mstage/1/
+c     data      coeff/1.d0/
 
 c
 c

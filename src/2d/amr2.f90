@@ -360,6 +360,10 @@ program amr2
     call opendatafile(inunit, amrfile)
 
     read(inunit,*) mxnest
+    if (mxnest .gt. 1) then
+      write(*,*)"amrcart not yet handling more than 1 level"
+      stop
+    endif
     if (mxnest <= 0) then
         stop 'Error ***   mxnest (amrlevels_max) <= 0 not allowed'
     endif

@@ -18,20 +18,19 @@ c
        integer irr(1-mbc:mx+mbc, 1-mbc:my+mbc)
 
 c
-c      mach 10 flow 30 degree ramp
+c      mach 2 shock
 c
-       rhol = 8.d0
-       ul   = 8.25d0
+       rhol = 56.d0/15.d0
+       ul   = 5.d0/4.d0
        vl   = 0.00d0
-       pl   = 116.5d0
+       pl   = 9.d0/2.d0
 
        rhor = 1.4d0
        ur   = 0.d0
        vr   = 0.d0
        pr   = 1.0d0
 
-       !sloc = 0.4d0 j! change to match original, which had bad indexing
-       sloc = 0.39d0
+       sloc = 0.45d0
 
        do 20 i=1,mx
        do 20 j=1,my

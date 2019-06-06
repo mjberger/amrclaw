@@ -25,7 +25,7 @@ c     # comment lines starting with #:
       end do
 
 
-      iprob = 21
+      iprob = 2
       write(*,*)"Setprob is setting iprob = ",iprob
 
       gamma = 1.4d0

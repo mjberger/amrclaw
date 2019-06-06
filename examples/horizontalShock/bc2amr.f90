@@ -105,10 +105,10 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
     hxmarg = hx * .01d0
     hymarg = hy * .01d0
 
-    pl = 116.5d0
-    ul = 8.25d0
-    vl = 0.01d0
-    rhol = 8.d0
+    rhol = 56.d0/15.d0
+    ul = 5.d0/4.d0
+    vl = 0.0d0
+    pl = 9.d0/2.d0
 
     ! Use periodic boundary condition specialized code only, if only one 
     ! boundary is periodic we still proceed below

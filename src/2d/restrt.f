@@ -63,6 +63,11 @@ c     # need to allocate for dynamic memory:
      4              timeBound,timeBoundCPU,
      5              timeRegridding,timeRegriddingCPU,
      6              timeValout,timeValoutCPU 
+     
+      ! this new peice is for irregular info
+      read(rstunit)poly,ar,points,wt,xcirr,ycirr,
+     1             ixg,iyg,nxtirr
+      read(rstunit) xloops,yloops,nloops,lhead
 
       close(rstunit) 
 

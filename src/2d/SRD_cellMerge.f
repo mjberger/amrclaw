@@ -23,10 +23,12 @@ c
        real*8 minmod
        character ch
 
-       logical IS_OUTSIDE,IS_GHOST,IS_FAR_GHOST,verbose/.false./
+       logical IS_OUTSIDE,IS_GHOST,IS_FAR_GHOST,verbose
        logical quad, nolimiter
        logical REG_NBORS,NOT_VALID_VAL,NOT_OK_GHOST
        common /order2/ ssw, quad, nolimiter
+       integer omp_get_maxthreads
+       integer maxthreads/1/
 
 c  xlow,ylow   refers to the grid
 c  xlower,ylower refers to the domain
@@ -58,6 +60,13 @@ c   (as in, jacobi rather than gauss seidel)
 c ::::::::::::::::
 
 c
+c      maxthreads initialized to 1 above in case no openmp
+!$     maxthreads = omp_get_max_threads()
+       if (maxthreads .gt. 1 .or. numgrids(1) .gt. 1) then
+          verbose = .false.
+       else
+          verbose = .true.
+       endif
        ar(-1) = 0.d0        ! zero out area of solid cells for this loop
        ar(lstgrd) = dx*dy   ! area of regular grid cell 
        qMerge   = 0.d0
@@ -78,7 +87,7 @@ c     nCount is size of neighborhood, numHoods is number of merged nhoods each c
        if (verbose) then
           totmass =  bigconck(q,irr,mitot,mjtot,lwidth,nvar)
           write(*,911) totmass
- 911      format(/,"         mass before redistribution is ",e30.20)
+ 911      format(/,"         mass before redistribution is ",e25.15)
        endif
 
 c       form qMerge vals 
@@ -299,7 +308,7 @@ c
           dif = totmass2 - totmass
 
           write(*,912) totmass2,dif
- 912      format("         mass after  redistribution is ",e30.20,
+ 912      format("         mass after  redistribution is ",e25.15,
      .           "  dif is ",e15.7)
        endif
 
@@ -366,6 +375,7 @@ c
       numHoods = 0  ! initialize, loop below will add each cell to its own nhood
       ncount = 0
       ar(-1) = 0.d0  ! reset here to remind us
+      maxnco = 0
 
 c     this code below counts on fact that don't need more than
 c     2 cells to a side for a merging neighborhood
@@ -408,6 +418,7 @@ c     2 cells to a side for a merging neighborhood
  15             continue
                 if (vqmerge > areaMin) then
                    ncount(i,j) = nco
+                   maxnco = max(maxnco,nco)
                    go to 10
                 else   ! redo with larger neighborhood
                    nco = nco + 1
@@ -418,7 +429,7 @@ c     2 cells to a side for a merging neighborhood
  10   continue      
       ! this relies on not using more than 2 stage RK method
       ! or will need to pass in number of stages
-      if (nco .gt. 2) then
+      if (maxnco .gt. 2) then
         write(*,*)"SRD mkNhoods: need more ghost cells for large nhoods"
         stop
       endif

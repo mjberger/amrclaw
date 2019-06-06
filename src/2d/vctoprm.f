@@ -21,7 +21,7 @@ c         ei        = q(4,i,j)/rho - .5d0*(u**2+v**2)
 c         pr        = gamma1*rho*ei 
           pr        = gamma1*(q(4,i,j)-.5d0*(q(2,i,j)**2+
      .                q(3,i,j)**2)/rho)
-c         qp(1,i,j) = rho
+          qp(1,i,j) = rho
           qp(2,i,j) = u
           qp(3,i,j) = v
           qp(4,i,j) = pr

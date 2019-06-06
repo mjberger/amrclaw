@@ -85,12 +85,12 @@ c
       iyn = mjtot - lwidth
       ar(-1) = 1.d0   ! fake value for solid area to avoid zero divides
 c
-      if (debug) then
-         ! for debugging, won't work for multiple grids at same level
-         totmass1 = gridconck(q,irr,mitot,mjtot,lwidth,nvar)
-         write(*,909) totmass1
- 909     format("           from method initial mass is ",e30.16)
-      endif
+c     if (debug) then
+c        ! for debugging, won't work for multiple grids at same level
+c        totmass1 = gridconck(q,irr,mitot,mjtot,lwidth,nvar)
+c        write(*,909) totmass1
+c909     format("           from method initial mass is ",e30.16)
+c     endif
 
 c
 c     # initialize fluxes:

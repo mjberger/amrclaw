@@ -8,9 +8,11 @@ c
       use amr_module
       implicit double precision (a-h,o-z)
 
+      dimension q(nvar,mitot,mjtot) 
+      ! use temporary array for qp to avoid converting back
+      dimension qp(nvar,mitot,mjtot)  
       integer ncount(mitot,mjtot), numHoods(mitot,mjtot) 
       integer irr(mitot,mjtot) 
-      dimension q(nvar,mitot,mjtot) 
       dimension qx(nvar,mitot,mjtot),qy(nvar,mitot,mjtot)
       dimension valprim(4)
       dimension exactsoln(1)
@@ -25,27 +27,27 @@ c
       ylowb = ylow - nghost*dy
 
       ! output primitive variables, not conserved
-      if (iprob .ne. 20)  call vctoprm(q,q,mitot,mjtot,nvar)
+      if (iprob .ne. 20)  call vctoprm(q,qp,mitot,mjtot,nvar)
 c
 c     ### call for exterior bcs at each stage so can use slopes
 c    ## NOTE THAT BNDRY CELLS FROM OTHER GRIDS NOT SET
             xhigh = xlowb + mitot*dx
             yhigh = ylowb + mjtot*dy
             call pphysbdlin(xlowb,xhigh,ylowb,yhigh,level,mitot,mjtot,
-     &                   nvar,q,time,dx,dy,qx,qy,irr,lstgrd)
+     &                   nvar,qp,time,dx,dy,qx,qy,irr,lstgrd)
  
        qx = 0.d0
        qy = 0.d0
 
 c  set pwconst true for piecewise constant plots, set to false for slopes in tec output
-c     pwconst =  .true.
-      pwconst =  .false.
+      pwconst =  .true.
+c     pwconst =  .false.
       if (pwconst) go to 8
 
       if (ssw .ne. 0.d0) then
-        call slopes(q,qx,qy,mitot,mjtot,irr,lstgrd,nghost,dx,dy,
+        call slopes(qp,qx,qy,mitot,mjtot,irr,lstgrd,nghost,dx,dy,
      &               xlowb,ylowb,nvar)
-        call qslopes(q,qx,qy,mitot,mjtot,irr,lstgrd,nghost,dx,dy,
+        call qslopes(qp,qx,qy,mitot,mjtot,irr,lstgrd,nghost,dx,dy,
      &                 xlowb,ylowb,mptr,nvar)
       endif
 
@@ -128,8 +130,8 @@ c
 c  reconstruct to corners to can contour through disjoint dataset
 c
          do ivar = 1, nvar
-            valprim(ivar) = q(ivar,i,j)+(xc-xcen)*qx(ivar,i,j) +
-     .                                  (yc-ycen)*qy(ivar,i,j)
+            valprim(ivar) = qp(ivar,i,j)+(xc-xcen)*qx(ivar,i,j) +
+     .                                   (yc-ycen)*qy(ivar,i,j)
          end do
          if (iprob .eq. 20)then
             call p20fn(xcen,ycen,exactsoln,time)

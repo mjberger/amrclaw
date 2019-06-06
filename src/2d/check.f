@@ -80,6 +80,11 @@ c
      4               timeBound,timeBoundCPU,
      5               timeRegridding,timeRegriddingCPU,
      6               timeValout,timeValoutCPU 
+
+      ! this new piece is for irregular info
+      write(chkunit) poly,ar,points,wt,xcirr,ycirr,
+     1               ixg,iyg,nxtirr
+      write(chkunit) xloops,yloops,nloops,lhead
 c
       close(chkunit)
 

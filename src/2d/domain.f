@@ -83,9 +83,12 @@ c
  60           mitot = node(ndihi,mptr)-node(ndilo,mptr) + 1 + 2*nghost
               mjtot = node(ndjhi,mptr)-node(ndjlo,mptr) + 1 + 2*nghost
               locaux = node(storeaux,mptr)
+              locirr = node(permstore,mptr)
+              locnew = node(store1,mptr)
 c             # added cfl to call to estdt so call.i isnt needed in estdt:
-              call estdt(alloc(node(store1,mptr)),mitot,mjtot,nvar,
-     1                   dx,dy,dtgrid,nghost,alloc(locaux),naux,cfl)
+              call estdt(alloc(locnew),alloc(locirr),
+     1                   mitot,mjtot,nvar,dx,dy,dtgrid,nghost,
+     2                   alloc(locaux),naux,cfl)
               dt = dmin1(dt,dtgrid)
               mptr   = node(levelptr,mptr)
             if (mptr .ne. 0) go to 60

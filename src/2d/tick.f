@@ -246,9 +246,9 @@ c         # rjl & mjb changed to cfl_level, 3/17/10
               write(outunit,100)level,cfl_level,possk(level),timenew
               endif
           if (method(4).ge.level) then
-              write(6,100)level,cfl_level,possk(level),timenew
+              write(6,100)level,possk(level),timenew
               endif
-100       format(' AMRCLAW: level ',i2,'  CFL = ',e10.3,
+100       format(' AMRCLAW: level ',i2,
      &           '  dt = ',e11.4,  '  final t = ',e13.6)
 
 

@@ -21,15 +21,10 @@ c
       dimension irr(nrow,ncol)
  
  
-      rho = 8.0d0   ! 5.7143d0*1.40d0
-      u = 8.25d0
+      rho = 56.d0/15.d0   ! mach 2 shock
+      u = 5.d0/4.d0
       v = .0d0
-      pr = 116.5d0
-c     rho = 1.4d0
-c     pi = 3.14159265358979d0
-c     u = cos(pi/6.d0)
-c     v = sin(pi/6.d0)
-c     pr = 1.d0
+      pr = 9.d0/2.d0
 c
       hxmarg = hx*.01
       hymarg = hy*.01

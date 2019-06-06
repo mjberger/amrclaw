@@ -66,7 +66,7 @@ c
        if (time.eq. t0 .and. (level.eq.1) .and. .not. rest) then
            tmass0 = totmass
            write(6,*) 'Total mass at initial time: ',tmass0
-           endif
+       endif
        write(outunit,777) time, totmass, totmass-tmass0
  777   format('time t = ',e12.5,',  total mass = ',e22.15, '  diff = ',
      &         e11.4)

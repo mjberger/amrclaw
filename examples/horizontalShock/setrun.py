@@ -40,7 +40,7 @@ def setrun(claw_pkg='amrclaw'):
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
     probdata.add_param('ismp',    1,  ' stabilization method')
     probdata.add_param('nloops',    1,  '# closed loops or segments')
-    probdata.add_param('xloop1',    .50676,  ' starting pt x')
+    probdata.add_param('xloop1',    0.0,  ' starting pt x')
     probdata.add_param('yloop1',    .00001, ' starting pt y')
     ## 1 = SRD
     ## 2 = DRD
@@ -66,13 +66,13 @@ def setrun(claw_pkg='amrclaw'):
 
     # Lower and upper edge of computational domain:
     clawdata.lower[0] = 0.000000e+00          # xlower
-    clawdata.upper[0] = 3.000000e+00          # xupper
+    clawdata.upper[0] = 1.000000e+00          # xupper
     clawdata.lower[1] = 0.000000e+00          # ylower
-    clawdata.upper[1] = 2.027027027           # yupper
+    clawdata.upper[1] = 1.000000000           # yupper
 
     # Number of grid cells:
-    clawdata.num_cells[0] = 148     # mx
-    clawdata.num_cells[1] = 100     # my
+    clawdata.num_cells[0] = 20      # mx
+    clawdata.num_cells[1] = 20      # my
 
     # ---------------
     # Size of system:
@@ -130,7 +130,7 @@ def setrun(claw_pkg='amrclaw'):
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
         clawdata.output_step_interval = 5
-        clawdata.total_steps = 14
+        clawdata.total_steps = 15
         #clawdata.total_steps = 148
         clawdata.output_t0 = True  # output at initial (or restart) time?
         #clawdata.output_t0 = False  # output at initial (or restart) time?

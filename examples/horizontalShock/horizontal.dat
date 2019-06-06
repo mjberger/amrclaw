@@ -1,0 +1,5 @@
+TITLE="flat shock test "
+VARIABLES="X" "Y"
+ZONE I=2 F=POINT
+  1.000000000000        0.00001
+  0.00000000e+00        0.00001

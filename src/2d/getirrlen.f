@@ -32,8 +32,8 @@ c
          ffluxlen(i,j) = 0.d0
          gfluxlen(i,j) = 0.d0
        else
-         ffluxlen(i,j) = dx
-         gfluxlen(i,j) = dy
+         ffluxlen(i,j) = dy
+         gfluxlen(i,j) = dx
        endif
  10   continue
 

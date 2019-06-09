@@ -23,9 +23,10 @@ c
 !! \param[out] fp fluxes on the right side of each vertical edge
 !! \param[out] gm fluxes on the lower side of each horizontal edge
 !! \param[out] gp fluxes on the upper side of each horizontal edge
-      subroutine stepgrid(q,fm,fp,gm,gp,mitot,mjtot,mbc,dt,dtnew,dx,dy,
+      subroutine stepgrid(q,qold,fm,fp,gm,gp,mitot,mjtot,mbc,dt,dtnew,
+     &                    dx,dy,
      &                    nvar,xlow,ylow,time,mptr,maux,aux,irr,lstgrd,
-     &                    ncount,numHoods,vtime)
+     &                    ncount,numHoods,vtime,istage)
 c
 c          
 c ::::::::::::::::::: STEPGRID   ::::::::::::::::::::::::::::::::::::
@@ -53,7 +54,7 @@ c :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
       common /comxyt/ dtcom,dxcom,dycom,tcom,icom,jcom
 
-      dimension q(nvar,mitot,mjtot)
+      dimension q(nvar,mitot,mjtot), qold(nvar,mitot,mjtot)
       dimension fp(nvar,mitot,mjtot),gp(nvar,mitot,mjtot)
       dimension fm(nvar,mitot,mjtot),gm(nvar,mitot,mjtot)
       dimension aux(maux,mitot,mjtot)
@@ -102,9 +103,9 @@ c
 c
 c     # take one step (2 stages)  on the conservation law:
 c
-      call mymethod(q,fm,fp,gm,gp,mitot,mjtot,mbc,dt,dtnew,dx,dy,
+      call mymethod(q,qold,fm,fp,gm,gp,mitot,mjtot,mbc,dt,dtnew,dx,dy,
      &            nvar,xlow,ylow,mptr,maux,aux,irr,lstgrd,
-     &            ncount,numHoods,vtime)
+     &            ncount,numHoods,vtime,istage)
 c
 c
 c!$OMP  CRITICAL (cflm)

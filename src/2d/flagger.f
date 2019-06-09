@@ -40,7 +40,6 @@ c
       integer listgrids(numgrids(lcheck)), locuse
       logical keepflagging
 
-c      call prepgrids(listgrids,numgrids(lcheck),lcheck)
       mbuff = max(nghost,ibuff+1)
 
       if(adjoint_flagging) then

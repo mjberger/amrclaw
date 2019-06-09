@@ -66,10 +66,11 @@ c :::::::::::::::::::::::::::::::::::::::;::::::::::::::::::::
               call setirr(mitot,mjtot,mptr,quad,
      &                    gradThreshold,alloc(locirr))
               lstgrd = node(lstptr,mptr)
-              if (level .lt. mxnest) then
+              ! do it all the time now, needed for RK
+              !if (level .lt. mxnest) then
                 loc2              = igetsp(mitot*mjtot*nvar)
                 node(store2,mptr) = loc2
-              endif
+              !endif
               rnode(timemult, mptr) = start_time
               go to 30
  20       continue

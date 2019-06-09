@@ -131,12 +131,13 @@ program amr2
     ! Common block variables
     real(kind=8) :: dxmin, dymin
     real(kind=8) :: cflcart,gamma,gamma1,xprob,yprob,alpha
-    real(kind=8) :: Re,gradThreshold
-    integer      :: iprob,ismp
+    real(kind=8) :: Re,gradThreshold,coeff(5)
+    integer      :: iprob,ismp,mstage
 
     common /comfine/ dxmin,dymin
 
     common /order2/ ssw, quad, nolimiter
+    common /RKmethod/ coeff, mstage
     common   /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,    &
                       ismp,gradThreshold
 

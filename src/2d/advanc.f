@@ -11,6 +11,7 @@ c
 c
       use amr_module
       implicit double precision (a-h,o-z)
+      common /RKmethod/ coeff(5),mstage
 
 
       logical    vtime
@@ -41,14 +42,15 @@ c get start time for more detailed timing by level
       call system_clock(clock_start,clock_rate)
       call cpu_time(cpu_start)
 
+c  mjb adapted june 8, 2019 for multistage RK methods.
+c  loop over all grids, each stage, and copy ghost cells
+c  to avoid needing so many
+      do istage = 1, mstage
 
       hx   = hxposs(level)
       hy   = hyposs(level)
       delt = possk(level)
-c     this is linear alg.
-c     call prepgrids(listgrids,numgrids(level),level)
 c
-
       call system_clock(clock_startBound,clock_rate)
       call cpu_time(cpu_startBound)
 
@@ -120,16 +122,20 @@ c
          mitot  = nx + 2*nghost
          mjtot  = ny + 2*nghost
 c
-          call par_advanc(mptr,mitot,mjtot,nvar,naux,dtnew,vtime)
+         call par_advanc(mptr,mitot,mjtot,nvar,naux,dtnew,vtime,
+     &                   istage,mstage)
+         if (istage .eq. mstage) then
 !$OMP CRITICAL (newdt)
           dtlevnew = dmin1(dtlevnew,dtnew)
 !$OMP END CRITICAL (newdt)    
+         endif
 
       end do
 !$OMP END PARALLEL DO
 c
       call system_clock(clock_finish,clock_rate)
       call cpu_time(cpu_finish)
+      ! both stages count towards number of cell updates
       tvoll(level) = tvoll(level) + clock_finish - clock_start
       tvollCPU(level) = tvollCPU(level) + cpu_finish - cpu_start
       timeStepgrid = timeStepgrid +clock_finish-clock_startStepgrid
@@ -138,36 +144,16 @@ c
 c     cflmax = dmax1(cflmax, cfl_level)
 
 c
-      return
-      end
-c
-c -------------------------------------------------------------
-c
-       subroutine prepgrids(listgrids, num, level)
-
-       use amr_module
-       implicit double precision (a-h,o-z)
-       integer listgrids(num)
-
-       mptr = lstart(level)
-       do j = 1, num
-          listgrids(j) = mptr
-          mptr = node(levelptr, mptr)
-       end do
-
-      if (mptr .ne. 0) then
-         write(*,*)" Error in routine setting up grid array "
-         stop
-      endif
+      end do  ! end loop over each stage
 
       return
       end
-
 c
 c --------------------------------------------------------------
 c
 !> Integrate grid **mptr**. grids are done in parallel.
-      subroutine par_advanc (mptr,mitot,mjtot,nvar,naux,dtnew,vtime)
+      subroutine par_advanc (mptr,mitot,mjtot,nvar,naux,dtnew,
+     .                       vtime,istage,mstage)
 c
       use amr_module
       use gauges_module, only: update_gauges, num_gauges
@@ -211,12 +197,13 @@ c  since integrator will overwrite it. only for grids not at
 c  the finest level. finest level grids do not maintain copies
 c  of old and new time solution values.
 c
-         if (level .lt. mxnest) then
+         ! do it all the time now, needed for multistage RK
+         !f (level .lt. mxnest) then
              ntot   = mitot * mjtot * nvar
 cdir$ ivdep
              do 10 i = 1, ntot
  10            alloc(locold + i - 1) = alloc(locnew + i - 1)
-         endif
+         !endif
 c
          xlow = rnode(cornxlo,mptr) - nghost*hx
          ylow = rnode(cornylo,mptr) - nghost*hy
@@ -260,12 +247,12 @@ c     no more,  each gauge has own array.
 c
          if (dimensional_split .eq. 0) then
 c           # Unsplit method
-         call stepgrid(alloc(locnew),fm,fp,gm,gp,
-     2                  mitot,mjtot,nghost,
-     3                  delt,dtnew,hx,hy,nvar,
-     4                  xlow,ylow,time,mptr,naux,alloc(locaux),
-     5                  alloc(locirr),node(lstptr,mptr),
-     6                  alloc(locncount),alloc(locnumHoods),vtime)
+         call stepgrid(alloc(locnew),alloc(locold),fm,fp,gm,gp,
+     2                 mitot,mjtot,nghost,
+     3                 delt,dtnew,hx,hy,nvar,
+     4                 xlow,ylow,time,mptr,naux,alloc(locaux),
+     5                 alloc(locirr),node(lstptr,mptr),
+     6                 alloc(locncount),alloc(locnumHoods),vtime,istage)
          else if (dimensional_split .eq. 1) then
          else if (dimensional_split .eq. 1) then
 c           # Godunov splitting
@@ -294,7 +281,11 @@ c           # should never get here due to check in amr2
 c
 c        write(outunit,969) mythread,delt, dtnew
 c969     format(" thread ",i4," updated by ",e15.7, " new dt ",e15.7)
-         rnode(timemult,mptr)  = rnode(timemult,mptr)+delt
+         ! should we mark stages by fractions? dont think it can
+         ! be used in between so may not be necessary
+         if (istage .eq. mstage) then
+            rnode(timemult,mptr)  = rnode(timemult,mptr)+delt
+         endif
 c
       return
       end

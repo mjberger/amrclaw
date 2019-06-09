@@ -47,7 +47,6 @@ c
       if (uprint) write(outunit,100) lget
 100   format(19h    updating level ,i5)
 c     need to set up data structure for parallel distrib of grids
-c     call prepgrids(listgrids,numgrids(level),level)
 
 c
 c  grid loop for each level

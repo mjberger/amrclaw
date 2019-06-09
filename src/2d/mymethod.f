@@ -1,17 +1,17 @@
-      subroutine mymethod(q,fm,fp,gm,gp,mitot,mjtot,lwidth,dtn,dtnewn,
+      subroutine mymethod(q,qold,fm,fp,gm,gp,mitot,mjtot,lwidth,
+     &                  dtn,dtnewn,
      &                  dx,dy,nvar,xlow,ylow,mptr,maux,aux,irr,
-     &                  lstgrd,ncount,numHoods,vtime)
+     &                  lstgrd,ncount,numHoods,vtime,istage)
 
       use amr_module
       implicit double precision (a-h,o-z)
 
-      dimension q(nvar,mitot,mjtot)
+      dimension q(nvar,mitot,mjtot), qold(nvar,mitot,mjtot)
       dimension f(nvar,mitot,mjtot),g(nvar,mitot,mjtot)
       dimension fm(nvar,mitot,mjtot),gm(nvar,mitot,mjtot)
       dimension fp(nvar,mitot,mjtot),gp(nvar,mitot,mjtot)
       dimension qx(nvar,mitot,mjtot),qy(nvar,mitot,mjtot)
       dimension ur(nvar,max(mitot,mjtot)),ul(nvar,max(mitot,mjtot))
-      dimension qtemp(nvar,mitot,mjtot)
       dimension res(nvar,mitot,mjtot)
       dimension ff(nvar,max(mitot,mjtot))
       dimension ffluxlen(mitot+1,mjtot+1),gfluxlen(mitot+1,mjtot+1)
@@ -19,6 +19,7 @@
       integer   irr(mitot,mjtot),ncount(mitot,mjtot)
       integer   numHoods(mitot,mjtot)
 
+      common   /RKmethod/ coeff(5),mstage
       common   /order2/ ssw,quad,nolimiter
       common   /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                  ismp,gradThreshold
@@ -38,9 +39,9 @@ c      dimension coeff(3)
 c      data       mstage/3/
 c      data       coeff/.21d0,.5d0,1.d0/  
 
-       dimension coeff(2)
-       data mstage/2/
-       data      coeff/0.5d0,1.d0/
+c      dimension coeff(2)
+c      data mstage/2/
+c      data      coeff/0.5d0,1.d0/
 
 c     dimension coeff(1)
 c     data      mstage/1/
@@ -104,16 +105,11 @@ c need routine to set face lengths and  midpoints
          call getirrlen(irr,mitot,mjtot,dtn,dx,dy,lstgrd,
      &               mptr,nvar,ffluxlen,gfluxlen)
 c
-c  could turn on for debugging, or move to regridding section of code
+c  turn on for debugging, or could move to regridding section of code
 c        call cellsClose(ffluxlen,gfluxlen,mitot,mjtot,irr,lstgrd,
 c    .                    lwidth)
  
-c
-      istage = 1        
-
- 12   continue
-
-c   :::::   rk with linear reconstruction follows ::::::
+c   ::::: 1 rk stage with linear reconstruction follows ::::::
 c
 c  store primitive variables in f for now
 c
@@ -121,10 +117,10 @@ c
 c     ### call for exterior bcs at each stage so can use slopes
             xhigh= xlow + mitot*dx
             yhigh = ylow + mjtot*dy
-         if (istage .eq. 1 .or. istage .eq. 2) then
+c        if (istage .eq. 1 .or. istage .eq. 2) then
             call pphysbdlin(xlow,xhigh,ylow,yhigh,level,mitot,mjtot,
      &                      nvar,q,time,dx,dy,qx,qy,irr,lstgrd)
-         endif
+c        endif
       if (ssw .ne. 0.d0) then   ! recalc slopes at each stage
          call slopes(q,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,dx,dy,
      &               xlow,ylow,nvar)
@@ -132,13 +128,6 @@ c     ### call for exterior bcs at each stage so can use slopes
      &                 xlow,ylow,mptr,nvar)
       endif
 
-      if (istage .eq. 1) then  ! moved to here so that bcs in q from new bc routine not phsybd
-c        copy q to qtemp for multi-stage RK
-         qtemp = q
-c        need to convert back to conserved vars for updating below
-         call vprmtoc(qtemp,mitot,mjtot,nvar)
-       endif
-c
 c
 c  loop through rows of q calculating fluxes one row at time
 c  vertical riemann problem first
@@ -234,10 +223,9 @@ c
             g(:,i,j) = g(:,i,j) * gfluxlen(i,j)
  580     continue
 c 
-        if (istage .eq. mstage .and. iprob .ne. 20) then
-             call vprmtoc(q,mitot,mjtot,nvar)  ! need conserved vars for last stage only
-        endif
-c
+        ! need conserved vars for second stage and for ghost cell
+        ! filling for multiple stages
+        if (iprob .ne. 20) call vprmtoc(q,mitot,mjtot,nvar)  
 c
 c      # finite volume update
 c
@@ -251,11 +239,9 @@ c
      &                 - firreg(m,k)
             res(m,i,j) = resid(m)
             if (istage .eq. 1) then
-               q(m,i,j) = qtemp(m,i,j) - dtn/ar(k)*resid(m)
+               q(m,i,j) = qold(m,i,j) - dtn/ar(k)*resid(m)
             else
-c              q(m,i,j) = .5*(qtemp(m,i,j) + q(m,i,j)   ! this way is final answer
-c    &                        - dtn/ar(k)*resid(m))
-               q(m,i,j) = q(m,i,j) - dtn/ar(k)*resid(m)  ! second stage alone
+               q(m,i,j) = q(m,i,j) - dtn/ar(k)*resid(m)  ! second stage builds on first
             endif
  917     continue
 
@@ -270,8 +256,8 @@ c
      .                  dy,lwidth,xlow,ylow,istage,ncount,numHoods)
          endif
 
-         if (istage .eq. 2) then  ! if did above update the 2nd way
-            q = 0.5d0*(q + qtemp)
+         if (istage .eq. 2) then  
+            q = 0.5d0*(q + qold)
          endif
 
 c
@@ -288,10 +274,6 @@ c         time step adjustment factor depends on stage.
 c         continue to accumulate for 2 stage method and change factor
 c         :::: next formula ONLY works for 1 and 2 stage methods
        endif
-         if (istage .lt. mstage ) then
-            istage = istage + 1
-            go to 12
-         endif
 c
 c     # output irregular fluxes for debugging purposes:
       if (debug) then
@@ -324,7 +306,7 @@ c     # output fluxes for debugging purposes:
 
 c
 c     estimate new time step for next round. even if not used will give cfl 
-      if (vtime) then
+      if (vtime .and. istage .eq. mstage) then
          arreg = dx*dy  ! get regular cell info  
          rlen = dsqrt(arreg)
          dt3 = 1.d10  ! initialize

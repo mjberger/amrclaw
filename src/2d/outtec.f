@@ -40,8 +40,8 @@ c    ## NOTE THAT BNDRY CELLS FROM OTHER GRIDS NOT SET
        qy = 0.d0
 
 c  set pwconst true for piecewise constant plots, set to false for slopes in tec output
-      pwconst =  .true.
-c     pwconst =  .false.
+c     pwconst =  .true.
+      pwconst =  .false.
       if (pwconst) go to 8
 
       if (ssw .ne. 0.d0) then

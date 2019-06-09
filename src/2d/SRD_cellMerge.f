@@ -30,10 +30,16 @@ c
        integer omp_get_maxthreads
        integer maxthreads/1/
 
+
 c  xlow,ylow   refers to the grid
 c  xlower,ylower refers to the domain
+c  OLD WAY
 c  istage will determine how many ghost cells can be trusted:
 c  a1ll in 1st stage, 2 less in 2nd stage
+c NEW WAY - do one stage at a time then copy in ghost cells at intermediate
+c stages for neighboring grids.  With 4 ghost cells, this means can
+c always trust 2 cells to the side, if interior cells. 
+c never use cells from exterior to the domain for SRD
 
 c  this next statement considers a ghost cell to be anything beyond the
 c  loop indices, since they change according to the stage
@@ -100,6 +106,10 @@ c       form qMerge vals
             if (k.eq.lstgrd .or. IS_OUTSIDE(xc,yc) .or.  
      &                           NOT_OK_GHOST(i,j)) then 
               qMerge(:,i,j) = q(:,i,j)
+              go to 10
+            endif
+            if (IS_OUTSIDE(xc,yc) .or. NOT_OK_GHOST(i,j)) then 
+              qMerge(:,i,j) = NaN ! to make sure we dont use it
               go to 10 
             endif
 c
@@ -275,7 +285,7 @@ c         if (IS_GHOST(i,j)) then
           call getCellCentroid(lstgrd,i,j,xc,yc,
      &                         xlow,ylow,dx,dy,k)
           if (IS_OUTSIDE(xc,yc) .or. NOT_OK_GHOST(i,j)) then
-             valnew(:,i,j) = qMerge(:,i,j)  ! copy what came in
+             valnew(:,i,j) = qMerge(:,i,j)  ! copy what came in  BUT NOW NAN SO MAYBE SET TO Q INSTEAD?
              go to 50 
           endif
 
@@ -393,11 +403,13 @@ c     2 cells to a side for a merging neighborhood
          vqmerge = 0.d0
          firstTimeThru = .true.
          nco = 0   ! initial size of neighborhood, from -1 to 1 square centered on cell
-         !if (i.ge.47 .and. j.ge. 44) then
-         !   areaMin = 2.d0*ar(lstgrd)
-         !else
-         !   areaMin = 0.5d0*ar(lstgrd)  
-         !endif
+         ! next lines are for unstable corner that havent figured out
+         ! yet in channel problem upper right corner
+         if (i.ge.47 .and. j.ge. 44) then
+            areaMin = 2.d0*ar(lstgrd)
+         else
+            areaMin = 0.5d0*ar(lstgrd)  
+         endif
 
             do while (vqmerge < areaMin) 
                do 15 joff = -nco, nco
@@ -443,8 +455,8 @@ c
       xcentMerge = 0.d0      
       ycentMerge = 0.d0
 
-      do 20 j = 1+2*(istage-1), mjtot-2*(istage-1)
-      do 20 i = 1+2*(istage-1), mitot-2*(istage-1)
+      do 20 j = lwidth-1, mjtot-lwidth/2
+      do 20 i = lwidth-1, mitot-lwidth/2
          k = irr(i,j)  
          if (k .eq. lstgrd) then
              call getCellCentroid(lstgrd,i,j,xcentMerge(i,j),

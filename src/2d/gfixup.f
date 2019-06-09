@@ -38,8 +38,9 @@ c
               mitot = nx + 2*nghost
               mjtot = ny + 2*nghost
               nwords        = mitot*mjtot*nvar
-              if (level .lt. mxnest) 
-     .           call reclam(node(store2, mptr), nwords)
+              ! needed all the time now, for RK method
+              !if (level .lt. mxnest) 
+                 call reclam(node(store2, mptr), nwords)
               node(store2, mptr) = 0
               mptr          = node(levelptr, mptr)
           go to 2
@@ -168,7 +169,9 @@ c
 c
 c     initialize 2nd (old time) storage block for new grids not at top level
 c
-      levend = min(lfine,mxnest-1)
+      !levend = min(lfine,mxnest-1)
+      ! do it all the time now, needed for RK method
+      levend = lfine
       do 110 level = lbase+1, levend
          mptr = lstart(level)
  105     if (mptr .eq. 0) go to 110

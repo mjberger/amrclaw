@@ -23,8 +23,9 @@ c      ## done after the checkpoint so pointers sitll work on restart
             nwords  = mitot*mjtot*nvar
             call reclam(node(store1, mptr), nwords)
             call reclam(node(permstore, mptr), 3*mitot*mjtot)
-            if (level .lt. mxnest) 
-     .         call reclam(node(store2, mptr), nwords)
+            ! do it all the time now, needed for RK
+            !if (level .lt. mxnest) 
+               call reclam(node(store2, mptr), nwords)
             if (naux .gt. 0) 
      .         call reclam(node(storeaux, mptr), mitot*mjtot*naux)
         mptr = node(levelptr, mptr)

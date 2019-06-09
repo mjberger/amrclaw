@@ -33,7 +33,6 @@ c
 c
 c
 !$    maxthreads = omp_get_max_threads()
-c     call prepgrids(listgrids,numgrids(lcheck),lcheck)
 
       numpro = 0 
       numbad = 0 

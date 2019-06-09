@@ -38,6 +38,7 @@ def setrun(claw_pkg='amrclaw'):
     #------------------------------------------------------------------
 
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
+    probdata.add_param('mstage ',2, 'RK method order (coeffs set in setprob)')
     probdata.add_param('ismp',    1,  ' stabilization method')
     probdata.add_param('nloops',     2,  '# closed loops or segments')
     probdata.add_param('xloop1',    0.,  ' starting pt x')
@@ -134,9 +135,9 @@ def setrun(claw_pkg='amrclaw'):
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
         clawdata.output_step_interval = 10000
-        clawdata.total_steps = 1
-        #clawdata.output_t0 = True  # output at initial (or restart) time?
-        clawdata.output_t0 = False  # output at initial (or restart) time?
+        clawdata.total_steps = 2
+        clawdata.output_t0 = True  # output at initial (or restart) time?
+        #clawdata.output_t0 = False  # output at initial (or restart) time?
 
 
     clawdata.output_format = 'ascii'       # 'ascii', 'binary', 'netcdf'

@@ -38,7 +38,8 @@ def setrun(claw_pkg='amrclaw'):
     #------------------------------------------------------------------
 
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
-    probdata.add_param('ismp',    1,  ' stabilization method')
+    probdata.add_param('mstage',    2, ' num RK stages')
+    probdata.add_param('ismp',    0,  ' stabilization method')
     probdata.add_param('nloops',    1,  '# closed loops or segments')
     probdata.add_param('xloop1',    0.0,  ' starting pt x')
     probdata.add_param('yloop1',    .00001, ' starting pt y')
@@ -71,8 +72,8 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.upper[1] = 1.000000000           # yupper
 
     # Number of grid cells:
-    clawdata.num_cells[0] = 20      # mx
-    clawdata.num_cells[1] = 20      # my
+    clawdata.num_cells[0] = 100     # mx
+    clawdata.num_cells[1] = 100     # my
 
     # ---------------
     # Size of system:

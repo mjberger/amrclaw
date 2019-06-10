@@ -113,13 +113,13 @@ def setrun(claw_pkg='amrclaw'):
     # Specify at what times the results should be written to fort.q files.
     # Note that the time integration stops after the final output time.
 
-    clawdata.output_style = 3
+    clawdata.output_style = 1
 
     if clawdata.output_style==1:
         # Output ntimes frames at equally spaced times up to tfinal:
         # Can specify num_output_times = 0 for no output
         clawdata.num_output_times = 2
-        clawdata.tfinal = 2.0
+        clawdata.tfinal = .120
         #clawdata.output_t0 = True  # output at initial (or restart) time?
         clawdata.output_t0 = False  # output at initial (or restart) time?
 
@@ -130,8 +130,8 @@ def setrun(claw_pkg='amrclaw'):
 
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
-        clawdata.output_step_interval = 5
-        clawdata.total_steps = 25
+        clawdata.output_step_interval = 1
+        clawdata.total_steps = 2
         #clawdata.total_steps = 148
         clawdata.output_t0 = True  # output at initial (or restart) time?
         #clawdata.output_t0 = False  # output at initial (or restart) time?

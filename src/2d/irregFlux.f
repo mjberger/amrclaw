@@ -35,6 +35,7 @@ c     # loop around boundary: compute cut cell flux
 c
 c       =======================================================
 c
+      firreg(:,lstgrd) = 0.d0
       k = lstgrd
       k = iabs(nxtirr(k))
 

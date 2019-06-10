@@ -10,7 +10,7 @@ c
      .                svdflx,qc1d,lenbc,lratiox,lratioy,hx,hy,
      .                maux,aux,auxc1d,delt,mptr)
 
-      use amr_module
+       use amr_module
        implicit double precision (a-h, o-z)
 
 
@@ -41,11 +41,15 @@ c      # in rp2, but shouldn't matter since wave is not used in qad
 c      # and for other arrays it is only the last parameter that is wrong
 c      #  ok as long as meqn, mwaves < maxvar
 
-       parameter (max1dp1 = max1d+1)
-       dimension ql(nvar,max1dp1),    qr(nvar,max1dp1)
-       dimension wave(nvar,mwaves,max1dp1), s(mwaves,max1dp1)
-       dimension amdq(nvar,max1dp1),  apdq(nvar,max1dp1)
-       dimension auxl(maxaux*max1dp1),  auxr(maxaux*max1dp1)
+       integer  max1dp1
+       !dimension ql(nvar,max1dp1),    qr(nvar,max1dp1)
+       !dimension wave(nvar,mwaves,max1dp1), s(mwaves,max1dp1)
+       !dimension amdq(nvar,max1dp1),  apdq(nvar,max1dp1)
+       !dimension auxl(maxaux*max1dp1),  auxr(maxaux*max1dp1)
+       dimension ql(nvar,max1d+1),    qr(nvar,max1d+1)
+       dimension wave(nvar,mwaves,max1d+1), s(mwaves,max1d+1)
+       dimension amdq(nvar,max1d+1),  apdq(nvar,max1d+1)
+       dimension auxl(maxaux*max1d+1),  auxr(maxaux*max1d+1)
 c
 c  WARNING: auxl,auxr dimensioned at max possible, but used as if
 c  they were dimensioned as the real maux by max1dp1. Would be better
@@ -126,6 +130,7 @@ c                # from the cell corresponding  to q
          endif
        endif
  
+       max1dp1 = max1d + 1
        call rpn2(1,max1dp1-2*nghost,nvar,mwaves,maux,nghost,
      .              nc+1-2*nghost,ql,qr,auxl,auxr,wave,s,amdq,apdq)
 c

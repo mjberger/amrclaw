@@ -110,6 +110,7 @@ c
 !$OMP&            SHARED(rvol,rvoll,level,nvar,mxnest,alloc,intrat)
 !$OMP&            SHARED(nghost,intratx,intraty,hx,hy,naux,listsp)
 !$OMP&            SHARED(node,rnode,dtlevnew,numgrids,listgrids)
+!$OMP&            SHARED(istage,mstage)
 !$OMP&            SHARED(listOfGrids,listStart,levSt,vtime)
 !$OMP&            SCHEDULE (DYNAMIC,1)
 !$OMP&            DEFAULT(none)
@@ -140,9 +141,6 @@ c
       tvollCPU(level) = tvollCPU(level) + cpu_finish - cpu_start
       timeStepgrid = timeStepgrid +clock_finish-clock_startStepgrid
       timeStepgridCPU=timeStepgridCPU+cpu_finish-cpu_startStepgrid      
-      
-c     cflmax = dmax1(cflmax, cfl_level)
-
 c
       end do  ! end loop over each stage
 
@@ -254,12 +252,9 @@ c           # Unsplit method
      5                 alloc(locirr),node(lstptr,mptr),
      6                 alloc(locncount),alloc(locnumHoods),vtime,istage)
          else if (dimensional_split .eq. 1) then
-         else if (dimensional_split .eq. 1) then
 c           # Godunov splitting
-         call stepgrid_dimSplit(alloc(locnew),fm,fp,gm,gp,
-     2               mitot,mjtot,nghost,
-     3               delt,dtnew,hx,hy,nvar,
-     4               xlow,ylow,time,mptr,naux,alloc(locaux))
+            write(6,*)"this option not supported"
+            stop
          else 
 c           # should never get here due to check in amr2
             write(6,*) '*** Strang splitting not supported'

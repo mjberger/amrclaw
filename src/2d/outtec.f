@@ -17,7 +17,7 @@ c
       dimension valprim(4)
       dimension exactsoln(1)
       common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold
+     .                ismp,gradThreshold,pwconst
       common /order2/ ssw, quad, nolimiter
       logical  quad, nolimiter
       logical pwconst
@@ -41,7 +41,7 @@ c    ## NOTE THAT BNDRY CELLS FROM OTHER GRIDS NOT SET
 
 c  set pwconst true for piecewise constant plots, set to false for slopes in tec output
 c     pwconst =  .true.
-      pwconst =  .false.
+c     pwconst =  .false.
       if (pwconst) go to 8
 
       if (ssw .ne. 0.d0) then
@@ -96,7 +96,7 @@ c        # test again for kirr -1 in case want to view in tecplot
          endif
 
          volFrac = ar(kirr)/ar(lstgrd)
-         perim =  0.d0
+         perim =  0.d0 ! maybe perim will indicate reason for instability?
          if (kirr .eq. lstgrd) then 
            perim = 2.d0*(dx+dy)
          else if (kirr .ne. -1) then

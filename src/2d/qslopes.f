@@ -10,9 +10,10 @@ c
       dimension qp(nvar,mitot,mjtot),qx(nvar,mitot,mjtot),
      &          qy(nvar,mitot,mjtot),irr(mitot,mjtot)
 
+      logical  pwconst
       common /order2/ ssw, quad, nolimiter
       common   /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold
+     .                ismp,gradThreshold,pwconst
 
       dimension rhsmax(nvar), rhsmin(nvar)
       dimension dumax(nvar),dumin(nvar),phimin(nvar)

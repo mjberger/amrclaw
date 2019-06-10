@@ -8,9 +8,9 @@ c
        implicit double precision (a-h, o-z)
 
       common   /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                  ismp,gradThreshold
+     .                  ismp,gradThreshold,pwconst
        dimension nlist(25,2), irr(mitot,mjtot)
-       logical outside, quad
+       logical outside, quad, pwconst
        logical verbose/.false./
        outside(i,j) = (i .lt. 1 .or. i .gt. mitot .or.
      &                 j .lt. 1 .or. j .gt. mjtot)

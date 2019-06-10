@@ -11,6 +11,7 @@
       dimension fm(nvar,mitot,mjtot),gm(nvar,mitot,mjtot)
       dimension fp(nvar,mitot,mjtot),gp(nvar,mitot,mjtot)
       dimension qx(nvar,mitot,mjtot),qy(nvar,mitot,mjtot)
+      dimension aux(maux,mitot,mjtot)
       dimension ur(nvar,max(mitot,mjtot)),ul(nvar,max(mitot,mjtot))
       dimension res(nvar,mitot,mjtot)
       dimension ff(nvar,max(mitot,mjtot))
@@ -22,16 +23,16 @@
       common   /RKmethod/ coeff(5),mstage
       common   /order2/ ssw,quad,nolimiter
       common   /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                  ismp,gradThreshold
+     .                  ismp,gradThreshold,pwconst
 
-      logical   debug, vtime  
+      logical   debug, vtime, pwconst  
       dimension firreg(nvar,-1:irrsize)
       dimension resid(nvar)
       dimension fakeState(nvar)
       character ch
 
       integer    xrp, yrp
-      data       debug/.true./
+      data       debug/.false./
       data       xrp/1/, yrp/0/
       data       pi/3.14159265357989d0/
 
@@ -347,12 +348,12 @@ c
       dimension q(nvar,mitot,mjtot), irr(mitot,mjtot)
 
       totmass = 0.d0
-      ar(-1)  = 0.d0
 
       do 10 j = lwidth+1, mjtot-lwidth
       do 10 i = lwidth+1, mitot-lwidth
 
          k = irr(i,j)
+         if (k .eq. -1) cycle 
          totmass = totmass + q(1,i,j)*ar(k)
 
  10   continue

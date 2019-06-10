@@ -9,9 +9,9 @@ c
 
        dimension qp(nvar,mitot,mjtot),qx(nvar,mitot,mjtot),
      &           qy(nvar,mitot,mjtot),irr(mitot,mjtot)
-       logical  regular, quad, nolimiter
+       logical  regular, quad, nolimiter, pwconst
       common   /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold
+     .                ismp,gradThreshold,pwconst
        common /order2/ ssw, quad, nolimiter
 
 c      regular(i,j) = ((i.gt. lwidth).and.(i.le.mitot-lwidth).and.

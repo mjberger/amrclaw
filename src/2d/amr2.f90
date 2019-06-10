@@ -275,9 +275,9 @@ program amr2
     read(inunit,*) method(3)  ! order_trans
 
     read(inunit,*) dimensional_split
-       if (dimensional_split > 1) then
+       if (dimensional_split >= 1) then
            print *, '*** ERROR ***  dimensional_split = ', dimensional_split
-           print *, ' Strang splitting not supported in amrclaw'
+           print *, ' dimensional splitting not supported in amrcart'
            stop
        endif
 

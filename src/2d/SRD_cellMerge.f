@@ -27,7 +27,7 @@ c
        logical quad, nolimiter
        logical REG_NBORS,NOT_VALID_VAL,NOT_OK_GHOST
        common /order2/ ssw, quad, nolimiter
-       integer omp_get_maxthreads
+       integer omp_get_max_threads
        integer maxthreads/1/
 
 
@@ -73,7 +73,7 @@ c      maxthreads initialized to 1 above in case no openmp
        else
           verbose = .true.
        endif
-       ar(-1) = 0.d0        ! zero out area of solid cells for this loop
+       !!ar(-1) = 0.d0        ! zero out area of solid cells for this loop
        ar(lstgrd) = dx*dy   ! area of regular grid cell 
        qMerge   = 0.d0
        dx2 = 2.d0*dx
@@ -335,12 +335,12 @@ c
       dimension q(nvar,mitot,mjtot), irr(mitot,mjtot)
 
       totmass = 0.d0
-      ar(-1)  = 0.d0
 
       do 10 j = lwidth+1, mjtot-lwidth
       do 10 i = lwidth+1, mitot-lwidth
 
          k = irr(i,j)
+         if (k .eq. -1) cycle 
          totmass = totmass + q(1,i,j)*ar(k)
 
  10   continue
@@ -384,7 +384,7 @@ c
       !!areaMin = ar(lstgrd)  
       numHoods = 0  ! initialize, loop below will add each cell to its own nhood
       ncount = 0
-      ar(-1) = 0.d0  ! reset here to remind us
+      !!ar(-1) = 0.d0  ! reset here to remind us
       maxnco = 0
 
 c     this code below counts on fact that don't need more than

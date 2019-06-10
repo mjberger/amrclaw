@@ -4,9 +4,10 @@
       implicit real*8 (a-h,o-z)
       character(len=25) fname
 c
+      logical pwconst
       common /RKmethod/ coeff(5), mstage
       common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold
+     .                ismp,gradThreshold,pwconst
 c
       iunit = 7
       fname = 'setprob.data'
@@ -25,10 +26,17 @@ c     # comment lines starting with #:
          coeff(2) = 1.0d0
       endif
 
+
       ! check for higher order if the structure in my method holds
       ! or need more scratch storage etc
       read(7,*) ismp
       write(*,*)"Using stabilization ismp = ",ismp
+
+      read(7,*) pwconst
+      write(*,*)"Plotting output with pwconst = ",pwconst
+
+      read(7,*) max1d
+      write(*,*)"Using grid patches of size  max1d = ",max1d
 
       read(7,*) nloops
       write(*,*) "This geometry has ", nloops," loops"

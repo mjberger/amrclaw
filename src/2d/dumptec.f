@@ -6,8 +6,8 @@ c
       use amr_module
       implicit double precision (a-h,o-z)
       common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold
-      logical         flag
+     .                ismp,gradThreshold,pwconst
+      logical         flag,pwconst
       character*23  filename 
 c
 c dumptec = make tecplot file for finest level soln values over entire domain

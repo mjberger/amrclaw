@@ -40,6 +40,7 @@ def setrun(claw_pkg='amrclaw'):
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
     probdata.add_param('mstage ',2, 'RK method order (coeffs set in setprob)')
     probdata.add_param('ismp',    1,  ' stabilization method')
+    probdata.add_param('pwconst', True,  ' no slopes in plotting ')
     probdata.add_param('nloops',     2,  '# closed loops or segments')
     probdata.add_param('xloop1',    0.,  ' starting pt x')
     probdata.add_param('yloop1',    .11, ' starting pt y')

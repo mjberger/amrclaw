@@ -43,7 +43,7 @@ c
        write(*,*)"Havent fixed indexing yet"
        stop
 
-       ar(-1) = 0.d0        ! zero out area of solid cells for this loop
+       !!ar(-1) = 0.d0        ! zero out area of solid cells for this loop
        ar(lstgrd) = dx*dy   ! area of regular grid cell 
        qMerge   = 0.d0
 
@@ -282,7 +282,7 @@ c
       areaMin = ar(lstgrd)  
       numHoods = 0  ! initialize, loop below will add each cell to its own nhood
       ncount = 0
-      ar(-1) = 0.d0  ! reset here to remind us
+      !!ar(-1) = 0.d0  ! reset here to remind us
       volMerge = 0.d0
       eps = 1.d-12
       eps = -1.d-12

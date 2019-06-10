@@ -38,8 +38,10 @@ def setrun(claw_pkg='amrclaw'):
     #------------------------------------------------------------------
 
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
-    probdata.add_param('mstage',    2,  ' number RK stages (<=2 for now')
+    probdata.add_param('mstage',    1,  ' number RK stages (<=2 for now')
     probdata.add_param('ismp',    1,  ' stabilization method')
+    probdata.add_param('pwconst',  True,  ' no slopes for plotting ')
+    probdata.add_param('max1d',   200,  ' max size each dir for grid patches ')
     probdata.add_param('nloops',    1,  '# closed loops or segments')
     probdata.add_param('xloop1',    .50676,  ' starting pt x')
     probdata.add_param('yloop1',    .00001, ' starting pt y')
@@ -101,9 +103,9 @@ def setrun(claw_pkg='amrclaw'):
     # restart_file 'fort.chkNNNNN' specified below should be in
     # the OUTDIR indicated in Makefile.
 
-    #clawdata.restart = True                # True to restart from prior results
-    clawdata.restart = False               # True to restart from prior results
-    clawdata.restart_file = 'fort.chk00144'  # File to use for restart data
+    clawdata.restart = True                # True to restart from prior results
+    #clawdata.restart = False               # True to restart from prior results
+    clawdata.restart_file = 'fort.chk00015'  # File to use for restart data
 
 
     # -------------
@@ -113,7 +115,7 @@ def setrun(claw_pkg='amrclaw'):
     # Specify at what times the results should be written to fort.q files.
     # Note that the time integration stops after the final output time.
 
-    clawdata.output_style = 1
+    clawdata.output_style = 3
 
     if clawdata.output_style==1:
         # Output ntimes frames at equally spaced times up to tfinal:
@@ -130,8 +132,8 @@ def setrun(claw_pkg='amrclaw'):
 
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
-        clawdata.output_step_interval = 1
-        clawdata.total_steps = 2
+        clawdata.output_step_interval = 5
+        clawdata.total_steps = 20
         #clawdata.total_steps = 148
         clawdata.output_t0 = True  # output at initial (or restart) time?
         #clawdata.output_t0 = False  # output at initial (or restart) time?
@@ -171,9 +173,9 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.dt_max = 1.000000e+99
 
     # Desired Courant number if variable dt used
-    clawdata.cfl_desired = 0.500000
+    clawdata.cfl_desired = 0.490000
     # max Courant number to allow without retaking step with a smaller dt:
-    clawdata.cfl_max = 0.500000
+    clawdata.cfl_max = 0.490000
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 1000

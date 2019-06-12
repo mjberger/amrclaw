@@ -20,10 +20,10 @@ c
        ylow   = rnode(cornylo,mptr) - nghost*hy
 
 c
-       call stepgrid(valbig,fm,fp,gm,gp,
-     1               mitot,mjtot,nghost,
-     2               dt,dtnew,hx,hy,nvar,
-     3               xlow,ylow,time,mptr,naux,auxbig)
+c      call stepgrid(valbig,fm,fp,gm,gp,
+c    1               mitot,mjtot,nghost,
+c    2               dt,dtnew,hx,hy,nvar,
+c    3               xlow,ylow,time,mptr,naux,auxbig)
 c
 c     update counts for error estimation step
        evol   = evol + nx * ny

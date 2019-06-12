@@ -17,12 +17,10 @@ COMMON_SOURCES += \
   $(AMRLIB)/amr2.f90 \
   $(AMRLIB)/bc2amr.f90 \
   $(AMRLIB)/b4step2.f90 \
-  $(AMRLIB)/qad.f \
   $(AMRLIB)/src2.f90 \
   $(AMRLIB)/src1d.f90 \
   $(AMRLIB)/advanc.f \
   $(AMRLIB)/bound.f90 \
-  $(AMRLIB)/stepgrid.f \
   $(AMRLIB)/mymethod.f \
   $(AMRLIB)/cellsClose.f \
   $(AMRLIB)/DRD_cellMerge.f \

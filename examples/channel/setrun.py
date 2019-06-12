@@ -39,15 +39,16 @@ def setrun(claw_pkg='amrclaw'):
 
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
     probdata.add_param('mstage ',2, 'RK method order (coeffs set in setprob)')
-    probdata.add_param('ismp',    1,  ' stabilization method')
+    probdata.add_param('ismp',    2,  ' stabilization method')
+    ## 1 = SRD
+    ## 2 = DRD
     probdata.add_param('pwconst', True,  ' no slopes in plotting ')
+    probdata.add_param('max1d', 60,' max size each dir for grid patches')
     probdata.add_param('nloops',     2,  '# closed loops or segments')
     probdata.add_param('xloop1',    0.,  ' starting pt x')
     probdata.add_param('yloop1',    .11, ' starting pt y')
     probdata.add_param('xloop2',    .999999,  ' starting pt x')
     probdata.add_param('yloop2',    .91,  ' starting pt y')
-    ## 1 = SRD
-    ## 2 = DRD
 
     #------------------------------------------------------------------
     # Standard Clawpack parameters to be written to claw.data:
@@ -79,8 +80,6 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.num_cells[1] = 44      # my
     #clawdata.num_cells[0] = 12      # mx
     #clawdata.num_cells[1] = 12      # my
-    #clawdata.num_cells[0] = 88      # mx
-    #clawdata.num_cells[1] = 88      # my
 
     # ---------------
     # Size of system:
@@ -136,7 +135,7 @@ def setrun(claw_pkg='amrclaw'):
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
         clawdata.output_step_interval = 10000
-        clawdata.total_steps = 2
+        clawdata.total_steps = 1
         clawdata.output_t0 = True  # output at initial (or restart) time?
         #clawdata.output_t0 = False  # output at initial (or restart) time?
 
@@ -175,9 +174,9 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.dt_max = 1.000000e+99
 
     # Desired Courant number if variable dt used
-    clawdata.cfl_desired = 0.900000
+    clawdata.cfl_desired = 0.500000
     # max Courant number to allow without retaking step with a smaller dt:
-    clawdata.cfl_max = 1.000000
+    clawdata.cfl_max = 0.500000
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 1000
@@ -228,7 +227,7 @@ def setrun(claw_pkg='amrclaw'):
     # --------------------
 
     # Number of ghost cells (usually 2)
-    clawdata.num_ghost = 4
+    clawdata.num_ghost = 6  # needed for 2 stage RK + delta distrib
 
     # Choice of BCs at xlower and xupper:
     #   0 or 'user'     => user specified (must modify bcNamr.f to use this option)

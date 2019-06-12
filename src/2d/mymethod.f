@@ -1,4 +1,4 @@
-      subroutine mymethod(q,qold,fm,fp,gm,gp,mitot,mjtot,lwidth,
+      subroutine mymethod(q,qold,mitot,mjtot,lwidth,
      &                  dtn,dtnewn,
      &                  dx,dy,nvar,xlow,ylow,mptr,maux,aux,irr,
      &                  lstgrd,ncount,numHoods,vtime,istage)
@@ -8,8 +8,6 @@
 
       dimension q(nvar,mitot,mjtot), qold(nvar,mitot,mjtot)
       dimension f(nvar,mitot,mjtot),g(nvar,mitot,mjtot)
-      dimension fm(nvar,mitot,mjtot),gm(nvar,mitot,mjtot)
-      dimension fp(nvar,mitot,mjtot),gp(nvar,mitot,mjtot)
       dimension qx(nvar,mitot,mjtot),qy(nvar,mitot,mjtot)
       dimension aux(maux,mitot,mjtot)
       dimension ur(nvar,max(mitot,mjtot)),ul(nvar,max(mitot,mjtot))
@@ -35,18 +33,6 @@
       data       debug/.false./
       data       xrp/1/, yrp/0/
       data       pi/3.14159265357989d0/
-
-c      dimension coeff(3)
-c      data       mstage/3/
-c      data       coeff/.21d0,.5d0,1.d0/  
-
-c      dimension coeff(2)
-c      data mstage/2/
-c      data      coeff/0.5d0,1.d0/
-
-c     dimension coeff(1)
-c     data      mstage/1/
-c     data      coeff/1.d0/
 
 c
 c
@@ -75,7 +61,23 @@ c
           stop
        endif
 
-       fakeState(1) = 1.d0
+       ! if this grid patch is all solid cells skip it
+       call countCellType(irr,mitot,mjtot,lwidth,numSolid,numCut,
+     .                    numFull,lstgrd)
+       nx = mitot-2*lwidth
+       ny = mjtot-2*lwidth
+       if (numSolid .eq. nx*ny) then
+c        write(*,*) "grid ",mptr," all solid" 
+         dtnewn = rinfinity     ! output var, need to return someting
+         return
+       endif
+c      if (numFull .eq. nx*ny) write(*,*) "grid ",mptr," all flow" 
+c      if (numCut+numSolid+numFull .ne. nx*ny) then
+c         write(*,*)"count doesn't work for grid ",mptr
+c      endif
+
+       ! in primitive variables
+       fakeState(1) = 1.0d0
        fakeState(2) = 0.d0
        fakeState(3) = 0.d0
        fakeState(4) = 1.0d0
@@ -118,7 +120,6 @@ c
 c     ### call for exterior bcs at each stage so can use slopes
             xhigh= xlow + mitot*dx
             yhigh = ylow + mjtot*dy
-c        if (istage .eq. 1 .or. istage .eq. 2) then
             call pphysbdlin(xlow,xhigh,ylow,yhigh,level,mitot,mjtot,
      &                      nvar,q,time,dx,dy,qx,qy,irr,lstgrd)
 c        endif
@@ -174,7 +175,6 @@ c    Horizontal riemann problems next
 c
       do 900 irow = lwidth-2, mitot-lwidth+3
 c
-         xright = xlow + (dfloat(irow)-.5d0)*dx
          do 611 j = lwidth-2, mjtot-lwidth+3
             call getXface(irow,j,xface,yface,irr,mitot,mjtot,
      .               xlow,ylow,dx,dy,lstgrd)
@@ -232,13 +232,13 @@ c      # finite volume update
 c
          c      = coeff(istage)
          ar(-1) = 1.d0   ! prevent zero divides for solid cells
-         do 917 j = iy1-lwidth+istage, iyn+lwidth-istage
-         do 917 i = ix1-lwidth+istage, ixn+lwidth-istage
+         do 917 j = 1+istage, mjtot-istage
+         do 917 i = 1+istage, mitot-istage
          do 917 m = 1, nvar
             k = irr(i,j)
             resid(m) = (f(m,i+1,j)-f(m,i,j)+g(m,i,j+1)-g(m,i,j))
      &                 - firreg(m,k)
-            res(m,i,j) = resid(m)
+            res(m,i,j) = resid(m) ! for debugging save both
             if (istage .eq. 1) then
                q(m,i,j) = qold(m,i,j) - dtn/ar(k)*resid(m)
             else
@@ -249,12 +249,16 @@ c
 c  postprocess for stability of cut cells. c
 c  do it in conserved variables for conservation purposes, (but maybe prim better?)
 c
-         if (ismp .eq. 1) then
-            call srd_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,dx,
-     .                  dy,lwidth,xlow,ylow,istage,ncount,numHoods,mptr)
-         else if (ismp .eq. 2) then
-            call drd_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,dx,
-     .                  dy,lwidth,xlow,ylow,istage,ncount,numHoods)
+         if (numCut .gt. 0)  then
+            if (ismp .eq. 1) then
+              call srd_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,
+     .                           dx,dy,lwidth,xlow,ylow,istage,
+     .                           ncount,numHoods,mptr)
+            else if (ismp .eq. 2) then
+               call drd_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,
+     .                            dx,dy,lwidth,xlow,ylow,istage,
+     .                            ncount,numHoods,mptr)
+            endif
          endif
 
          if (istage .eq. 2) then  
@@ -308,31 +312,31 @@ c     # output fluxes for debugging purposes:
 c
 c     estimate new time step for next round. even if not used will give cfl 
       if (vtime .and. istage .eq. mstage) then
-         arreg = dx*dy  ! get regular cell info  
-         rlen = dsqrt(arreg)
-         dt3 = 1.d10  ! initialize
-         do 140 j = lwidth+1, mjtot-lwidth
-         do 140 i = lwidth+1, mitot-lwidth
-            k = irr(i,j)
-            if (k .ne. -1) then
-                p = gamma1* (q(4,i,j)- .5d0* (q(2,i,j)**2 +
-     &                       q(3,i,j)**2)/q(1,i,j))
-                c2 = gamma*p/q(1,i,j)
-                if (c2 .le. 0.d0) go to 140
-                c = dsqrt(c2)
-                u = q(2,i,j)/q(1,i,j)
-                v = q(3,i,j)/q(1,i,j)
+c        speedmax = 0.d0
+c        do 140 j = lwidth+1, mjtot-lwidth
+c        do 140 i = lwidth+1, mitot-lwidth
+c           k = irr(i,j)
+c           if (k .ne. -1) then
+c               p = gamma1* (q(4,i,j)- .5d0* (q(2,i,j)**2 +
+c    &                       q(3,i,j)**2)/q(1,i,j))
+c               c2 = gamma*p/q(1,i,j)
+c               if (c2 .le. 0.d0) go to 140
+c               c = dsqrt(c2)
+c               u = q(2,i,j)/q(1,i,j)
+c               v = q(3,i,j)/q(1,i,j)
 c               ::: dt using muscl cfl limit
-                 speed = dmax1(dabs(u)+c,dabs(v)+c)  !use max norm for muscl
-                 dtx = dx / (dabs(u)+c)
-                 dty = dy / (dabs(v)+c)
-                 delT = MIN(dtx,dty)
-                 dt3 =  min(cfl* delT,dt3)
-            endif
- 140     continue
-         dtnewn = dt3     ! output var, need to return someting
-      else
-         dtnewn = dtn     ! output var, need to return someting
+c                !speed = dmax1(dabs(u)+c,dabs(v)+c)  !use max norm for muscl
+c                speed = dsqrt(u*u+v*v) +c  
+c                speedmax = max(speedmax,speed) 
+c                !dtx = dx / (dabs(u)+c)
+c                !dty = dy / (dabs(v)+c)
+c                !delT = MIN(dtx,dty)
+c           endif
+c140     continue
+c        effh = dx*dy/(2.d0*dx+2.d0*dy)
+c        dtnewn = cflcart* effh / speedmax
+          call estdt(q,irr,mitot,mjtot,nvar,dx,dy,dtnewn,lwidth,
+     &               aux,naux,cfl)
       endif
 
       return

@@ -110,7 +110,7 @@ c
 !$OMP&            SHARED(rvol,rvoll,level,nvar,mxnest,alloc,intrat)
 !$OMP&            SHARED(nghost,intratx,intraty,hx,hy,naux,listsp)
 !$OMP&            SHARED(node,rnode,dtlevnew,numgrids,listgrids)
-!$OMP&            SHARED(istage,mstage)
+!$OMP&            SHARED(istage,mstage,ar,ixg,iyg,nxtirrr)
 !$OMP&            SHARED(listOfGrids,listStart,levSt,vtime)
 !$OMP&            SCHEDULE (DYNAMIC,1)
 !$OMP&            DEFAULT(none)
@@ -222,10 +222,10 @@ c
             locsvf = node(ffluxptr,mptr)
             locsvq = locsvf + nvar*lenbc
             locx1d = locsvq + nvar*lenbc
-            call qad(alloc(locnew),mitot,mjtot,nvar,
-     1               alloc(locsvf),alloc(locsvq),lenbc,
-     2               intratx(level-1),intraty(level-1),hx,hy,
-     3               naux,alloc(locaux),alloc(locx1d),delt,mptr)
+c           call qad(alloc(locnew),mitot,mjtot,nvar,
+c    1               alloc(locsvf),alloc(locsvq),lenbc,
+c    2               intratx(level-1),intraty(level-1),hx,hy,
+c    3               naux,alloc(locaux),alloc(locx1d),delt,mptr)
          endif
 
 c        # See if the grid about to be advanced has gauge data to output.
@@ -245,12 +245,16 @@ c     no more,  each gauge has own array.
 c
          if (dimensional_split .eq. 0) then
 c           # Unsplit method
-         call stepgrid(alloc(locnew),alloc(locold),fm,fp,gm,gp,
-     2                 mitot,mjtot,nghost,
-     3                 delt,dtnew,hx,hy,nvar,
-     4                 xlow,ylow,time,mptr,naux,alloc(locaux),
-     5                 alloc(locirr),node(lstptr,mptr),
-     6                 alloc(locncount),alloc(locnumHoods),vtime,istage)
+c        call stepgrid(alloc(locnew),alloc(locold),fm,fp,gm,gp,
+c    2                 mitot,mjtot,nghost,
+c    3                 delt,dtnew,hx,hy,nvar,
+c    4                 xlow,ylow,time,mptr,naux,alloc(locaux),
+c    5                 alloc(locirr),node(lstptr,mptr),
+c    6                 alloc(locncount),alloc(locnumHoods),vtime,istage)
+         call mymethod(alloc(locnew),alloc(locold),mitot,mjtot,nghost,
+     1                 delt,dtnew,hx,hy,nvar,xlow,ylow,mptr,naux,
+     2                 alloc(locaux),alloc(locirr),node(lstptr,mptr),
+     3                 alloc(locncount),alloc(locnumHoods),vtime,istage)
          else if (dimensional_split .eq. 1) then
 c           # Godunov splitting
             write(6,*)"this option not supported"

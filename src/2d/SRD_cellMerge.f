@@ -23,28 +23,25 @@ c
        real*8 minmod
        character ch
 
-       logical IS_OUTSIDE,IS_GHOST,IS_FAR_GHOST,verbose
-       logical quad, nolimiter
-       logical REG_NBORS,NOT_VALID_VAL,NOT_OK_GHOST
+       logical IS_OUTSIDE, REG_NBORS,NOT_VALID_VAL,NOT_OK_GHOST
+       logical quad, nolimiter,verbose
        common /order2/ ssw, quad, nolimiter
        integer omp_get_max_threads
        integer maxthreads/1/
 
 
-c  xlow,ylow   refers to the grid
+c  xlow,ylow   refers to the corner of grid (w/o ghost cells)
 c  xlower,ylower refers to the domain
+
 c  OLD WAY
 c  istage will determine how many ghost cells can be trusted:
 c  a1ll in 1st stage, 2 less in 2nd stage
+
 c NEW WAY - do one stage at a time then copy in ghost cells at intermediate
-c stages for neighboring grids.  With 4 ghost cells, this means can
-c always trust 2 cells to the side, if interior cells. 
+c stages for neighboring grids.  With 4 ghost cells, this means that
+c interior cells can always trust 2 cells to the side after 1 stage
 c never use cells from exterior to the domain for SRD
 
-c  this next statement considers a ghost cell to be anything beyond the
-c  loop indices, since they change according to the stage
-       IS_GHOST(i,j) = (i .le. lwidth .or. i .gt. mitot-lwidth .or.
-     .                  j .le. lwidth .or. j .gt. mjtot-lwidth)
        IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
      .                  y .lt. ylower .or. y .gt. yupper)
        REG_NBORS(i,j,lstgrd) = (irr(i+1,j).eq.lstgrd .and. 
@@ -53,10 +50,10 @@ c  loop indices, since they change according to the stage
      .                          irr(i,j-1).eq.lstgrd)
       NOT_VALID_VAL(i,j) = (i>mitot-2*(istage-1) .or. i<2*(istage-1)+1
      .                .or.  j>mjtot-2*(istage-1) .or. j<2*(istage-1)+1)
-      NOT_OK_GHOST(i,j) = (i .lt. lwidth-1 .or. 
-     .                     i .gt. mitot-lwidth/2 .or.
-     .                     j .lt. lwidth-1 .or. 
-     .                     j .gt. mjtot-lwidth/2)
+      NOT_OK_GHOST(i,j) = (i .lt. 3 .or. 
+     .                     i .gt. mitot-2 .or.
+     .                     j .lt. 3 .or. 
+     .                     j .gt. mjtot-2)
 
 c :::::::::::::;:::
 c
@@ -66,6 +63,8 @@ c   (as in, jacobi rather than gauss seidel)
 c ::::::::::::::::
 
 c
+c      set verbosity for debugging, but only if serial and one grid,
+c      otherwise meaningless
 c      maxthreads initialized to 1 above in case no openmp
 !$     maxthreads = omp_get_max_threads()
        if (maxthreads .gt. 1 .or. numgrids(1) .gt. 1) then
@@ -73,17 +72,19 @@ c      maxthreads initialized to 1 above in case no openmp
        else
           verbose = .true.
        endif
-       !!ar(-1) = 0.d0        ! zero out area of solid cells for this loop
+
+c      some initializations
        ar(lstgrd) = dx*dy   ! area of regular grid cell 
        qMerge   = 0.d0
        dx2 = 2.d0*dx
        dy2 = 2.d0*dy
 
        ! put in 'normal' values to prevent errors e.g. in converting to prim vars
+       ! these fake vals are in conserved variables
        fakeState(1) = 1.d0
        fakeState(2) = 0.d0
        fakeState(3) = 0.d0
-       fakeState(4) = 2.5d0
+       fakeState(4) = 2.5d0 !(p/gm1, corresponding to fakestate in method)
 
 c     first make neighborhoods - need count for each cells, and width (nhood above)
 c     nCount is size of neighborhood, numHoods is number of merged nhoods each cells is in
@@ -102,15 +103,13 @@ c       form qMerge vals
             k = irr(i,j)
             if (k .eq. -1) go to 10 ! no solid cells
             call getCellCentroid(lstgrd,i,j,xc,yc,xlow,ylow,dx,dy,k)
-            !if (k .eq. lstgrd .or. IS_GHOST(i,j)) then 
-            if (k.eq.lstgrd .or. IS_OUTSIDE(xc,yc) .or.  
-     &                           NOT_OK_GHOST(i,j)) then 
-              qMerge(:,i,j) = q(:,i,j)
-              go to 10
-            endif
             if (IS_OUTSIDE(xc,yc) .or. NOT_OK_GHOST(i,j)) then 
               qMerge(:,i,j) = NaN ! to make sure we dont use it
               go to 10 
+            endif
+            if (k.eq.lstgrd) then
+              qMerge(:,i,j) = q(:,i,j)
+              go to 10
             endif
 c
 c           sum in blocks of size 2*ncount on a size using only valid cells 
@@ -119,7 +118,6 @@ c
              do 27 ioff = -ncount(i,j), ncount(i,j)
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) go to 27  ! solid cells dont contribute to neighborhood
-                !if (IS_GHOST(i+ioff,j+joff)) go to 27  ! nor ghost cells
                 call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                               xlow,ylow,dx,dy,koff)
                 if (IS_OUTSIDE(xcn,ycn)) go to 27  ! nor ghost cells
@@ -136,10 +134,13 @@ c               count this cell
         gradmx = 0.d0
         gradmy = 0.d0
 
-        do 20 j = lwidth+1, mjtot-lwidth
-        do 20 i = lwidth+1, mitot-lwidth
+        do 20 j = 3, mjtot-2
+        do 20 i = 3, mitot-2
             k = irr(i,j)
             if (k .eq. -1) go to 20 ! solid cells have no gradient
+            call getCellCentroid(lstgrd,i,j,xc,yc,
+     &                           xlow,ylow,dx,dy,k)
+            if (IS_OUTSIDE(xc,yc)) go to 20  ! exterior cells dont contribute
 
             ! if completely regular, use regular qmerge gradients
             ! even reg cells need gradients to put their val in cut cells
@@ -167,7 +168,6 @@ c               count this cell
                 if (ioff .eq. 0 .and. joff .eq. 0) go to 22 ! no eqn to solve
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) go to 22
-c               if (IS_GHOST(i+ioff,j+joff)) go to 22
                 call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                               xlow,ylow,dx,dy,koff)
                 if (IS_OUTSIDE(xcn,ycn)) go to 22
@@ -199,8 +199,8 @@ c               if (IS_GHOST(i+ioff,j+joff)) go to 22
 c
 c      apply limiter if requested. Go over all neighbors, do BJ
         if (nolimiter) go to 35
-        do 30 j = lwidth+1, mjtot-lwidth
-        do 30 i = lwidth+1, mitot-lwidth
+        do 30 j = 3, mjtot-2
+        do 30 i = 3, mitot-2
             k = irr(i,j)
             if (k .eq. -1) go to 30 ! solid cells have no gradient
             if (numHoods(i,j).eq.1 .and. ncount(i,j) .eq.0) go to 30  ! CHECK THAT NOTHING TO DO AND VAL NOT CHANGED
@@ -214,7 +214,6 @@ c      apply limiter if requested. Go over all neighbors, do BJ
               if (ioff .eq. 0 .and. joff .eq. 0) go to 31
               koff = irr(i+ioff,j+joff)
               if (koff .eq. -1) go to 31
-c             if (IS_GHOST(i+ioff,j+joff)) go to 31
               call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                             xlow,ylow,dx,dy,koff)
               if (IS_OUTSIDE(xcn,ycn)) go to 31
@@ -228,7 +227,6 @@ c             if (IS_GHOST(i+ioff,j+joff)) go to 31
                 if (ioff .eq. 0 .and. joff .eq. 0) go to 32 ! no eqn to solve
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) go to 32
-c               if (IS_GHOST(i+ioff,j+joff)) go to 32
                 call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                               xlow,ylow,dx,dy,koff)
                 if (IS_OUTSIDE(xcn,ycn)) go to 32
@@ -281,7 +279,6 @@ c
              valnew(:,i,j) = fakeState
              go to 50  ! does not contribute
           endif
-c         if (IS_GHOST(i,j)) then
           call getCellCentroid(lstgrd,i,j,xc,yc,
      &                         xlow,ylow,dx,dy,k)
           if (IS_OUTSIDE(xc,yc) .or. NOT_OK_GHOST(i,j)) then
@@ -293,17 +290,17 @@ c         if (IS_GHOST(i,j)) then
           do 40 ioff = -ncount(i,j), ncount(i,j)
              koff = irr(i+ioff,j+joff)
              if (koff .eq. -1) go to 40  
-c            if (IS_GHOST(i+ioff,j+joff)) go to 40  
              call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                            xlow,ylow,dx,dy,koff)
              if (IS_OUTSIDE(xcn,ycn)) go to 40  
-c            call getCellCentroid(lstgrd,i+ioff,j+joff,xc,yc,xlow,
-c    .                            ylow,dx,dy,koff)
+c            check if physicla state
              qm(:) = qMerge(:,i,j) + (xcn-xcentMerge(i,j))*gradmx(:,i,j)
      .                             + (ycn-ycentMerge(i,j))*gradmy(:,i,j)
              pr = .4d0*(qm(4)- 0.5d0*(qm(2)**2+qm(3)**2)/qm(1))
              if ((qm(1) .le. 0.d0) .or. (pr .le. 0.d0)) then
-                write(*,*)" should not happen"
+                write(*,900)qm(1),pr,mptr,i,j
+ 900            format("should not happen, rho,pr,mptr,i, j",
+     .                  2e15.7,3i4)
              endif
              valnew(:,i+ioff,j+joff) = valnew(:,i+ioff,j+joff) + 
      .              qm(:)/numHoods(i+ioff,j+joff)
@@ -316,7 +313,6 @@ c
        if (verbose) then
           totmass2 =  bigconck(q,irr,mitot,mjtot,lwidth,nvar)
           dif = totmass2 - totmass
-
           write(*,912) totmass2,dif
  912      format("         mass after  redistribution is ",e25.15,
      .           "  dif is ",e15.7)
@@ -364,16 +360,14 @@ c
       dimension xcentMerge(mitot,mjtot), ycentMerge(mitot,mjtot)
       dimension ncount(mitot,mjtot), irr(mitot,mjtot)
 
-      logical NOT_OK_GHOST,IS_GHOST, IS_OUTSIDE, firstTimeThru
+      logical NOT_OK_GHOST, IS_OUTSIDE, firstTimeThru
       logical debug/.false./, IS_OUT_OF_RANGE
       character ch
 
-      IS_GHOST(i,j) = (i .le. lwidth .or. i .gt. mitot-lwidth .or.
-     .                 j .le. lwidth .or. j .gt. mjtot-lwidth)
-      NOT_OK_GHOST(i,j) = (i .lt. lwidth-1 .or. 
-     .                     i .gt. mitot-lwidth/2 .or.
-     .                     j .lt. lwidth-1 .or. 
-     .                     j .gt. mjtot-lwidth/2)
+      NOT_OK_GHOST(i,j) = (i .lt. 3 .or. 
+     .                     i .gt. mitot-2 .or.
+     .                     j .lt. 3 .or. 
+     .                     j .gt. mjtot-2)
       IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
      .                   y .lt. ylower .or. y .gt. yupper)
       IS_OUT_OF_RANGE(i,j)  = (i<1 .or. i>mitot .or. j<1 .or. j>mjtot)
@@ -382,6 +376,7 @@ c
       !!areaMin = 2.d0*ar(lstgrd)  
       areaMin = 0.5d0*ar(lstgrd)  
       !!areaMin = ar(lstgrd)  
+
       numHoods = 0  ! initialize, loop below will add each cell to its own nhood
       ncount = 0
       !!ar(-1) = 0.d0  ! reset here to remind us
@@ -389,8 +384,8 @@ c
 
 c     this code below counts on fact that don't need more than
 c     2 cells to a side for a merging neighborhood
-      do 10 j = lwidth-1, mjtot-lwidth/2
-      do 10 i = lwidth-1, mitot-lwidth/2
+      do 10 j = 3, mjtot-2
+      do 10 i = 3, mitot-2
          k = irr(i,j)  
          if (k .eq. -1) go to 10
          call getCellCentroid(lstgrd,i,j,xc,yc,
@@ -455,8 +450,8 @@ c
       xcentMerge = 0.d0      
       ycentMerge = 0.d0
 
-      do 20 j = lwidth-1, mjtot-lwidth/2
-      do 20 i = lwidth-1, mitot-lwidth/2
+      do 20 j = 3, mjtot-2
+      do 20 i = 3, mitot-2
          k = irr(i,j)  
          if (k .eq. lstgrd) then
              call getCellCentroid(lstgrd,i,j,xcentMerge(i,j),
@@ -469,7 +464,6 @@ c
          endif
          call getCellCentroid(lstgrd,i,j,xcentMerge(i,j),
      .                        ycentMerge(i,j),xlow,ylow,dx,dy,k)
-c        if (IS_GHOST(i,j)) then
          if (IS_OUTSIDE(xcentMerge(i,j),ycentMerge(i,j))) then
             volMerge(i,j) = 0.d0
             go to 20
@@ -486,7 +480,6 @@ c        if (IS_GHOST(i,j)) then
             if (koff .eq. -1) go to 25 ! solid cells dont help
             call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,xlow,ylow,
      .                           dx,dy,koff)
-c           if (IS_GHOST(i+ioff,j+joff)) go to 25  
             if (IS_OUTSIDE(xcn,ycn)) go to 25  
             ! see if can trust this ghost cell val
             if (NOT_OK_GHOST(i+ioff,j+joff)) go to 25  

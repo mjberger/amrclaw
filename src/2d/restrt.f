@@ -41,7 +41,11 @@ c     rstfile  = 'restart.data'
 
       !!read(rstunit) lenmax,lendim,isize
       !! new version has flexible node size, so need to read current size maxgr
-      read(rstunit) lenmax,lendim,isize,maxgr
+      read(rstunit) lenmax,lendim,isize,maxgr,max1dnew
+      if (max1d .ne. max1dnew) then
+         write(*,*)" changing max1d not yet implemented"
+         write(*,*)" it was ",max1d," now ",max1dnew
+      endif
 
 c     # need to allocate for dynamic memory:
       call restrt_alloc(isize)

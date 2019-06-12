@@ -27,12 +27,6 @@ c   qp contains the primitive variables
 c
 
 c
-c  initialize all slopes to 0 first
-c
-
-c      initialize all slopes to zero first
-       qx = 0.d0
-       qy = 0.d0
        if (ssw .eq. 0.d0) go to 99
 c
        do 10 j = 1, mjtot

@@ -57,10 +57,10 @@ c         coarsen by 2 in every direction
           call coarsen(valdub,midub,mjdub,
      1                 valbgc,mi2tot,mj2tot,nvar)
 
-          call stepgrid(valbgc,fm,fp,gm,gp,
-     1                mi2tot,mj2tot,nghost,
-     2                dt2,dtnew2,hx2,hy2,nvar,
-     3                xlow,ylow,tpre,mptr,naux,auxbgc)
+c         call stepgrid(valbgc,fm,fp,gm,gp,
+c    1                mi2tot,mj2tot,nghost,
+c    2                dt2,dtnew2,hx2,hy2,nvar,
+c    3                xlow,ylow,tpre,mptr,naux,auxbgc)
 
 c         update counts for error estimation work
           evol = evol + (nx/2)*(ny/2)

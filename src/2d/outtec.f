@@ -21,9 +21,25 @@ c
       common /order2/ ssw, quad, nolimiter
       logical  quad, nolimiter
       logical pwconst
+      logical isAllSolid,checkIfAllSolid
       character ch
 c
-      xlowb = xlow - nghost*dx
+c     first count to see if any non solid cells on grid
+c     tecplot doesnt like zeroes
+      isAllSolid = checkIfAllSolid(irr,mitot,mjtot,nghost)
+      call countCellType(irr,mitot,mjtot,nghost,numSolid,numCut,
+     &                         numFull,lstgrd)
+      if (isAllSolid) then
+        if (numSolid .ne. (mitot-2*nghost)*(mjtot-2*nghost)) then
+          write(*,*)"count off in outtec"
+          stop
+        else
+          return
+        endif
+      endif
+
+
+ 8    xlowb = xlow - nghost*dx
       ylowb = ylow - nghost*dy
 
       ! output primitive variables, not conserved
@@ -42,7 +58,7 @@ c    ## NOTE THAT BNDRY CELLS FROM OTHER GRIDS NOT SET
 c  set pwconst true for piecewise constant plots, set to false for slopes in tec output
 c     pwconst =  .true.
 c     pwconst =  .false.
-      if (pwconst) go to 8
+      if (pwconst) go to 9
 
       if (ssw .ne. 0.d0) then
         call slopes(qp,qx,qy,mitot,mjtot,irr,lstgrd,nghost,dx,dy,
@@ -51,7 +67,7 @@ c     pwconst =  .false.
      &                 xlowb,ylowb,mptr,nvar)
       endif
 
- 8    continue
+ 9    continue
 
 c  count needed for unstructured tec format (so dont have to look up new format)
       nCellsinPlane = 0  
@@ -188,6 +204,50 @@ c
  104      format(4i10)
           ico = ico + 4
        end do
+
+      return
+      end
+c
+c -----------------------------------------------------------
+c
+      logical function checkIfAllSolid(irr,mitot,mjtot,nghost)
+
+      dimension irr(mitot,mjtot)
+
+      checkIfAllSolid = .true.
+
+      do 5 j = nghost+1, mjtot-nghost
+      do 5 i = nghost+1, mitot-nghost
+         if (irr(i,j) .ne. -1) then
+           checkIfAllSolid = .false.
+           go to 99
+         endif
+ 5    continue
+
+ 99   return 
+      end
+c
+c -----------------------------------------------------------
+c
+      subroutine countCellType(irr,mitot,mjtot,nghost,numSolid,numCut,
+     &                         numFull,lstgrd)
+      
+      dimension irr(mitot,mjtot)
+
+      numSolid = 0
+      numCut = 0
+      numFull = 0
+
+      do 10 j = nghost+1,mjtot-nghost
+      do 10 i = nghost+1,mitot-nghost
+         if (irr(i,j) .eq. -1) then
+            numSolid = numSolid + 1
+         else if (irr(i,j) .ne. lstgrd) then
+            numCut = numCut + 1
+         else
+            numFull = numFull + 1
+         endif
+ 10   continue
 
       return
       end

@@ -41,6 +41,7 @@ def setrun(claw_pkg='amrclaw'):
     probdata.add_param('mstage',    2, ' num RK stages')
     probdata.add_param('ismp',    0,  ' stabilization method')
     probdata.add_param('pwconst', True,' no slopes in plotting ')
+    probdata.add_param('max1d', 40,' max size each dir for grid patches')
     probdata.add_param('nloops',    1,  '# closed loops or segments')
     probdata.add_param('xloop1',    0.0,  ' starting pt x')
     probdata.add_param('yloop1',    .00001, ' starting pt y')
@@ -73,8 +74,8 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.upper[1] = 1.000000000           # yupper
 
     # Number of grid cells:
-    clawdata.num_cells[0] = 100     # mx
-    clawdata.num_cells[1] = 100     # my
+    clawdata.num_cells[0] = 310     # mx
+    clawdata.num_cells[1] = 310     # my
 
     # ---------------
     # Size of system:
@@ -225,7 +226,7 @@ def setrun(claw_pkg='amrclaw'):
     # --------------------
 
     # Number of ghost cells (usually 2)
-    clawdata.num_ghost = 4
+    clawdata.num_ghost = 6
 
     # Choice of BCs at xlower and xupper:
     #   0 or 'user'     => user specified (must modify bcNamr.f to use this option)

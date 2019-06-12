@@ -202,8 +202,9 @@ c               count this cell
 c
 c      apply limiter if requested. Go over all neighbors, do BJ
         if (nolimiter) go to 35
-        do 30 j = lwidth+1, mjtot-lwidth
-        do 30 i = lwidth+1, mitot-lwidth
+        !! this assumes no nhood larger than 2
+        do 30 j = 3, mjtot-2
+        do 30 i = 3, mitot-2
             k = irr(i,j)
             if (k .eq. -1) go to 30 ! solid cells have no gradient
             if (numHoods(i,j) .eq. 1) go to 30  ! CHECK THAT NOTHING TO DO AND VAL NOT CHANGED
@@ -325,12 +326,12 @@ c
       dimension xcentMerge(mitot,mjtot), ycentMerge(mitot,mjtot)
       dimension ncount(mitot,mjtot), irr(mitot,mjtot)
 
-      logical NOT_OK_GHOST, IS_OUT_OF_RANGE, IS_OUTSIDE, firstTimeThru
+      logical NOT_OK_GHOST, IS_OUTSIDE, firstTimeThru
 
-      NOT_OK_GHOST(i,j) = (i.lt.lwidth-1 .or. i .gt.mitot-lwidth/2 .or.
-     .                 j .lt. lwidth-1 .or. j .gt. mjtot-lwidth/2)
-
-      IS_OUT_OF_RANGE(i,j)  = (i<1 .or. i>mitot .or. j<1 .or. j>mjtot)
+       NOT_OK_GHOST(i,j) = (i .lt. 3 .or.
+     .                     i .gt. mitot-2 .or.
+     .                     j .lt. 3 .or.
+     .                     j .gt. mjtot-2)
 
       IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
      .                   y .lt. ylower .or. y .gt. yupper)
@@ -366,7 +367,7 @@ c
             do while (vqmerge < areaMin) 
                do 15 joff = -nco, nco
                do 15 ioff = -nco, nco
-                   if (IS_OUT_OF_RANGE(i+ioff,j+joff)) go to 15
+                   if (NOT_OK_GHOST(i+ioff,j+joff)) go to 15
                    koff = irr(i+ioff,j+joff)
                    if (koff .eq. -1) go to 15  ! solid cells dont help
                    call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,

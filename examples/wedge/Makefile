@@ -24,8 +24,8 @@ OVERWRITE ?= True                   # False ==> make a copy of OUTDIR first
 # Environment variable FC should be set to fortran compiler, e.g. gfortran
 
 # Compiler flags can be specified here or set as an environment variable
-FFLAGS ?= -g -C -CB -CU -fpe0 -ftrapuv
-#FFLAGS ?= -g -fbounds-check -ffpe-trap=invalid,overflow,zero -fopenmp  
+#FFLAGS ?= -g -C -CB -CU -fpe0 -ftrapuv mcmodel=large
+FFLAGS ?= -g -fbounds-check -ffpe-trap=invalid,overflow,zero 
 
 # ---------------------------------
 # package sources for this program:
@@ -56,10 +56,7 @@ SOURCES = \
   fbody.f \
   bc2amr.f90 \
   pphysbdlin.f \
-  vrm_llf.f \
-  estdt.f \
-  $(CLAW)/riemann/src/rpn2_vc_advection.f \
-  $(CLAW)/riemann/src/rpt2_vc_advection.f \
+  vrm_hll.f \
 
 #-------------------------------------------------------------------
 # Include Makefile containing standard definitions and make options:

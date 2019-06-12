@@ -5,12 +5,13 @@ c
 
       implicit double precision (a-h,o-z)
       common /userdt/ cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold
+     .                ismp,gradThreshold,pwconst
 
 
       dimension qr(4,msize),ql(4,msize)
       dimension ur(4), ul(4)
       dimension rx(4,msize),fl(4),fr(4)
+      logical   pwconst
 
 c
       if (ixmax .gt. msize) then

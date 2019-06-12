@@ -80,17 +80,23 @@ c
          dy   = hyposs(1)
          dt   = possk(1)
          dtgrid = dt
- 60           mitot = node(ndihi,mptr)-node(ndilo,mptr) + 1 + 2*nghost
-              mjtot = node(ndjhi,mptr)-node(ndjlo,mptr) + 1 + 2*nghost
+ 60           nx = node(ndihi,mptr)-node(ndilo,mptr) + 1 
+              ny = node(ndjhi,mptr)-node(ndjlo,mptr) + 1
+              mitot = nx + 2*nghost
+              mjtot = ny + 2*nghost
               locaux = node(storeaux,mptr)
               locirr = node(permstore,mptr)
               locnew = node(store1,mptr)
+              lstgrd = node(lstptr,mptr)
+              call countCellType(alloc(locirr),mitot,mjtot,nghost,
+     1                    numSolid,numCut,numFull,lstgrd)
 c             # added cfl to call to estdt so call.i isnt needed in estdt:
+              if (numSolid .eq. nx*ny) go to 59
               call estdt(alloc(locnew),alloc(locirr),
      1                   mitot,mjtot,nvar,dx,dy,dtgrid,nghost,
      2                   alloc(locaux),naux,cfl)
               dt = dmin1(dt,dtgrid)
-              mptr   = node(levelptr,mptr)
+ 59           mptr   = node(levelptr,mptr)
             if (mptr .ne. 0) go to 60
          possk(1) = dt
       endif

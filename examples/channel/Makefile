@@ -57,8 +57,6 @@ SOURCES = \
   bc2amr.f90 \
   pphysbdlin.f \
   vrm_llf.f \
-  $(CLAW)/riemann/src/rpn2_vc_advection.f \
-  $(CLAW)/riemann/src/rpt2_vc_advection.f \
 
 #-------------------------------------------------------------------
 # Include Makefile containing standard definitions and make options:

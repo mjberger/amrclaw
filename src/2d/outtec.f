@@ -149,10 +149,10 @@ c
             valprim(ivar) = qp(ivar,i,j)+(xc-xcen)*qx(ivar,i,j) +
      .                                   (yc-ycen)*qy(ivar,i,j)
          end do
-         if (iprob .eq. 20)then
-            call p20fn(xcen,ycen,exactsoln,time)
-             errprim =  q(i,j,1) - exactsoln(1)
-         endif
+c        if (iprob .eq. 20)then
+c           call p20fn(xcen,ycen,exactsoln,time)
+c            errprim =  q(i,j,1) - exactsoln(1)
+c        endif
 
           if (iprob .eq. 20) then  ! output error and soln, nvar=1
              write(14,102) xc,yc,(valprim(ivar),ivar=1,nvar),

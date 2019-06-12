@@ -39,10 +39,9 @@ COMMON_SOURCES += \
   $(AMRLIB)/isig.f \
   $(AMRLIB)/dumptec.f \
   $(AMRLIB)/outtec.f \
-  $(AMRLIB)/p19tru.f \
-  $(AMRLIB)/p19fn.f \
-  $(AMRLIB)/p20fn.f \
   $(AMRLIB)/zeroin.f \
+  $(AMRLIB)/p19fn.f \
+  $(AMRLIB)/p19tru.f \
   $(AMRLIB)/auxcoarsen.f \
   $(AMRLIB)/fixcapaq.f \
   $(AMRLIB)/estdt.f \
@@ -146,13 +145,6 @@ COMMON_SOURCES += \
   $(AMRLIB)/mkbdry.f \
   $(AMRLIB)/centrd.f \
   $(AMRLIB)/fs.f \
-  $(AMRLIB)/p18.f \
-  $(AMRLIB)/p18f.f \
-  $(AMRLIB)/p18mu.f \
-  $(AMRLIB)/p18th.f \
-  $(AMRLIB)/p18yw.f \
-  $(AMRLIB)/p18xw.f \
-  $(AMRLIB)/p18fxw.f \
   $(AMRLIB)/zero2.f \
 # $(AMRLIB)/resize_alloc_static.f90 \
 # $(AMRLIB)/fbody.f \

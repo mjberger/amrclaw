@@ -1,7 +1,7 @@
 c
 c -------------------------------------------------------------
 c
-      subroutine vrm(qr,ql,rx,ixmin,ixmax,iflip,msize)
+      subroutine vrm(qr,ql,rx,ixmin,ixmax,iflip,msize,mptr)
       implicit double precision (a-h,o-z)
       common /userdt/ cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                ismp,gradThreshold
@@ -43,7 +43,13 @@ c
   10     continue
 c
       do 20 k = ixmin, ixmax
+        if (rhol(k) .le. 0 .or. pl(k) .le.0.) then
+           write(*,*)"bad val k ",k,"grid ",mptr)
+        endif
         aL  = dsqrt(gamma*pl(k)/rhol(k))
+        if (rhor(k) .le. 0 .or. pr(k) .le.0.) then
+           write(*,*)"bad val k ",k,"grid ",mptr)
+        endif
         aR  = dsqrt(gamma*pr(k)/rhor(k))
 
 c       sL = ul(k) - aL; 

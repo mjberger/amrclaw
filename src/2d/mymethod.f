@@ -159,7 +159,7 @@ c              ul(m,i) = q(m,i,jcol)  ! which might lead to bad rp
 c
 c store fluxes in ff vector, copy into permanent flux array
 c
-         call vrm(ur,ul,ff,lwidth-2,mitot-lwidth+3,yrp,msize)
+         call vrm(ur,ul,ff,lwidth-2,mitot-lwidth+3,yrp,msize,mptr)
 c
          do 720 i = lwidth-2, mitot-lwidth+3
          do 720 m = 1, nvar
@@ -199,7 +199,7 @@ c              ul(m,j) = q(m,irow,j)
 c
 c store fluxes in ff 
 c
-         call vrm(ur,ul,ff,lwidth-2,mjtot-lwidth+3,xrp,msize)
+         call vrm(ur,ul,ff,lwidth-2,mjtot-lwidth+3,xrp,msize,mptr)
 c
          do 721  m = 1, nvar
          do 721 j = lwidth-2, mjtot-lwidth+3

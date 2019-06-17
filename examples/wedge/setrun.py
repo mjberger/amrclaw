@@ -39,7 +39,7 @@ def setrun(claw_pkg='amrclaw'):
 
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
     probdata.add_param('mstage',  2,  ' number RK stages (<=2 for now')
-    probdata.add_param('ismp',    1,  ' stabilization method')
+    probdata.add_param('ismp',    2,  ' stabilization method')
     probdata.add_param('pwconst', False,  ' no slopes for plotting ')
     probdata.add_param('max1d',   120,  ' max size each dir for grid patches ')
     probdata.add_param('nloops',    1,  '# closed loops or segments')
@@ -122,8 +122,9 @@ def setrun(claw_pkg='amrclaw'):
     if clawdata.output_style==1:
         # Output ntimes frames at equally spaced times up to tfinal:
         # Can specify num_output_times = 0 for no output
-        clawdata.num_output_times = 30
+        clawdata.num_output_times = 2
         clawdata.tfinal = .120
+        #clawdata.tfinal = .00095
         #clawdata.output_t0 = True  # output at initial (or restart) time?
         clawdata.output_t0 = False  # output at initial (or restart) time?
 
@@ -135,10 +136,10 @@ def setrun(claw_pkg='amrclaw'):
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
         clawdata.output_step_interval = 5
-        clawdata.total_steps = 20
+        clawdata.total_steps = 10
         #clawdata.total_steps = 148
-        clawdata.output_t0 = True  # output at initial (or restart) time?
-        #clawdata.output_t0 = False  # output at initial (or restart) time?
+        #clawdata.output_t0 = True  # output at initial (or restart) time?
+        clawdata.output_t0 = False  # output at initial (or restart) time?
 
 
     clawdata.output_format = 'ascii'       # 'ascii', 'binary', 'netcdf'
@@ -175,7 +176,7 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.dt_max = 1.000000e+99
 
     # Desired Courant number if variable dt used
-    clawdata.cfl_desired = 0.200000
+    clawdata.cfl_desired = 0.250000
     # max Courant number to allow without retaking step with a smaller dt:
     clawdata.cfl_max = 0.250000
 

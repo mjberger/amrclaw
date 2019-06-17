@@ -339,15 +339,14 @@ c
 
       ! merge until vqmerge at least this big (analogous to 1d where left and right nhoods each dx
       !!areaMin = 2.d0*ar(lstgrd)  
-      !!areaMin = 0.5d0*ar(lstgrd)  
-      areaMin = ar(lstgrd)  
+      areaMin = 0.5d0*ar(lstgrd)  
+      !!areaMin = ar(lstgrd)  
       numHoods = 0  ! initialize, loop below will add each cell to its own nhood
       ncount = 0
       maxnco = 0
 
       volMerge = 0.d0
       eps = 1.d-12
-      eps = -1.d-12
 
       do 10 j = 3, mjtot-2
       do 10 i = 3, mitot-2
@@ -483,8 +482,11 @@ c
           if (k .eq. lstgrd) cycle  
           nco = ncount(i,j)
           if (nco .eq. 0) then
-             if (delta(1,i,j) .ne. 0.d0) then
-                write(*,*)"error"
+             ! if not merged then should have nothing to distrib, w/in roundoff
+             if (dabs(delta(1,i,j)) .gt. eps) then
+                write(*,900) mptr,i,j,eps,delta(1,i,j)
+  900           format(" error grid ",i4, "i,j,delta ",2i5,
+     .                  e15.7, "eps ",e15.7)
              endif
              cycle  ! large enough cut cells dont play either
           endif

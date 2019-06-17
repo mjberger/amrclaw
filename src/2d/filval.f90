@@ -39,6 +39,12 @@ subroutine filval(val, mitot, mjtot, dx, dy, level, time,  mic,          &
     ! External function definitions
     real(kind=8) :: get_max_speed
 
+   ! FOR DEBUGGING
+    REAL(8), PARAMETER :: NANVAL =  TRANSFER((/ Z'00000000', Z'7FF80000' /),1.0_8)
+
+    !! DEBUGGING mjb
+    valc = NANVAL
+
 
     refinement_ratio_x = intratx(level-1)
     refinement_ratio_y = intraty(level-1)

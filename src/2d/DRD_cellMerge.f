@@ -22,6 +22,7 @@ c
        dimension graddot(nvar),alpha(nvar),recon(nvar)
        dimension a(2,2),b(2)
        real*8 minmod
+       integer maxthreads/1/, omp_get_max_threads
 
        logical IS_GHOST, IS_FAR_GHOST, verbose
        logical IS_OUTSIDE, NOT_OK_GHOST, NOT_VALID_VAL,REG_NBORS
@@ -101,7 +102,7 @@ c       also form denvolMerge since needs density
             if (k .eq. -1) go to 10 ! no solid cells           
             call getCellCentroid(lstgrd,i,j,xc,yc,xlow,ylow,dx,dy,k)
             if (IS_OUTSIDE(xc,yc) .or. NOT_OK_GHOST(i,j)) then
-              qMerge(:,i,j) = NaN ! to make sure we dont use it
+              qMerge(:,i,j) = rinfinity ! to make sure we dont use it
               go to 10
             endif
             if (k .eq. lstgrd) then 
@@ -473,6 +474,7 @@ c
 
 
       qold(1,:,:) = q(1,:,:)  ! save for density weighted distrib
+      eps = 1.d-12
       do j = 1, mjtot
       do i = 1, mitot
           k = irr(i,j)

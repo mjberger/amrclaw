@@ -1,7 +1,7 @@
 c
 c  ----------------------------------------------------------
 c
-      subroutine domain (nvar,vtime,nx,ny,naux,start_time)
+      subroutine domain (nvar,vtime,nx_domain,ny_domain,naux,start_time)
 c
       use amr_module
       implicit double precision (a-h,o-z)
@@ -27,7 +27,8 @@ c
       lstart(1) = mstart
 
       if (flag_richardson) then
-      if (((nx/2)*2 .ne. nx) .or. (ny/2)*2 .ne. ny) then 
+      if (((nx_domain/2)*2 .ne. nx_domain) .or. 
+     .     (ny_domain/2)*2 .ne. ny_domain) then 
          write(outunit,*)" must have even number of cells"
          write(*,*)      " must have even number of cells"
          stop
@@ -36,8 +37,8 @@ c
 
       node(ndilo,mstart) = 0
       node(ndjlo,mstart) = 0
-      node(ndihi,mstart) = nx-1
-      node(ndjhi,mstart) = ny-1
+      node(ndihi,mstart) = nx_domain-1
+      node(ndjhi,mstart) = ny_domain-1
 
       lfine = 1
       call  birect(mstart)
@@ -103,12 +104,12 @@ c             # added cfl to call to estdt so call.i isnt needed in estdt:
 c
 c set rest of possk array for refined timesteps
 c
-      iregsz(1) = nx
-      jregsz(1) = ny
+      iregsz(1) = nx_domain
+      jregsz(1) = ny_domain
       iregst(1) = 0
       jregst(1) = 0
-      iregend(1) = nx-1
-      jregend(1) = ny-1
+      iregend(1) = nx_domain-1
+      jregend(1) = ny_domain-1
       do 70 level = 2, mxnest
          iregsz(level) = iregsz(level-1) * intratx(level-1)
          jregsz(level) = jregsz(level-1) * intraty(level-1)

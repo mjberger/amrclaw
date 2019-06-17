@@ -4,12 +4,13 @@ c
        subroutine estdt(val,irr,mitot,mjtot,nvar,dx,dy,dtgrid,
      1                  lwidth,aux,naux,cfl)
 c
+       use amr_module, only : rinfinity
        implicit double precision (a-h, o-z)
        dimension val(nvar,mitot,mjtot), irr(mitot,mjtot)
        common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                 ismp,gradThreshold
 c
-       speedmax = rinfinity
+       speedmax =  0.d0
        do 20 j = lwidth+1, mjtot-lwidth
        do 10 i = lwidth+1, mitot-lwidth
          if (irr(i,j) .ne. -1) then
@@ -28,7 +29,9 @@ c
  20    continue
 c
        effh = (dx*dy)/(2.d0*dx + 2.d0*dy)
-       dtgrid = cflcart * effh / speedmax
+       if (speedmax .gt. 0.d0) then
+          dtgrid = cflcart * effh / speedmax
+       endif
 c
        return
        end

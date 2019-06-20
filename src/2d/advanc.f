@@ -196,7 +196,7 @@ c  the finest level. finest level grids do not maintain copies
 c  of old and new time solution values.
 c
          ! do it all the time now, needed for multistage RK
-         !f (level .lt. mxnest) then
+         !if (level .lt. mxnest) then
              ntot   = mitot * mjtot * nvar
 cdir$ ivdep
              do 10 i = 1, ntot

@@ -46,10 +46,10 @@ c
       nterms = 2 
 
 
-c      do 110 ix0 = lwidth-2, mitot-lwidth+3
 c      do 110 iy0 = lwidth-2, mjtot-lwidth+3
-      do 110 ix0 = 1, mitot
+c      do 110 ix0 = lwidth-2, mitot-lwidth+3
       do 110 iy0 = 1, mjtot
+      do 110 ix0 = 1, mitot
          k = irr(ix0,iy0)
          if (k .eq. -1) go to 110
          if (k .eq. lstgrd .and. ALL_NBORS_EXIST(ix0,iy0)) then

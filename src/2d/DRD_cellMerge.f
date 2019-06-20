@@ -116,15 +116,18 @@ c
              do 27 ioff = -ncount(i,j), ncount(i,j)
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) go to 27  ! solid cells dont contribute
+	        !! to include the cell itself uncomment next line
                 call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                               xlow,ylow,dx,dy,koff)
                 if (IS_OUTSIDE(xcn,ycn)) go to 27 ! nor ghost cells
                 if (NOT_VALID_VAL(i+ioff,j+joff)) go to 27
-c               count this cell 
+c               count this cell for qmerge, not for density distrib
                 aoff = ar(koff)
                 qMerge(:,i,j) = qMerge(:,i,j) + aoff*q(:,i+ioff,j+joff)
-                denvolMerge(i,j) = denvolMerge(i,j) + 
-     .                             aoff*q(1,i+ioff,j+joff)
+                if (ioff .ne. 0 .or. joff .ne. 0) then 
+                     denvolMerge(i,j) = denvolMerge(i,j) + 
+     .                                  aoff*q(1,i+ioff,j+joff)
+                endif
  27          continue
              qMerge(:,i,j) = qMerge(:,i,j) / volMerge(i,j)
  10     continue
@@ -298,7 +301,7 @@ c
 c
        call distribute(q,delta,volMerge,numHoods,ncount,
      .                 irr,mitot,mjtot,nvar,lstgrd,
-     .                 denvolMerge)
+     .                 denvolMerge,mptr,istage)
 c
 c      q comes back updated
 c
@@ -340,8 +343,8 @@ c
 
       ! merge until vqmerge at least this big (analogous to 1d where left and right nhoods each dx
       !!areaMin = 2.d0*ar(lstgrd)  
-      areaMin = 0.5d0*ar(lstgrd)  
-      !!areaMin = ar(lstgrd)  
+      !!areaMin = 0.5d0*ar(lstgrd)  
+      areaMin = ar(lstgrd)  
       numHoods = 0  ! initialize, loop below will add each cell to its own nhood
       ncount = 0
       maxnco = 0
@@ -455,7 +458,7 @@ c -------------------------------------------------------------------
 c
       subroutine distribute(q,delta,volMerge,numHoods,ncount,
      .                      irr,mitot,mjtot,nvar,lstgrd,
-     .                      denvolMerge)
+     .                      denvolMerge,mptr,istage)
 
       use amr_module
       implicit double precision (a-h, o-z)
@@ -465,6 +468,7 @@ c
       dimension ncount(mitot,mjtot), irr(mitot,mjtot)
       dimension q(nvar,mitot,mjtot), delta(nvar,mitot,mjtot)
       dimension qold(1,mitot,mjtot)
+      dimension qp(4,mitot,mjtot)
       logical NOT_OK_GHOST
 
       NOT_OK_GHOST(i,j) = (i .lt. nghost-1 .or. 
@@ -498,16 +502,46 @@ c
           do 10 ioff = -nco, nco
             koff = irr(i+ioff,j+joff)
             if (koff .eq. -1 .or. NOT_OK_GHOST(i+ioff,j+joff)) go to 10
-            q(:,i+ioff,j+joff) = q(:,i+ioff,j+joff)-
-     &                           delta(:,i,j)/volMerge(i,j)
-c           dsum = dsum + ar(koff)*qold(1,i+ioff,j+joff)
-c           q(:,i+ioff,j+joff) = q(:,i+ioff,j+joff)- delta(:,i,j)*
-c    &                         qold(1,i+ioff,j+joff)/denvolMerge(i,j)
+            ! to include cell itself comment out next line
+	    if (ioff .eq. 0 .and. joff .eq. 0) go to 10
+c           q(:,i+ioff,j+joff) = q(:,i+ioff,j+joff)-
+c    &                           delta(:,i,j)/volMerge(i,j)
+            dsum = dsum + ar(koff)*qold(1,i+ioff,j+joff)
+            q(:,i+ioff,j+joff) = q(:,i+ioff,j+joff)- delta(:,i,j)*
+     &                         qold(1,i+ioff,j+joff)/denvolMerge(i,j)
  10       continue
 c         if (dabs(dsum-denvolMerge(i,j)) .gt. 1.d-14) then
 c            write(*,*)"error here"
 c         endif
 
+      end do
+      end do
+
+c     check positivity
+      call checkPhys(q,mitot,mjtot,mptr,istage)
+
+      return
+      end
+c
+c ------------------------------------------------------------------------
+c
+      subroutine checkPhys(q,mitot,mjtot,mptr,istage)
+
+      implicit real*8 (a-h,o-z)
+      dimension q(4,mitot,mjtot)
+
+      gamma1 = .4d0
+      do j = 1, mjtot
+      do i = 1, mitot
+        rho = q(1,i,j)
+	u = q(2,i,j)/rho
+	v = q(2,i,j)/rho
+	pr = gamma1*(q(4,i,j)-.5d0*rho*(u*u+v*v))
+	if (rho < 0 .or. pr < 0) then
+           write(*,901)rho,pr,i,j,mptr,istage
+ 901       format("non=-physical den/pr",2e15.7," at i,j grid stage ",
+     .            4i5)
+        endif
       end do
       end do
 

@@ -34,7 +34,10 @@ c           ## if next line commented out, then diagonal nbors are allwoed
            iyn = iy0 + joff
            if (outside(ixn,iyn)) go to 20
 c           ::: dont use points 2 away in each coordinate direction
-           if (l1_len(ixn,iyn) .ge. 3) go to 20
+c          uncomment next line is for broader stencil
+c          if (l1_len(ixn,iyn) .ge. 3) go to 20
+c          this line says to use is edge nbors only
+           if (l1_len(ixn,iyn) .ge. 2) go to 20
            kn  = irr(ixn,iyn)
            if (kn .eq. -1) go to 20
            if (kn .eq. lstgrd  .or. k0 .eq. lstgrd) go to 25

@@ -246,6 +246,8 @@ c
             endif
  917     continue
 
+         call checkPhys(q,mitot,mjtot,mptr,istage)
+
 c  postprocess for stability of cut cells. c
 c  do it in conserved variables for conservation purposes, (but maybe prim better?)
 c

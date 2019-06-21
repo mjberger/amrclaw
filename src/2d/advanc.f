@@ -63,7 +63,7 @@ c We want to do this regardless of the threading type
 !$OMP&                    mjtot,time,levSt),
 !$OMP&            SHARED(level, nvar, naux, alloc, intrat, delt,
 !$OMP&                   listOfGrids,listStart,nghost,
-!$OMP&                   node,rnode,numgrids,listgrids),
+!$OMP&                   node,rnode,numgrids,listgrids,istage),
 !$OMP&            SCHEDULE (dynamic,1)
 !$OMP&            DEFAULT(none)
       do j = 1, numgrids(level)
@@ -110,8 +110,8 @@ c
 !$OMP&            SHARED(rvol,rvoll,level,nvar,mxnest,alloc,intrat)
 !$OMP&            SHARED(nghost,intratx,intraty,hx,hy,naux,listsp)
 !$OMP&            SHARED(node,rnode,dtlevnew,numgrids,listgrids)
-!$OMP&            SHARED(istage,mstage,ar,ixg,iyg,nxtirrr)
-!$OMP&            SHARED(listOfGrids,listStart,levSt,vtime)
+!$OMP&            SHARED(istage,mstage,ar,ixg,iyg,nxtirr)
+!$OMP&            SHARED(listOfGrids,listStart,levSt,vtime,delt)
 !$OMP&            SCHEDULE (DYNAMIC,1)
 !$OMP&            DEFAULT(none)
       do j = 1, numgrids(level)
@@ -125,10 +125,22 @@ c
 c
          call par_advanc(mptr,mitot,mjtot,nvar,naux,dtnew,vtime,
      &                   istage,mstage)
+
+
+c        update for one stage so that bc's set properly
+c        for second stage, but then will take it off
+c        when average them
+c
+         rnode(timemult,mptr) = rnode(timemult,mptr)+delt
          if (istage .eq. mstage) then
 !$OMP CRITICAL (newdt)
           dtlevnew = dmin1(dtlevnew,dtnew)
 !$OMP END CRITICAL (newdt)    
+         endif
+
+         if (istage .eq. 2) then  ! fix for more than 2 stage RK  
+            ! grid has been updated in time for each stage. subtract one for 2 stage method
+            rnode(timemult,mptr)  = rnode(timemult,mptr)-delt
          endif
 
       end do
@@ -182,7 +194,7 @@ c
       delt  = possk(level)
       nx    = node(ndihi,mptr) - node(ndilo,mptr) + 1
       ny    = node(ndjhi,mptr) - node(ndjlo,mptr) + 1
-      thistime  = rnode(timemult,mptr)+(istage-1)*delt
+      time  = rnode(timemult,mptr)
 
 !$    mythread = omp_get_thread_num()
 
@@ -196,12 +208,15 @@ c  the finest level. finest level grids do not maintain copies
 c  of old and new time solution values.
 c
          ! do it all the time now, needed for multistage RK
+         ! even if no refinement.  But only do it on
+         ! first stage, other locold holds qold for RK update
          !if (level .lt. mxnest) then
+         if (istage .eq. 1) then
              ntot   = mitot * mjtot * nvar
 cdir$ ivdep
              do 10 i = 1, ntot
  10            alloc(locold + i - 1) = alloc(locnew + i - 1)
-         !endif
+         endif
 c
          xlow = rnode(cornxlo,mptr) - nghost*hx
          ylow = rnode(cornylo,mptr) - nghost*hy
@@ -248,14 +263,14 @@ c           # Unsplit method
 c        call stepgrid(alloc(locnew),alloc(locold),fm,fp,gm,gp,
 c    2                 mitot,mjtot,nghost,
 c    3                 delt,dtnew,hx,hy,nvar,
-c    4                 xlow,ylow,thistime,mptr,naux,alloc(locaux),
+c    4                 xlow,ylow,time,mptr,naux,alloc(locaux),
 c    5                 alloc(locirr),node(lstptr,mptr),
 c    6                 alloc(locncount),alloc(locnumHoods),vtime,istage)
          call mymethod(alloc(locnew),alloc(locold),mitot,mjtot,nghost,
      1                 delt,dtnew,hx,hy,nvar,xlow,ylow,mptr,naux,
      2                 alloc(locaux),alloc(locirr),node(lstptr,mptr),
      3                 alloc(locncount),alloc(locnumHoods),vtime,
-     4                 istage,thistime)
+     4                 istage,time)
          else if (dimensional_split .eq. 1) then
 c           # Godunov splitting
             write(6,*)"this option not supported"
@@ -282,9 +297,6 @@ c
 c        write(outunit,969) mythread,delt, dtnew
 c969     format(" thread ",i4," updated by ",e15.7, " new dt ",e15.7)
          ! note above that for the second stage time incremetned
-         if (istage .eq. mstage) then
-            rnode(timemult,mptr)  = rnode(timemult,mptr)+delt
-         endif
 c
       return
       end

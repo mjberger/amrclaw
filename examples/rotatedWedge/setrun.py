@@ -41,7 +41,7 @@ def setrun(claw_pkg='amrclaw'):
     probdata.add_param('mstage',  2,  ' number RK stages (<=2 for now')
     probdata.add_param('ismp',    0,  ' stabilization method')
     probdata.add_param('pwconst', False, ' no slopes for plotting ')
-    probdata.add_param('max1d',  100,  ' max size each dir for grid patches ')
+    probdata.add_param('max1d', 100,  ' max size each dir for grid patches ')
     probdata.add_param('nloops',    0,  '# this problem rotates the IC, not geom.')
 
 #  not quite working with cut cells due to lower left boundary
@@ -72,16 +72,14 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.num_dim = num_dim
 
     # Lower and upper edge of computational domain:
-    clawdata.lower[0] = 0.390000e+00          # xlower
-    clawdata.upper[0] = 1.390000e+00          # xupper
+    clawdata.lower[0] = 0.300000e+00          # xlower
+    clawdata.upper[0] = 1.300000e+00          # xupper
     clawdata.lower[1] = 0.000000e+00          # ylower
-    clawdata.upper[1] = 1.000000000           # yupper
+    clawdata.upper[1] = 0.2500000000           # yupper
 
     # Number of grid cells:
-    clawdata.num_cells[0] = 148     # mx
-    clawdata.num_cells[1] = 100     # my
-    #clawdata.num_cells[0] = 100*2     # mx
-    #clawdata.num_cells[1] = 100*2     # my
+    clawdata.num_cells[0] = 100*2     # mx
+    clawdata.num_cells[1] = 50      # my
 
     # ---------------
     # Size of system:
@@ -109,9 +107,9 @@ def setrun(claw_pkg='amrclaw'):
     # restart_file 'fort.chkNNNNN' specified below should be in
     # the OUTDIR indicated in Makefile.
 
-    #clawdata.restart = True                # True to restart from prior results
-    clawdata.restart = False               # True to restart from prior results
-    clawdata.restart_file = 'fort.chk00165'  # File to use for restart data
+    clawdata.restart = True                # True to restart from prior results
+    #clawdata.restart = False               # True to restart from prior results
+    clawdata.restart_file = 'fort.chk03000'  # File to use for restart data
 
 
     # -------------
@@ -139,8 +137,8 @@ def setrun(claw_pkg='amrclaw'):
 
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
-        clawdata.output_step_interval = 500 
-        clawdata.total_steps = 500
+        clawdata.output_step_interval = 4000
+        clawdata.total_steps = 4000
         clawdata.output_t0 = True  # output at initial (or restart) time?
         #clawdata.output_t0 = False  # output at initial (or restart) time?
 

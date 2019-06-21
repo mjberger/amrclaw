@@ -62,6 +62,7 @@ c
        endif
 
        ! if this grid patch is all solid cells skip it
+       ! this method only counts interior cells, not ghost cells.
        call countCellType(irr,mitot,mjtot,lwidth,numSolid,numCut,
      .                    numFull,lstgrd)
        nx = mitot-2*lwidth
@@ -117,11 +118,13 @@ c
 c  store primitive variables in f for now
 c
       if (iprob .ne. 20) call vctoprm(q,q,mitot,mjtot,nvar)
+c     now using bc2amr in conserved variables. copyingn internally
+c     from different grids for each stage
 c     ### call for exterior bcs at each stage so can use slopes
-            xhigh= xlow + mitot*dx
-            yhigh = ylow + mjtot*dy
-            call pphysbdlin(xlow,xhigh,ylow,yhigh,level,mitot,mjtot,
-     &                      nvar,q,time,dx,dy,qx,qy,irr,lstgrd)
+c           xhigh= xlow + mitot*dx
+c           yhigh = ylow + mjtot*dy
+c           call pphysbdlin(xlow,xhigh,ylow,yhigh,level,mitot,mjtot,
+c    &                      nvar,q,time,dx,dy,qx,qy,irr,lstgrd)
 c        endif
       if (ssw .ne. 0.d0) then   ! recalc slopes at each stage
          call slopes(q,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,dx,dy,

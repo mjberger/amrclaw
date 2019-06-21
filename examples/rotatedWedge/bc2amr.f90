@@ -242,15 +242,13 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
                 continue
 
             case(3) ! Wall boundary conditions
+                ! actually only wall after initial shock location
+                ! otherwise flow through (extrap)
                 do j = 1, nyb
                     do i = 1, nrow
                         val(:,i,j) = val(:, i, 2 * nyb + 1 - j)
-                    end do
-                end do
-                ! negate the normal velocity:
-                do j = 1, nyb
-                    do i = 1, nrow
-                        val(3,i,j) = -val(3, i, j)
+			xcen = xlo_patch  + (dfloat(i)-.5d0)* hx
+			if (xcen .gt. sloc) val(3,i,j) = -val(3,i,j)
                     end do
                 end do
 
@@ -292,9 +290,9 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
                     pt = 1.d0
                 endif
                 val(1,i,j) = rhot
-                val(2,i,j) = ut
-                val(3,i,j) = vt
-                val(4,i,j) = pt
+                val(2,i,j) = rhot*ut
+                val(3,i,j) = rhot*vt
+                val(4,i,j) = pt/.4d0+0.5d0*rhot*(ut**2+vt**2)
               end do
               end do
 

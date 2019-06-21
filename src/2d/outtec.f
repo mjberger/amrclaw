@@ -20,7 +20,7 @@ c
      .                ismp,gradThreshold,pwconst
       common /order2/ ssw, quad, nolimiter
       logical  quad, nolimiter
-      logical pwconst
+      logical pwconst, ghostOut
       logical isAllSolid,checkIfAllSolid
       character ch
 c
@@ -55,6 +55,21 @@ c    &                   nvar,qp,time,dx,dy,qx,qy,irr,lstgrd)
        qx = 0.d0
        qy = 0.d0
 
+c  if want to output ghost cells too change this flag
+       ghostOut = .false.
+       if (ghostOut) then
+          ist = 1
+          iend = mitot
+          jst = 1
+          jend = mjtot
+       else
+          ist = nghost+1
+          iend = mitot-nghost
+          jst = nghost+1
+          jend = mjtot-nghost
+       endif
+
+
 c  set pwconst true for piecewise constant plots, set to false for slopes in tec output
 c     pwconst =  .true.
 c     pwconst =  .false.
@@ -71,10 +86,8 @@ c     pwconst =  .false.
 
 c  count needed for unstructured tec format (so dont have to look up new format)
       nCellsinPlane = 0  
-      do 10 i = nghost+1, mitot-nghost
-      do 10 j = nghost+1, mjtot-nghost
-c      do 10 i = nghost-2, mitot-nghost+4
-c      do 10 j = nghost-2, mjtot-nghost+4
+       do 10 i = ist,iend
+       do 10 j = jst,jend
          if (irr(i,j) .ne. -1) then
             nCellsinPlane = nCellsinPlane+1
          endif
@@ -93,10 +106,8 @@ c
 
 c  only output real rows and cols, no ghost cells 
 c
-      do 15 i = nghost+1, mitot-nghost
-      do 15 j = nghost+1, mjtot-nghost
-c     do 15 i = nghost-2,mitot-nghost+4
-c     do 15 j = nghost-2,mjtot-nghost+4
+      do 15 j = jst,jend
+      do 15 i = ist, iend
          kirr = irr(i,j)
          if (kirr .eq. -1) go to 15
 

@@ -47,10 +47,10 @@ c     tecplot doesnt like zeroes
 c
 c     ### call for exterior bcs at each stage so can use slopes
 c    ## NOTE THAT BNDRY CELLS FROM OTHER GRIDS NOT SET
-            xhigh = xlowb + mitot*dx
-            yhigh = ylowb + mjtot*dy
-            call pphysbdlin(xlowb,xhigh,ylowb,yhigh,level,mitot,mjtot,
-     &                   nvar,qp,time,dx,dy,qx,qy,irr,lstgrd)
+c           xhigh = xlowb + mitot*dx
+c           yhigh = ylowb + mjtot*dy
+c           call pphysbdlin(xlowb,xhigh,ylowb,yhigh,level,mitot,mjtot,
+c    &                   nvar,qp,time,dx,dy,qx,qy,irr,lstgrd)
  
        qx = 0.d0
        qy = 0.d0
@@ -73,8 +73,8 @@ c  count needed for unstructured tec format (so dont have to look up new format)
       nCellsinPlane = 0  
       do 10 i = nghost+1, mitot-nghost
       do 10 j = nghost+1, mjtot-nghost
-c      do 10 i = nghost-1, mitot-nghost+2
-c      do 10 j = nghost-1, mjtot-nghost+2
+c      do 10 i = nghost-2, mitot-nghost+4
+c      do 10 j = nghost-2, mjtot-nghost+4
          if (irr(i,j) .ne. -1) then
             nCellsinPlane = nCellsinPlane+1
          endif
@@ -95,8 +95,8 @@ c  only output real rows and cols, no ghost cells
 c
       do 15 i = nghost+1, mitot-nghost
       do 15 j = nghost+1, mjtot-nghost
-c       do 15 i = nghost-1,mitot-nghost+2
-c       do 15 j = nghost-1,mjtot-nghost+2
+c     do 15 i = nghost-2,mitot-nghost+4
+c     do 15 j = nghost-2,mjtot-nghost+4
          kirr = irr(i,j)
          if (kirr .eq. -1) go to 15
 

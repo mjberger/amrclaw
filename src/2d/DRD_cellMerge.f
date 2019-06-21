@@ -518,17 +518,18 @@ c         endif
       end do
 
 c     check positivity
-      call checkPhys(q,mitot,mjtot,mptr,istage)
+      call checkPhys(q,mitot,mjtot,mptr,istage,'from DRD_merge')
 
       return
       end
 c
 c ------------------------------------------------------------------------
 c
-      subroutine checkPhys(q,mitot,mjtot,mptr,istage)
+      subroutine checkPhys(q,mitot,mjtot,mptr,istage,str)
 
       implicit real*8 (a-h,o-z)
       dimension q(4,mitot,mjtot)
+      character*14 str
 
       gamma1 = .4d0
       do j = 1, mjtot
@@ -538,9 +539,9 @@ c
 	v = q(2,i,j)/rho
 	pr = gamma1*(q(4,i,j)-.5d0*rho*(u*u+v*v))
 	if (rho < 0 .or. pr < 0) then
-           write(*,901)rho,pr,i,j,mptr,istage
+           write(*,901)rho,pr,i,j,mptr,istage,str
  901       format("non=-physical den/pr",2e15.7," at i,j grid stage ",
-     .            4i5)
+     .            4i5," from ",a14)
         endif
       end do
       end do

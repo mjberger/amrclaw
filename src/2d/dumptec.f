@@ -45,8 +45,8 @@ c
               hx   = hxposs(level)
               hy   = hyposs(level)
 
-             call bound(time,nvar,nghost,alloc(locnew),mitot,mjtot,mptr,
-     1                  alloc(locaux),naux)
+c            call bound(time,nvar,nghost,alloc(locnew),mitot,mjtot,mptr,
+c    1                  alloc(locaux),naux)
 
               ! remember got 3 times size of irr to include other arrays
               locirr = node(permstore,mptr)

@@ -182,7 +182,7 @@ c
       delt  = possk(level)
       nx    = node(ndihi,mptr) - node(ndilo,mptr) + 1
       ny    = node(ndjhi,mptr) - node(ndjlo,mptr) + 1
-      time  = rnode(timemult,mptr)
+      thistime  = rnode(timemult,mptr)+(istage-1)*delt
 
 !$    mythread = omp_get_thread_num()
 
@@ -248,13 +248,14 @@ c           # Unsplit method
 c        call stepgrid(alloc(locnew),alloc(locold),fm,fp,gm,gp,
 c    2                 mitot,mjtot,nghost,
 c    3                 delt,dtnew,hx,hy,nvar,
-c    4                 xlow,ylow,time,mptr,naux,alloc(locaux),
+c    4                 xlow,ylow,thistime,mptr,naux,alloc(locaux),
 c    5                 alloc(locirr),node(lstptr,mptr),
 c    6                 alloc(locncount),alloc(locnumHoods),vtime,istage)
          call mymethod(alloc(locnew),alloc(locold),mitot,mjtot,nghost,
      1                 delt,dtnew,hx,hy,nvar,xlow,ylow,mptr,naux,
      2                 alloc(locaux),alloc(locirr),node(lstptr,mptr),
-     3                 alloc(locncount),alloc(locnumHoods),vtime,istage)
+     3                 alloc(locncount),alloc(locnumHoods),vtime,
+     4                 istage,thistime)
          else if (dimensional_split .eq. 1) then
 c           # Godunov splitting
             write(6,*)"this option not supported"
@@ -280,8 +281,7 @@ c           # should never get here due to check in amr2
 c
 c        write(outunit,969) mythread,delt, dtnew
 c969     format(" thread ",i4," updated by ",e15.7, " new dt ",e15.7)
-         ! should we mark stages by fractions? dont think it can
-         ! be used in between so may not be necessary
+         ! note above that for the second stage time incremetned
          if (istage .eq. mstage) then
             rnode(timemult,mptr)  = rnode(timemult,mptr)+delt
          endif

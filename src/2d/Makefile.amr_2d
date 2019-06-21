@@ -32,8 +32,8 @@ COMMON_SOURCES += \
   $(AMRLIB)/irregFlux.f \
   $(AMRLIB)/vctoprm.f \
   $(AMRLIB)/vprmtoc.f \
-  $(AMRLIB)/qslopes.f \
-  $(AMRLIB)/slopes.f \
+  $(AMRLIB)/AG_qslopes.f \
+  $(AMRLIB)/AG_slopes.f \
   $(AMRLIB)/addneighbors.f \
   $(AMRLIB)/makep.f \
   $(AMRLIB)/isig.f \

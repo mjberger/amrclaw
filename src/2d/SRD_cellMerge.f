@@ -104,7 +104,7 @@ c       form qMerge vals
             if (k .eq. -1) go to 10 ! no solid cells
             call getCellCentroid(lstgrd,i,j,xc,yc,xlow,ylow,dx,dy,k)
             if (IS_OUTSIDE(xc,yc) .or. NOT_OK_GHOST(i,j)) then 
-              qMerge(:,i,j) = NaN ! to make sure we dont use it
+              qMerge(:,i,j) = rinfinity ! to make sure we dont use it
               go to 10 
             endif
             if (k.eq.lstgrd) then

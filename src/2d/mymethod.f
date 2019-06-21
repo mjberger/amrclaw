@@ -1,7 +1,7 @@
       subroutine mymethod(q,qold,mitot,mjtot,lwidth,
      &                  dtn,dtnewn,
      &                  dx,dy,nvar,xlow,ylow,mptr,maux,aux,irr,
-     &                  lstgrd,ncount,numHoods,vtime,istage)
+     &                  lstgrd,ncount,numHoods,vtime,istage,time)
 
       use amr_module
       implicit double precision (a-h,o-z)
@@ -134,7 +134,7 @@ c
 c  loop through rows of q calculating fluxes one row at time
 c  vertical riemann problem first
 c
-      do 800 jcol = lwidth-2, mjtot-lwidth+3
+      do 800 jcol = 2, mjtot-2 
 c
          do 511 i = lwidth-2, mitot-lwidth+3
             call getYface(i,jcol,xface,yface,irr,mitot,mjtot,
@@ -173,7 +173,7 @@ c
 c
 c    Horizontal riemann problems next
 c
-      do 900 irow = lwidth-2, mitot-lwidth+3
+      do 900 irow = 2, mitot-2
 c
          do 611 j = lwidth-2, mjtot-lwidth+3
             call getXface(irow,j,xface,yface,irr,mitot,mjtot,
@@ -218,8 +218,8 @@ c
 c  multiply fluxes by mesh spacing. 
 c  this zeros out unused fluxes so solid vals dont get updated.
 c
-         do 580 i = 2, mitot
-         do 580 j = 2, mjtot
+         do 580 i = 1, mitot
+         do 580 j = 1, mjtot
             f(:,i,j) = f(:,i,j) * ffluxlen(i,j)
             g(:,i,j) = g(:,i,j) * gfluxlen(i,j)
  580     continue
@@ -246,7 +246,7 @@ c
             endif
  917     continue
 
-         call checkPhys(q,mitot,mjtot,mptr,istage)
+         call checkPhys(q,mitot,mjtot,mptr,istage,'from my_method')
 
 c  postprocess for stability of cut cells. c
 c  do it in conserved variables for conservation purposes, (but maybe prim better?)

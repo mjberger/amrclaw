@@ -128,9 +128,9 @@ c    &                      nvar,q,time,dx,dy,qx,qy,irr,lstgrd)
 c        endif
       if (ssw .ne. 0.d0) then   ! recalc slopes at each stage
          call slopes(q,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,dx,dy,
-     &               xlow,ylow,nvar)
+     &               xlow,ylow,nvar,mptr,istage)
          call qslopes(q,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,dx,dy,
-     &                 xlow,ylow,mptr,nvar)
+     &                 xlow,ylow,mptr,nvar,istage)
       endif
 
 c

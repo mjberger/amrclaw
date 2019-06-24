@@ -2,7 +2,7 @@ c
 c ---------------------------------------------------------------------
 c
        subroutine qslopes(qp,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,
-     &                    hx,hy,xlow,ylow,mptr,nvar)
+     &                    hx,hy,xlow,ylow,mptr,nvar,istage)
 
       use amr_module
       implicit double precision(a-h,o-z)
@@ -160,8 +160,10 @@ c              if (IS_GHOST(i+ioff,j+joff)) go to 31
                 recon = qp(:,i,j) + phimin * graddot
                 ! one last check for positivity
                 if (recon(1) .le. 0.d0 .or. recon(4) .le. 0.d0) then
-                    dalpha = 0.d0
-                    print *,"nonphysical on boundary"
+                  dalpha = 0.d0
+                  write(*,900) i,j,mptr,istage
+ 900              format("boundary nonphysical: cell ",2i5,
+     .                   " grid ",i4," istage ",i2)
                 endif
                 phimin = min(phimin, dalpha)
  934         continue

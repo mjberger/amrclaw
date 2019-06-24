@@ -7,7 +7,8 @@ c
       implicit double precision (a-h,o-z)
       common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                ismp,gradThreshold,pwconst
-      logical         flag,pwconst
+      common /order2/ ssw, quad, nolimiter
+      logical         flag,pwconst,quad,nolimiter
       character*23  filename 
 c
 c dumptec = make tecplot file for finest level soln values over entire domain
@@ -26,6 +27,8 @@ c
  100  format('TITLE = "Extracted cutting Planes through mesh"' )
 
  10   level = lfine
+
+c     fill ghost cells if need them for output or to compute gradients
       mptr = lstart(level)
  20       if (mptr .eq. 0) go to 50
               nx = node(ndihi,mptr)-node(ndilo,mptr)+1
@@ -45,8 +48,9 @@ c
               hx   = hxposs(level)
               hy   = hyposs(level)
 
-c            call bound(time,nvar,nghost,alloc(locnew),mitot,mjtot,mptr,
-c    1                  alloc(locaux),naux)
+             if (ssw .ne. 0 .and. .not. pwconst)
+     1         call bound(time,nvar,nghost,alloc(locnew),mitot,mjtot,
+     2                    mptr,alloc(locaux),naux)
 
               ! remember got 3 times size of irr to include other arrays
               locirr = node(permstore,mptr)
@@ -61,6 +65,7 @@ c
               mptr = node(levelptr,mptr)
           go to 20
 50        continue
+ 
 c
       close(14)
 c

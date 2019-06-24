@@ -76,10 +76,11 @@ c     pwconst =  .false.
       if (pwconst) go to 9
 
       if (ssw .ne. 0.d0) then
+        istage = 0 ! signifies called from outtec
         call slopes(qp,qx,qy,mitot,mjtot,irr,lstgrd,nghost,dx,dy,
-     &               xlowb,ylowb,nvar)
+     &               xlowb,ylowb,nvar,mptr,istage)
         call qslopes(qp,qx,qy,mitot,mjtot,irr,lstgrd,nghost,dx,dy,
-     &                 xlowb,ylowb,mptr,nvar)
+     &                 xlowb,ylowb,mptr,nvar,istage)
       endif
 
  9    continue

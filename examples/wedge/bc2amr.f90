@@ -107,7 +107,7 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
 
     pl = 116.5d0
     ul = 8.25d0
-    vl = 0.01d0
+    vl = 0.00d0
     rhol = 8.d0
 
     ! Use periodic boundary condition specialized code only, if only one 
@@ -129,10 +129,10 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
             case(0) ! User defined boundary condition
                 do j = 1, ncol
                     do i=1, nxl
-                        val(1, i, j) = rhol
-                        val(2, i, j) = ul
-                        val(3, i, j) = vl
-                        val(4, i, j) = pl
+                       val(1, i, j) = rhol
+                       val(2, i, j) = rhol*ul
+                       val(3, i, j) = rhol*vl
+                       val(4, i, j) = pl/.4d0 + 0.5d0*rhol*(ul**2+vl**2)
                     end do
                 end do
                

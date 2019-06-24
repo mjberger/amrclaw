@@ -1,7 +1,7 @@
 c
 c -------------------------------------------------------------
 c
-      subroutine vrm(qr,ql,rx,ixmin,ixmax,iflip,msize)
+      subroutine vrm(qr,ql,rx,ixmin,ixmax,iflip,msize,mptr)
 
       implicit double precision (a-h,o-z)
       common /userdt/ cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
@@ -39,6 +39,10 @@ c
 c        !El   = ql(4,k)
 c        !pl = gamma1*(El-.5d0*(rhoul*rhoul+rhoutl*rhoutl)/rhol)
          pl = ql(4,k)
+         if (rhol .le. 0 .or. pl .le.0.) then
+           write(*,*)"bad lft val k ",k," grid ",mptr
+         endif
+
          El = 0.5d0*(rhoul**2+rhoutl**2)/rhol +pl/gamma1
          cl = dsqrt(gamma * pl / rhol)
          sl = max(dabs(rhoul/rhol + cl), dabs(rhoul/rhol - cl) )
@@ -49,6 +53,9 @@ c        !pl = gamma1*(El-.5d0*(rhoul*rhoul+rhoutl*rhoutl)/rhol)
          !Er   = qr(4,k)
          !pr = gamma1*(Er-.5d0*(rhour*rhour+rhoutr*rhoutr)/rhor)
          pr = qr(4,k)
+         if (rhor .le. 0 .or. pr .le.0.) then
+           write(*,*)"bad rt val k ",k,"grid ",mptr
+         endif
          Er = 0.5d0*(rhour**2+rhoutr**2)/rhor + pr/gamma1
          cr = dsqrt(gamma * pr / rhor)
          sr = max(dabs(rhour/rhor + cr), dabs(rhour/rhor - cr) )

@@ -2,7 +2,7 @@ c
 c ---------------------------------------------------------------------
 c
        subroutine qslopes(qp,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,
-     &                    hx,hy,xlow,ylow,mptr,nvar)
+     &                    hx,hy,xlow,ylow,mptr,nvar,istage)
 
       use amr_module
       implicit double precision(a-h,o-z)

@@ -2,7 +2,7 @@ c
 c------------------------------------------------------------
 c
        subroutine slopes(qp,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,
-     .                   hx,hy,xlow,ylow,nvar)
+     .                   hx,hy,xlow,ylow,nvar,mptr,istage)
 
        use amr_module
        implicit double precision(a-h,o-z)

@@ -19,7 +19,11 @@ c
       use amr_module
       implicit double precision (a-h,o-z)
       logical first
+      logical pwconst, quad, nolimiter
       common /order2/ ssw, quad, nolimiter
+      common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
+     .                ismp,gradThreshold,pwconst
+
       
 
 c ::::::::::::::::::::::::::::: GINIT ::::::::::::::::::::::::
@@ -62,7 +66,6 @@ c :::::::::::::::::::::::::::::::::::::::;::::::::::::::::::::
               ! get space for irr, and for ncount and numhoods too
               node(permstore,mptr) = igetsp(3*mitot*mjtot) 
               locirr = node(permstore,mptr)
-              gradThreshold = 1.d-7
               call setirr(mitot,mjtot,mptr,quad,
      &                    gradThreshold,alloc(locirr))
               lstgrd = node(lstptr,mptr)

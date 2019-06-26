@@ -18,6 +18,7 @@ c
      .                ismp,gradThreshold,pwconst
 
       logical IS_GHOST
+      logical nolimiter, quad, pwconst
       integer isloperecon/4/
       ! 3 is LSQ + BJ (8 neighbors)
       ! 4 is LSQ + BJ (4 neighbors)
@@ -26,11 +27,20 @@ c
       IS_GHOST(i,j) = (i .le. lwidth .or. i .gt. mitot-lwidth .or.
      .                 j .le. lwidth .or. j .gt. mjtot-lwidth)
 
+        if (isloperecon.eq.4 .and. nolimiter) then
+            isloperecon = 5
+        endif
+
         nco = 1
         do 20 j = 2, mjtot-1
         do 20 i = 2, mitot-1
             k = irr(i,j)
             if(k .eq. lstgrd .or. k .eq. -1) goto 20
+            if (ar(k)/ar(lstgrd) .lt. gradThreshold) then
+               qx(:,i,j) = 0.d0
+               qy(:,i,j) = 0.d0
+               go to 20           ! leave 0 gradient:  more stable for teeny cells w/o slopes
+            endif
 
             ! can reconstruct high order poly here, but for now do linear reconstruction
             ! solving least squares problem with all neighboring merged vals. Should preprocess the matrix and save

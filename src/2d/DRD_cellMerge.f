@@ -67,6 +67,7 @@ c      maxthreads initialized to 1 above in case no openmp
        else
           verbose = .true.
        endif
+       verbose = .false.
 c
 c      some initializations
        ar(lstgrd) = dx*dy   ! area of regular grid cell 
@@ -130,6 +131,13 @@ c               count this cell for qmerge, not for density distrib
                 endif
  27          continue
              qMerge(:,i,j) = qMerge(:,i,j) / volMerge(i,j)
+             ! for debugging test now if qMerge an ok state.qMerge in conserved vars
+             xymomsq = (qMerge(2,i,j)**2+qMerge(3,i,j)**2)/qMerge(1,i,j)
+             press = .4d0*(qMerge(4,i,j)-0.5d0*xymomsq)
+             if (qMerge(1,i,j).lt.0.d0.or. press.lt.0.d0) then
+                write(*,*)"grid ",mptr," den/pr ",qMerge(1,i,j),press,
+     .                    " of qMerge already bad at cell ",i,j
+             endif
  10     continue
 
         ! gradient of merged neighborhoods, initialized to 0. 
@@ -151,7 +159,7 @@ c               count this cell for qmerge, not for density distrib
             ! even reg cells need gradients to put their val in cut cells
             if (k .eq. lstgrd .and. REG_NBORS(i,j,lstgrd)) then
                gradmx(:,i,j) = (qMerge(:,i+1,j)- qMerge(:,i-1,j))/dx2
-               gradmy(:,i,j) = (qMerge(:,i,j+1)- qMerge(:,i,j+1))/dy2
+               gradmy(:,i,j) = (qMerge(:,i,j+1)- qMerge(:,i,j-1))/dy2
                go to 20
             endif
             if (ncount(i,j) .eq. 0) then 
@@ -171,6 +179,8 @@ c               count this cell for qmerge, not for density distrib
             do 22 joff = -nco, nco
             do 22 ioff = -nco, nco
                 if (ioff .eq. 0 .and. joff .eq. 0) go to 22 ! no eqn to solve
+                ! next line skips diagonal cells to reduce stencil size
+                if (abs(ioff) .eq. 1 .and. abs(joff) .eq. 1) go to 22
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) go to 22
                 call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
@@ -195,12 +205,14 @@ c               count this cell for qmerge, not for density distrib
              c22 = sqrt(a(2,2) - c12**2)
 
              ! now back solve (C^t C = rhs of A^tdu ) to get x and y gradient for all variables
-             do m = 1, nvar
-               b(1) = rhs(1,m) / c11
-               b(2) = (rhs(2,m) - c12*b(1))/c22
-               gradmy(m,i,j) = b(2) / c22
-               gradmx(m,i,j) = (b(1) - c12*gradmy(m,i,j))/c11
-             end do
+             if (c22 .ne. 0.d0) then  ! otherwise leave gradient zero. might need to test for c11 as well
+                do m = 1, nvar
+                  b(1) = rhs(1,m) / c11
+                  b(2) = (rhs(2,m) - c12*b(1))/c22
+                  gradmy(m,i,j) = b(2) / c22
+                  gradmx(m,i,j) = (b(1) - c12*gradmy(m,i,j))/c11
+                end do
+             endif
  20     continue
 
 c
@@ -220,6 +232,9 @@ c      apply limiter if requested. Go over all neighbors, do BJ
             do 31 joff = -nco, nco
             do 31 ioff = -nco, nco
               if (ioff .eq. 0 .and. joff .eq. 0) go to 31
+              ! next line skips diagonal cells to reduce stencil size
+              if (abs(ioff) .eq. 1 .and. abs(joff) .eq. 1) go to 31
+
               koff = irr(i+ioff,j+joff)
               if (koff .eq. -1) go to 31
               call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
@@ -296,7 +311,9 @@ c
              write(*,*)" should not happen"
           endif
          !! compute conservative diff between new and old vals to redistribute
-          delta(:,i,j) = ar(k) * (qm(:) - q(:,i,j))
+         delta(:,i,j) = ar(k) * (qm(:) - q(:,i,j))
+         !!  and reset q to stable val
+         q(:,i,j) = qm(:)
  50    continue
 c
        call distribute(q,delta,volMerge,numHoods,ncount,
@@ -343,8 +360,8 @@ c
 
       ! merge until vqmerge at least this big (analogous to 1d where left and right nhoods each dx
       !!areaMin = 2.d0*ar(lstgrd)  
-      !!areaMin = 0.5d0*ar(lstgrd)  
-      areaMin = ar(lstgrd)  
+      areaMin = 0.5d0*ar(lstgrd)  
+      !!areaMin = ar(lstgrd)  
       numHoods = 0  ! initialize, loop below will add each cell to its own nhood
       ncount = 0
       maxnco = 0
@@ -503,7 +520,8 @@ c
             koff = irr(i+ioff,j+joff)
             if (koff .eq. -1 .or. NOT_OK_GHOST(i+ioff,j+joff)) go to 10
             ! to include cell itself comment out next line
-	    if (ioff .eq. 0 .and. joff .eq. 0) go to 10
+            if (ioff .eq. 0 .and. joff .eq. 0) go to 10
+            if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 10
 c           q(:,i+ioff,j+joff) = q(:,i+ioff,j+joff)-
 c    &                           delta(:,i,j)/volMerge(i,j)
             dsum = dsum + ar(koff)*qold(1,i+ioff,j+joff)
@@ -534,15 +552,15 @@ c
       gamma1 = .4d0
       do j = 1, mjtot
       do i = 1, mitot
-        rho = q(1,i,j)
-	u = q(2,i,j)/rho
-	v = q(3,i,j)/rho
-	pr = gamma1*(q(4,i,j)-.5d0*rho*(u*u+v*v))
-	if (rho < 0 .or. pr < 0) then
-           write(*,901)rho,pr,i,j,mptr,istage,str
- 901       format("non-physical den/pr",2e15.7," at i,j grid stage ",
-     .            4i5,a14)
-        endif
+         rho = q(1,i,j)
+         u = q(2,i,j)/rho
+         v = q(3,i,j)/rho
+         pr = gamma1*(q(4,i,j)-.5d0*rho*(u*u+v*v))
+         if (rho < 0 .or. pr < 0) then
+            write(*,901)rho,pr,i,j,mptr,istage,str
+ 901        format("non-physical den/pr",2e15.7," at i,j grid stage ",
+     .           4i5,2x,a14)
+         endif
       end do
       end do
 

@@ -28,6 +28,7 @@ c
        common /order2/ ssw, quad, nolimiter
        integer omp_get_max_threads
        integer maxthreads/1/
+       logical noDiagonals
 
 
 c  xlow,ylow   refers to the corner of grid (w/o ghost cells)
@@ -72,6 +73,10 @@ c      maxthreads initialized to 1 above in case no openmp
        else
           verbose = .true.
        endif
+       !verbose = .false.
+       verbose = .true.
+       noDiagonals = .true.
+       !noDiagonals = .false.
 
 c      some initializations
        ar(lstgrd) = dx*dy   ! area of regular grid cell 
@@ -89,7 +94,8 @@ c      some initializations
 c     first make neighborhoods - need count for each cells, and width (nhood above)
 c     nCount is size of neighborhood, numHoods is number of merged nhoods each cells is in
       call makeNHood(volMerge,xcentMerge,ycentMerge,ncount,irr,numHoods,
-     .           mitot,mjtot,lwidth,lstgrd,xlow,ylow,dx,dy,istage,mptr)
+     .               mitot,mjtot,lwidth,lstgrd,xlow,ylow,dx,dy,istage,
+     .               mptr,noDiagonals)
 
        if (verbose) then
           totmass =  bigconck(q,irr,mitot,mjtot,lwidth,nvar)
@@ -112,7 +118,7 @@ c       form qMerge vals
               go to 10
             endif
 c
-c           sum in blocks of size 2*ncount on a size using only valid cells 
+c           sum blocks to left & rt using only valid cells 
 c
              do 27 joff = -ncount(i,j), ncount(i,j)
              do 27 ioff = -ncount(i,j), ncount(i,j)
@@ -122,6 +128,9 @@ c
      &                               xlow,ylow,dx,dy,koff)
                 if (IS_OUTSIDE(xcn,ycn)) go to 27  ! nor ghost cells
                 if (NOT_VALID_VAL(i+ioff,j+joff)) go to 27  ! cant trust this ghost cell val
+                if (noDiagonals) then
+                   if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 27
+                endif
 c               count this cell 
                 qMerge(:,i,j) = qMerge(:,i,j) + ar(koff)*
      .                        q(:,i+ioff,j+joff)/numHoods(i+ioff,j+joff)
@@ -146,7 +155,7 @@ c               count this cell
             ! even reg cells need gradients to put their val in cut cells
             if (k .eq. lstgrd .and. REG_NBORS(i,j,lstgrd)) then
                gradmx(:,i,j) = (qMerge(:,i+1,j)- qMerge(:,i-1,j))/dx2
-               gradmy(:,i,j) = (qMerge(:,i,j+1)- qMerge(:,i,j+1))/dy2
+               gradmy(:,i,j) = (qMerge(:,i,j+1)- qMerge(:,i,j-1))/dy2
                go to 20
             endif
 
@@ -168,6 +177,9 @@ c               count this cell
                 if (ioff .eq. 0 .and. joff .eq. 0) go to 22 ! no eqn to solve
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) go to 22
+                if (noDiagonals) then
+                  if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 22
+                endif
                 call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                               xlow,ylow,dx,dy,koff)
                 if (IS_OUTSIDE(xcn,ycn)) go to 22
@@ -189,12 +201,14 @@ c               count this cell
              c22 = sqrt(a(2,2) - c12**2)
 
              ! now back solve (C^t C = rhs of A^tdu ) to get x and y gradient for all variables
-             do m = 1, nvar
-               b(1) = rhs(1,m) / c11
-               b(2) = (rhs(2,m) - c12*b(1))/c22
-               gradmy(m,i,j) = b(2) / c22
-               gradmx(m,i,j) = (b(1) - c12*gradmy(m,i,j))/c11
-             end do
+             if (c22 .ne. 0.d0) then ! might have to test c11 too?
+                do m = 1, nvar
+                  b(1) = rhs(1,m) / c11
+                  b(2) = (rhs(2,m) - c12*b(1))/c22
+                  gradmy(m,i,j) = b(2) / c22
+                  gradmx(m,i,j) = (b(1) - c12*gradmy(m,i,j))/c11
+                end do
+             endif
  20     continue
 c
 c      apply limiter if requested. Go over all neighbors, do BJ
@@ -214,6 +228,9 @@ c      apply limiter if requested. Go over all neighbors, do BJ
               if (ioff .eq. 0 .and. joff .eq. 0) go to 31
               koff = irr(i+ioff,j+joff)
               if (koff .eq. -1) go to 31
+              if (noDiagonals) then
+                 if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 31
+              endif
               call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                             xlow,ylow,dx,dy,koff)
               if (IS_OUTSIDE(xcn,ycn)) go to 31
@@ -227,6 +244,9 @@ c      apply limiter if requested. Go over all neighbors, do BJ
                 if (ioff .eq. 0 .and. joff .eq. 0) go to 32 ! no eqn to solve
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) go to 32
+                if (noDiagonals) then
+                   if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 32
+                endif
                 call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                               xlow,ylow,dx,dy,koff)
                 if (IS_OUTSIDE(xcn,ycn)) go to 32
@@ -249,10 +269,9 @@ c      apply limiter if requested. Go over all neighbors, do BJ
                      endif
                   end do
                   ! one last check for positivity
-                  if (recon(1) .le. 0.d0) alpha = 0.d0
-                  velsq = recon(2)**2+recon(3)**2
-                  press = .4d0*(recon(4)-0.5d0*velsq/recon(1))
-                  if (press .le. 0.d0) alpha = 0.d0
+                  xymomsq = recon(2)**2+recon(3)**2
+                  press = .4d0*(recon(4)-0.5d0*xymomsq/recon(1))
+                  if (recon(1).le.0.d0 .or. press.le.0.d0) alpha = 0.d0
                   phimin = min(phimin, alpha)
  32         continue
             gradmx(:,i,j) = gradmx(:,i,j)*phimin(:)
@@ -282,18 +301,21 @@ c
           call getCellCentroid(lstgrd,i,j,xc,yc,
      &                         xlow,ylow,dx,dy,k)
           if (IS_OUTSIDE(xc,yc) .or. NOT_OK_GHOST(i,j)) then
-             valnew(:,i,j) = qMerge(:,i,j)  ! copy what came in  BUT NOW NAN SO MAYBE SET TO Q INSTEAD?
+             valnew(:,i,j) = qMerge(:,i,j)  ! copy what came in  
              go to 50 
           endif
 
           do 40 joff = -ncount(i,j), ncount(i,j)
           do 40 ioff = -ncount(i,j), ncount(i,j)
              koff = irr(i+ioff,j+joff)
-             if (koff .eq. -1) go to 40  
+             if (koff .eq. -1) go to 40
+             if (noDiagonals) then
+                if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 40
+             endif
              call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                            xlow,ylow,dx,dy,koff)
              if (IS_OUTSIDE(xcn,ycn)) go to 40  
-c            check if physicla state
+c            check if physical state
              qm(:) = qMerge(:,i,j) + (xcn-xcentMerge(i,j))*gradmx(:,i,j)
      .                             + (ycn-ycentMerge(i,j))*gradmy(:,i,j)
              pr = .4d0*(qm(4)- 0.5d0*(qm(2)**2+qm(3)**2)/qm(1))
@@ -351,7 +373,7 @@ c ----------------------------------------------------------------------------
 c
       subroutine makeNHood(volMerge,xcentMerge,ycentMerge,ncount,irr,
      .                     numHoods,mitot,mjtot,lwidth,lstgrd,xlow,ylow,
-     .                     dx,dy,istage,mptr)
+     .                     dx,dy,istage,mptr,noDiagonals)
 
       use amr_module
       implicit double precision (a-h, o-z)
@@ -359,7 +381,7 @@ c
       dimension numHoods(mitot,mjtot), volMerge(mitot,mjtot)
       dimension xcentMerge(mitot,mjtot), ycentMerge(mitot,mjtot)
       dimension ncount(mitot,mjtot), irr(mitot,mjtot)
-
+      logical noDiagonals
       logical NOT_OK_GHOST, IS_OUTSIDE, firstTimeThru
       logical debug/.false./, IS_OUT_OF_RANGE
       character ch
@@ -400,11 +422,11 @@ c     2 cells to a side for a merging neighborhood
          nco = 0   ! initial size of neighborhood, from -1 to 1 square centered on cell
          ! next lines are for unstable corner that havent figured out
          ! yet in channel problem upper right corner
-         if (i.ge.47 .and. j.ge. 44) then
-            areaMin = 2.d0*ar(lstgrd)
-         else
-            areaMin = 0.5d0*ar(lstgrd)  
-         endif
+         !if (i.ge.47 .and. j.ge. 44) then
+         !   areaMin = 2.d0*ar(lstgrd)
+         !else
+         !   areaMin = 0.5d0*ar(lstgrd)  
+         !endif
 
             do while (vqmerge < areaMin) 
                do 15 joff = -nco, nco
@@ -412,6 +434,9 @@ c     2 cells to a side for a merging neighborhood
                    if (IS_OUT_OF_RANGE(i+ioff,j+joff)) go to 15  
                    koff = irr(i+ioff,j+joff)
                    if (koff .eq. -1) go to 15  ! solid cells dont help
+                   if (noDiagonals) then
+                      if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 15
+                   endif
                    call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                             xlow,ylow,dx,dy,koff)
                    if (IS_OUTSIDE(xcn,ycn)) go to 15  
@@ -433,7 +458,15 @@ c     2 cells to a side for a merging neighborhood
                    firstTimeThru = .false.
                 endif
             end do
- 10   continue      
+ 10   continue
+
+c
+c second pass to enlarge cut cells whose volume was large enough to not need
+c merging, but is neighbor to too many other cut cells that do, so needs support
+      
+
+
+      
       ! this relies on not using more than 2 stage RK method
       ! or will need to pass in number of stages
       if (maxnco .gt. 2) then
@@ -443,7 +476,29 @@ c     2 cells to a side for a merging neighborhood
 
 c     needed number of neighbhoods to compute volMerge = which is not
 c     the real volume of the merging neighborhood
-c
+      do j = 3, mjtot-2
+      do i = 3, mitot-2
+          k = irr(i,j)
+          if (k .eq. lstgrd .or. k .eq. -1) cycle
+          if (ncount(i,j) .gt. 0) cycle ! should be ok
+          if (ncount(i,j) .eq. 0 .and. numHoods(i,j) .ge. 3) then
+             ncount(i,j) = 1
+             ! adjust nhood count for new neighborhoods
+             do joff = -1, 1
+             do ioff = -1, 1
+                if (ioff .eq. 0 .and. joff .eq. 0) cycle ! already counted yourself
+                koff = irr(i+ioff,j+joff)
+                if (koff .eq. -1) cycle
+                if (IS_OUT_OF_RANGE(i+ioff,j+joff)) cycle
+                call getCellCentroid(lstgrd,i,j,xcn,
+     .                      ycn,xlow,ylow,dx,dy,k)
+                if (IS_OUTSIDE(xcn,ycn)) cycle
+                numHoods(i+ioff,j+joff) = numHoods(i+ioff,j+joff)+1 !ignoring inside/outside stuff
+             end do
+             end do
+          endif
+      end do
+      end do
 
 !   initialize array with  most common case, overwritten below as needed
       volMerge = ar(lstgrd) 
@@ -477,7 +532,10 @@ c
          do 25 ioff = -nco, nco
             if (IS_OUT_OF_RANGE(i+ioff,j+joff)) go to 25
             koff = irr(i+ioff,j+joff)
-            if (koff .eq. -1) go to 25 ! solid cells dont help
+            if (koff .eq. -1) go to 25 ! solid cells dont help 
+            if (noDiagonals) then
+               if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 25
+            endif
             call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,xlow,ylow,
      .                           dx,dy,koff)
             if (IS_OUTSIDE(xcn,ycn)) go to 25  

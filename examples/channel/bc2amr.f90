@@ -82,229 +82,265 @@
 ! ::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::;
 
 subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
-                  xlo_patch, xhi_patch, ylo_patch, yhi_patch) 
+     xlo_patch, xhi_patch, ylo_patch, yhi_patch, irr, lstgrd) 
 
-    use amr_module, only: mthbc, xlower, ylower, xupper, yupper
-    use amr_module, only: xperdom,yperdom,spheredom
+  use amr_module, only: mthbc, xlower, ylower, xupper, yupper
+  use amr_module, only: xperdom,yperdom,spheredom
+  use amr_module, only: xcirr,ycirr 
 
-    implicit none
+  implicit none
 
-    ! Input/Output
-    integer, intent(in) :: nrow, ncol, meqn, naux, level
-    real(kind=8), intent(in) :: hx, hy, time
-    real(kind=8), intent(in) :: xlo_patch, xhi_patch
-    real(kind=8), intent(in) :: ylo_patch, yhi_patch
-    real(kind=8), intent(in out) :: val(meqn, nrow, ncol)
-    real(kind=8), intent(in out) :: aux(naux, nrow, ncol)
-    
-    ! Local storage
-    integer :: i, j, ibeg, jbeg, nxl, nxr, nyb, nyt
-    real(kind=8) :: hxmarg, hymarg
-    real(kind=8) :: pr,u,v,rho
+  ! Input/Output
+  integer, intent(in) :: nrow, ncol, meqn, naux, level
+  integer, intent(in) :: irr(nrow,ncol), lstgrd
+  real(kind=8), intent(in) :: hx, hy, time
+  real(kind=8), intent(in) :: xlo_patch, xhi_patch
+  real(kind=8), intent(in) :: ylo_patch, yhi_patch
+  real(kind=8), intent(in out) :: val(meqn, nrow, ncol)
+  real(kind=8), intent(in out) :: aux(naux, nrow, ncol)
 
-    hxmarg = hx * .01d0
-    hymarg = hy * .01d0
+  ! Local storage
+  integer :: i, j, ibeg, jbeg, nxl, nxr, nyb, nyt,kuse
+  real(kind=8) :: hxmarg, hymarg
+  real(kind=8) :: pr,u,v,rho,xcen,ycen
 
-    rho = 1.d0
-    u = 0.d0
-    v = 0.d0
-    pr = 1.d0
+  hxmarg = hx * .01d0
+  hymarg = hy * .01d0
 
-    ! Use periodic boundary condition specialized code only, if only one 
-    ! boundary is periodic we still proceed below
-    if (xperdom .and. (yperdom .or. spheredom)) then
-        return
-    end if
+  rho = 1.d0
+  !u = 0.d0
+  !v = 0.d0
+  u = 0.1d0
+  v = 0.01d0
+  pr = 1.d0
 
-    ! Each check has an initial check to ensure that the boundary is a real
-    ! boundary condition and otherwise skips the code.  Otherwise 
-    !-------------------------------------------------------
-    ! Left boundary:
-    !-------------------------------------------------------
-    if (xlo_patch < xlower-hxmarg) then
-        ! number of grid cells from this patch lying outside physical domain:
-        nxl = int((xlower + hxmarg - xlo_patch) / hx)
+  ! Use periodic boundary condition specialized code only, if only one 
+  ! boundary is periodic we still proceed below
+  if (xperdom .and. (yperdom .or. spheredom)) then
+     return
+  end if
 
-        select case(mthbc(1))
-            case(0) ! User defined boundary condition
-                do j = 1, ncol
-                    do i=1, nxl
-                        val(1, i, j) = rho
-                        val(2, i, j) = u
-                        val(3, i, j) = v
-                        val(4, i, j) = pr
-                    end do
-                end do
-               
-            case(1) ! Zero-order extrapolation
-                do j = 1, ncol
-                    do i=1, nxl
-                        val(:, i, j) = val(:, nxl + 1, j)
-                    end do
-                end do
+  ! Each check has an initial check to ensure that the boundary is a real
+  ! boundary condition and otherwise skips the code.  Otherwise 
+  !-------------------------------------------------------
+  ! Left boundary:
+  !-------------------------------------------------------
+  if (xlo_patch < xlower-hxmarg) then
+     ! number of grid cells from this patch lying outside physical domain:
+     nxl = int((xlower + hxmarg - xlo_patch) / hx)
 
-            case(2) ! Periodic boundary condition
-                continue
+     select case(mthbc(1))
+     case(0) ! User defined boundary condition
+        do j = 1, ncol
+           do i=1, nxl
+              kuse = irr(i,j)
+              if (kuse .ne. -1 .and. kuse .ne. lstgrd) then
+                 xcen = xcirr(kuse)
+                 ycen = ycirr(kuse)
+              else
+                 ycen = ylo_patch + (dfloat(j)-.5d0)* hy
+                 xcen = xlo_patch + (dfloat(i)-.5d0)* hx
+              endif
+              rho =  ycen - .1d0*xcen + .5d0
+              !rho = 1.d0
 
-            case(3) ! Wall boundary conditions
-                do j = 1, ncol
-                    do i=1, nxl
-                        val(:, i, j) = val(:, 2 * nxl + 1 - i, j)
-                    end do
-                end do
-                ! negate the normal velocity:
-                do j = 1, ncol
-                    do i=1, nxl
-                        val(2, i, j) = -val(2, i, j)
-                    end do
-                end do
+              val(1, i, j) = rho
+              val(2, i, j) = rho*u
+              val(3, i, j) = rho*v
+              val(4, i, j) = pr/.4d0 + 0.5d0*rho*(u**2+v**2)
+           end do
+        end do
 
-            case(4) ! Spherical domain
-                continue
+     case(1) ! Zero-order extrapolation
+        do j = 1, ncol
+           do i=1, nxl
+              val(:, i, j) = val(:, nxl + 1, j)
+           end do
+        end do
 
-            case default
-                print *, "Invalid boundary condition requested."
-                stop
-        end select
-    end if
+     case(2) ! Periodic boundary condition
+        continue
 
-    !-------------------------------------------------------
-    ! Right boundary:
-    !-------------------------------------------------------
-    if (xhi_patch > xupper+hxmarg) then
+     case(3) ! Wall boundary conditions
+        do j = 1, ncol
+           do i=1, nxl
+              val(:, i, j) = val(:, 2 * nxl + 1 - i, j)
+           end do
+        end do
+        ! negate the normal velocity:
+        do j = 1, ncol
+           do i=1, nxl
+              val(2, i, j) = -val(2, i, j)
+           end do
+        end do
 
-        ! number of grid cells lying outside physical domain:
-        nxr = int((xhi_patch - xupper + hxmarg) / hx)
-        ibeg = max(nrow - nxr + 1, 1)
+     case(4) ! Spherical domain
+        continue
 
-        select case(mthbc(2))
-            case(0) ! User defined boundary condition
-                ! Replace this code with a user defined boundary condition
-                stop "A user defined boundary condition was not provided."
-            case(1) ! Zero-order extrapolation
-                do i = ibeg, nrow
-                    do j = 1, ncol
-                        val(:, i, j) = val(:, ibeg - 1, j)
-                    end do
-                end do
+     case default
+        print *, "Invalid boundary condition requested."
+        stop
+     end select
+  end if
 
-            case(2) ! Periodic boundary condition
-                continue
+  !-------------------------------------------------------
+  ! Right boundary:
+  !-------------------------------------------------------
+  if (xhi_patch > xupper+hxmarg) then
 
-            case(3) ! Wall boundary conditions
-                do i=ibeg, nrow
-                    do j = 1, ncol
-                        val(:, i, j) = val(:, 2 * ibeg - 1 - i, j)
-                    end do
-                end do
-                ! negate the normal velocity:
-                do i = ibeg, nrow
-                    do j = 1, ncol
-                        val(2, i, j) = -val(2, i, j)
-                    end do
-                end do
+     ! number of grid cells lying outside physical domain:
+     nxr = int((xhi_patch - xupper + hxmarg) / hx)
+     ibeg = max(nrow - nxr + 1, 1)
 
-            case(4) ! Spherical domain
-                continue
+     select case(mthbc(2))
+     case(0) ! User defined boundary condition
+        ! set exact instead of outflow, since this code used for accuracy test
+        do j = 1, ncol
+           do i=ibeg, nrow
+              kuse = irr(i,j)
+              if (kuse .ne. -1 .and. kuse .ne. lstgrd) then
+                 xcen = xcirr(kuse)
+                 ycen = ycirr(kuse)
+              else
+                 ycen = ylo_patch + (dfloat(j)-.5d0)* hy
+                 xcen = xlo_patch + (dfloat(i)-.5d0)* hx
+              endif
+              rho =  ycen - .1d0*xcen + .5d0
+              !rho = 1.d0
 
-            case default
-                print *, "Invalid boundary condition requested."
-                stop
+              val(1, i, j) = rho
+              val(2, i, j) = rho*u
+              val(3, i, j) = rho*v
+              val(4, i, j) = pr/.4d0 + 0.5d0*rho*(u**2+v**2)
+           end do
+        end do
 
-        end select
-    end if
 
-    !-------------------------------------------------------
-    ! Bottom boundary:
-    !-------------------------------------------------------
-    if (ylo_patch < ylower - hymarg) then
 
-        ! number of grid cells lying outside physical domain:
-        nyb = int((ylower + hymarg - ylo_patch) / hy)
+     case(1) ! Zero-order extrapolation
+        do i = ibeg, nrow
+           do j = 1, ncol
+              val(:, i, j) = val(:, ibeg - 1, j)
+           end do
+        end do
 
-        select case(mthbc(3))
-            case(0) ! User defined boundary condition
-                ! Replace this code with a user defined boundary condition
-                stop "A user defined boundary condition was not provided."
-            
-            case(1) ! Zero-order extrapolation
-                do j = 1, nyb
-                    do i = 1, nrow
-                        val(:,i,j) = val(:, i, nyb + 1)
-                    end do
-                end do
+     case(2) ! Periodic boundary condition
+        continue
 
-            case(2) ! Periodic boundary condition
-                continue
+     case(3) ! Wall boundary conditions
+        do i=ibeg, nrow
+           do j = 1, ncol
+              val(:, i, j) = val(:, 2 * ibeg - 1 - i, j)
+           end do
+        end do
+        ! negate the normal velocity:
+        do i = ibeg, nrow
+           do j = 1, ncol
+              val(2, i, j) = -val(2, i, j)
+           end do
+        end do
 
-            case(3) ! Wall boundary conditions
-                do j = 1, nyb
-                    do i = 1, nrow
-                        val(:,i,j) = val(:, i, 2 * nyb + 1 - j)
-                    end do
-                end do
-                ! negate the normal velocity:
-                do j = 1, nyb
-                    do i = 1, nrow
-                        val(3,i,j) = -val(3, i, j)
-                    end do
-                end do
+     case(4) ! Spherical domain
+        continue
 
-            case(4) ! Spherical domain
-                continue
+     case default
+        print *, "Invalid boundary condition requested."
+        stop
 
-            case default
-                print *, "Invalid boundary condition requested."
-                stop
+     end select
+  end if
 
-        end select
-    end if
+  !-------------------------------------------------------
+  ! Bottom boundary:
+  !-------------------------------------------------------
+  if (ylo_patch < ylower - hymarg) then
 
-    !-------------------------------------------------------
-    ! Top boundary:
-    !-------------------------------------------------------
-    if (yhi_patch > yupper + hymarg) then
+     ! number of grid cells lying outside physical domain:
+     nyb = int((ylower + hymarg - ylo_patch) / hy)
 
-        ! number of grid cells lying outside physical domain:
-        nyt = int((yhi_patch - yupper + hymarg) / hy)
-        jbeg = max(ncol - nyt + 1, 1)
+     select case(mthbc(3))
+     case(0) ! User defined boundary condition
+        ! Replace this code with a user defined boundary condition
+        stop "A user defined boundary condition was not provided."
 
-        select case(mthbc(4))
-            case(0) ! User defined boundary condition
-                ! Replace this code with a user defined boundary condition
-                stop "A user defined boundary condition was not provided."
+     case(1) ! Zero-order extrapolation
+        do j = 1, nyb
+           do i = 1, nrow
+              val(:,i,j) = val(:, i, nyb + 1)
+           end do
+        end do
 
-            case(1) ! Zero-order extrapolation
-                do j = jbeg, ncol
-                    do i = 1, nrow
-                        val(:, i, j) = val(:, i, jbeg - 1)
-                    end do
-                end do
+     case(2) ! Periodic boundary condition
+        continue
 
-            case(2) ! Periodic boundary condition
-                continue
+     case(3) ! Wall boundary conditions
+        do j = 1, nyb
+           do i = 1, nrow
+              val(:,i,j) = val(:, i, 2 * nyb + 1 - j)
+           end do
+        end do
+        ! negate the normal velocity:
+        do j = 1, nyb
+           do i = 1, nrow
+              val(3,i,j) = -val(3, i, j)
+           end do
+        end do
 
-            case(3) ! Wall boundary conditions
-                do j = jbeg, ncol 
-                    do i = 1, nrow
-                        val(:, i, j) = val(:, i, 2 * jbeg - 1 - j)
-                    end do
-                end do
-                ! negate the normal velocity:
-                do j = jbeg, ncol
-                    do i = 1, nrow
-                        val(3, i, j) = -val(3, i, j)
-                    end do
-                end do
+     case(4) ! Spherical domain
+        continue
 
-            case(4) ! Spherical domain
-                continue
+     case default
+        print *, "Invalid boundary condition requested."
+        stop
 
-            case default
-                print *, "Invalid boundary condition requested."
-                stop
+     end select
+  end if
 
-        end select
-    end if
+  !-------------------------------------------------------
+  ! Top boundary:
+  !-------------------------------------------------------
+  if (yhi_patch > yupper + hymarg) then
+
+     ! number of grid cells lying outside physical domain:
+     nyt = int((yhi_patch - yupper + hymarg) / hy)
+     jbeg = max(ncol - nyt + 1, 1)
+
+     select case(mthbc(4))
+     case(0) ! User defined boundary condition
+        ! Replace this code with a user defined boundary condition
+        stop "A user defined boundary condition was not provided."
+
+     case(1) ! Zero-order extrapolation
+        do j = jbeg, ncol
+           do i = 1, nrow
+              val(:, i, j) = val(:, i, jbeg - 1)
+           end do
+        end do
+
+     case(2) ! Periodic boundary condition
+        continue
+
+     case(3) ! Wall boundary conditions
+        do j = jbeg, ncol 
+           do i = 1, nrow
+              val(:, i, j) = val(:, i, 2 * jbeg - 1 - j)
+           end do
+        end do
+        ! negate the normal velocity:
+        do j = jbeg, ncol
+           do i = 1, nrow
+              val(3, i, j) = -val(3, i, j)
+           end do
+        end do
+
+     case(4) ! Spherical domain
+        continue
+
+     case default
+        print *, "Invalid boundary condition requested."
+        stop
+
+     end select
+  end if
 
 end subroutine bc2amr

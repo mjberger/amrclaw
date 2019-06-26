@@ -57,6 +57,7 @@ c    &                   nvar,qp,time,dx,dy,qx,qy,irr,lstgrd)
 
 c  if want to output ghost cells too change this flag
        ghostOut = .false.
+       !ghostOut = .true.
        if (ghostOut) then
           ist = 1
           iend = mitot

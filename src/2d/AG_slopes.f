@@ -32,6 +32,9 @@ c
      .                  j .le. lwidth .or. j .gt. mjtot-lwidth)
 c
       isloperecon = 4
+      if (isloperecon .eq. 4 .and. nolimiter) then
+         isloperecon = 5
+      endif
       ! 0 is no slopes
       ! 1 is central
       ! 2 is MC

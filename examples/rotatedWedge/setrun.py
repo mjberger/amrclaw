@@ -78,8 +78,8 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.upper[1] = 0.2500000000           # yupper
 
     # Number of grid cells:
-    clawdata.num_cells[0] = 100*2     # mx
-    clawdata.num_cells[1] = 50      # my
+    clawdata.num_cells[0] = 100*8     # mx
+    clawdata.num_cells[1] = 50*4      # my
 
     # ---------------
     # Size of system:
@@ -107,8 +107,8 @@ def setrun(claw_pkg='amrclaw'):
     # restart_file 'fort.chkNNNNN' specified below should be in
     # the OUTDIR indicated in Makefile.
 
-    clawdata.restart = True                # True to restart from prior results
-    #clawdata.restart = False               # True to restart from prior results
+    #clawdata.restart = True                # True to restart from prior results
+    clawdata.restart = False               # True to restart from prior results
     clawdata.restart_file = 'fort.chk03000'  # File to use for restart data
 
 
@@ -137,10 +137,10 @@ def setrun(claw_pkg='amrclaw'):
 
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
-        clawdata.output_step_interval = 4000
-        clawdata.total_steps = 4000
-        clawdata.output_t0 = True  # output at initial (or restart) time?
-        #clawdata.output_t0 = False  # output at initial (or restart) time?
+        clawdata.output_step_interval = 16000
+        clawdata.total_steps = 16000
+        #clawdata.output_t0 = True  # output at initial (or restart) time?
+        clawdata.output_t0 = False  # output at initial (or restart) time?
 
 
     clawdata.output_format = 'ascii'       # 'ascii', 'binary', 'netcdf'

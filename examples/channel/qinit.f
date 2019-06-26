@@ -24,8 +24,10 @@ c
 c      ul = 0.0d0
 c      vl = 0.0d0
 
-       do 20 i=1,mx
-       do 20 j=1,my
+c      fill ghost cells too so can more easily plot before
+c      time stepping starts
+       do 20 i = 1-mbc, mx+mbc
+       do 20 j = 1-mbc, my+mbc
           kuse = irr(i,j)
           if (kuse .ne. -1 .and. kuse .ne. lstgrd) then
              xcen = xcirr(kuse)

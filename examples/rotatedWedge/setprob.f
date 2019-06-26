@@ -55,7 +55,6 @@ c     # comment lines starting with #:
       xprob = xupper
       yprob = yupper
       cflcart = cfl  ! have to go through and only use one
-      gradThreshold = 1.d-4
 
 
       return

@@ -39,7 +39,7 @@ def setrun(claw_pkg='amrclaw'):
 
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
     probdata.add_param('mstage ',2, 'RK method order (coeffs set in setprob)')
-    probdata.add_param('ismp',    2,  ' stabilization method')
+    probdata.add_param('ismp',    1,  ' stabilization method')
     ## 1 = SRD
     ## 2 = DRD
     probdata.add_param('pwconst', True,  ' no slopes in plotting ')
@@ -71,12 +71,16 @@ def setrun(claw_pkg='amrclaw'):
 
     # Lower and upper edge of computational domain:
     clawdata.lower[0] = 0.000000e+00          # xlower
-    clawdata.upper[0] = 1.000000e+00          # xupper
+    #clawdata.upper[0] = 1.000000e+00          # xupper
+    # to get rid of nonexact cell at top bndry shorten domain by 1 cell
+    # since want to test accuracy of srd now
+    clawdata.upper[0] = .977000e+00          # xupper
     clawdata.lower[1] = 0.000000e+00          # ylower
     clawdata.upper[1] = 1.000000e+00          # yupper
 
     # Number of grid cells:
-    clawdata.num_cells[0] = 44      # mx
+    #clawdata.num_cells[0] = 44      # mx
+    clawdata.num_cells[0] = 43      # mx
     clawdata.num_cells[1] = 44      # my
     #clawdata.num_cells[0] = 12      # mx
     #clawdata.num_cells[1] = 12      # my
@@ -135,7 +139,7 @@ def setrun(claw_pkg='amrclaw'):
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
         clawdata.output_step_interval = 10000
-        clawdata.total_steps = 1
+        clawdata.total_steps = 100
         clawdata.output_t0 = True  # output at initial (or restart) time?
         #clawdata.output_t0 = False  # output at initial (or restart) time?
 
@@ -174,9 +178,9 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.dt_max = 1.000000e+99
 
     # Desired Courant number if variable dt used
-    clawdata.cfl_desired = 0.500000
+    clawdata.cfl_desired = 0.250000
     # max Courant number to allow without retaking step with a smaller dt:
-    clawdata.cfl_max = 0.500000
+    clawdata.cfl_max = 0.250000
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 1000
@@ -236,7 +240,7 @@ def setrun(claw_pkg='amrclaw'):
     #   3 or 'wall'     => solid wall for systems where q(2) is normal velocity
 
     clawdata.bc_lower[0] = 'user'   # at xlower
-    clawdata.bc_upper[0] = 'extrap'   # at xupper
+    clawdata.bc_upper[0] = 'user'   # at xupper
 
     # this problem has cut cells on top and bottom for y, so ignore
     clawdata.bc_lower[1] = 'extrap'   # at ylower

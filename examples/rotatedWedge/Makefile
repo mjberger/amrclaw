@@ -56,7 +56,7 @@ SOURCES = \
   fbody.f \
   bc2amr.f90 \
   pphysbdlin.f \
-  vrm_hll.f \
+  vrm_vl.f \
 
 #-------------------------------------------------------------------
 # Include Makefile containing standard definitions and make options:

@@ -15,7 +15,7 @@ CLAWMAKE = $(CLAW)/clawutil/src/Makefile.common
 CLAW_PKG = amrclaw                  # Clawpack package to use
 EXE = xamr                          # Executable to create
 SETRUN_FILE = setrun.py             # File containing function to make data
-OUTDIR = _output                    # Directory for output
+OUTDIR = _output_nodiag                    # Directory for output
 SETPLOT_FILE = setplot.py           # File containing function to set plots
 PLOTDIR = _plots                    # Directory for plots
 
@@ -25,7 +25,7 @@ OVERWRITE ?= True                   # False ==> make a copy of OUTDIR first
 
 # Compiler flags can be specified here or set as an environment variable
 #FFLAGS ?= -g -C -CB -CU -fpe0 -ftrapuv mcmodel=large
-FFLAGS ?= -O2 -fbounds-check -ffpe-trap=invalid,overflow,zero -fopenmp 
+#FFLAGS ?= -O2 -fbounds-check -ffpe-trap=invalid,overflow,zero -fopenmp  mcmodel=large
 
 # ---------------------------------
 # package sources for this program:
@@ -56,7 +56,7 @@ SOURCES = \
   fbody.f \
   bc2amr.f90 \
   pphysbdlin.f \
-  vrm_llf.f \
+  vrm_vl.f \
 
 #-------------------------------------------------------------------
 # Include Makefile containing standard definitions and make options:

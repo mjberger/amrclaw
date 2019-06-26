@@ -55,8 +55,9 @@ SOURCES = \
   qinit.f \
   fbody.f \
   bc2amr.f90 \
-  pphysbdlin.f \
-  vrm_llf.f \
+  bound.f90 \
+  vrm_vl.f \
+  dumptec.f \
 
 #-------------------------------------------------------------------
 # Include Makefile containing standard definitions and make options:

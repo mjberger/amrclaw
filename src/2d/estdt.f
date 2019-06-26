@@ -19,8 +19,7 @@ c
              v   = val(3,i,j)/rho
              etot  = val(4,i,j)
              velsq  = (u*u+v*v)
-             eint = etot - 0.5d0*velsq
-             p    = eint*gamma1
+             p    = gamma1*(etot-.5d0*rho*velsq)
              c    = dsqrt(gamma*p/rho)
              speed = dsqrt(velsq) + c
              speedmax = max(speedmax,speed)

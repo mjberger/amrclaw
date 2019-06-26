@@ -38,10 +38,10 @@ def setrun(claw_pkg='amrclaw'):
     #------------------------------------------------------------------
 
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
-    probdata.add_param('mstage',  2,  ' number RK stages (<=2 for now')
-    probdata.add_param('ismp',    2,  ' stabilization method')
+    probdata.add_param('mstage',  1,  ' number RK stages (<=2 for now')
+    probdata.add_param('ismp',    1,  ' stabilization method')
     probdata.add_param('pwconst', False,  ' no slopes for plotting ')
-    probdata.add_param('max1d',   120,  ' max size each dir for grid patches ')
+    probdata.add_param('max1d',  166,  ' max size each dir for grid patches ')
     probdata.add_param('nloops',    1,  '# closed loops or segments')
     probdata.add_param('xloop1',    .50676,  ' starting pt x')
     probdata.add_param('yloop1',    .00001, ' starting pt y')
@@ -76,8 +76,8 @@ def setrun(claw_pkg='amrclaw'):
     # Number of grid cells:
     #clawdata.num_cells[0] = 148     # mx
     #clawdata.num_cells[1] = 100     # my
-    clawdata.num_cells[0] = 148*6     # mx
-    clawdata.num_cells[1] = 100*6     # my
+    clawdata.num_cells[0] = 148*2     # mx
+    clawdata.num_cells[1] = 100*2     # my
 
     # ---------------
     # Size of system:
@@ -107,7 +107,7 @@ def setrun(claw_pkg='amrclaw'):
 
     #clawdata.restart = True                # True to restart from prior results
     clawdata.restart = False               # True to restart from prior results
-    clawdata.restart_file = 'fort.chk00015'  # File to use for restart data
+    clawdata.restart_file = 'fort.chk00177'  # File to use for restart data
 
 
     # -------------
@@ -122,9 +122,9 @@ def setrun(claw_pkg='amrclaw'):
     if clawdata.output_style==1:
         # Output ntimes frames at equally spaced times up to tfinal:
         # Can specify num_output_times = 0 for no output
-        clawdata.num_output_times = 2
+        clawdata.num_output_times = 1
         clawdata.tfinal = .120
-        #clawdata.tfinal = .00095
+        #clawdata.tfinal = .00419895 
         #clawdata.output_t0 = True  # output at initial (or restart) time?
         clawdata.output_t0 = False  # output at initial (or restart) time?
 
@@ -135,9 +135,8 @@ def setrun(claw_pkg='amrclaw'):
 
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
-        clawdata.output_step_interval = 5
-        clawdata.total_steps = 10
-        #clawdata.total_steps = 148
+        clawdata.output_step_interval = 50 
+        clawdata.total_steps = 1
         #clawdata.output_t0 = True  # output at initial (or restart) time?
         clawdata.output_t0 = False  # output at initial (or restart) time?
 
@@ -277,7 +276,7 @@ def setrun(claw_pkg='amrclaw'):
     elif clawdata.checkpt_style == 3:
         # Checkpoint every checkpt_interval timesteps (on Level 1)
         # and at the final time.
-        clawdata.checkpt_interval = 1000
+        clawdata.checkpt_interval = 95  
 
     # ---------------
     # AMR parameters:

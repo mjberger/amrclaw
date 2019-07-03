@@ -171,9 +171,9 @@ c              if (IS_GHOST(i+ioff,j+joff)) go to 31
                 ! one last check for positivity
                 if (recon(1) .le. 0.d0 .or. recon(4) .le. 0.d0) then
                   dalpha = 0.d0
-                  write(*,900) i,j,mptr,istage
- 900              format("boundary nonphysical: cell ",2i5,
-     .                   " grid ",i4," istage ",i2)
+                  write(*,900) i,j,recon(1),recon(4),mptr,istage
+ 900              format("boundary nonphysical: cell ",2i5," rho, pr",
+     .                   2e15.7," grid ",i4," istage ",i2)
                 endif
                 phimin = min(phimin, dalpha)
  934         continue

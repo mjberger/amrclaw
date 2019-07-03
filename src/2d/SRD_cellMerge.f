@@ -73,10 +73,11 @@ c      maxthreads initialized to 1 above in case no openmp
        else
           verbose = .true.
        endif
-       !verbose = .false.
-       verbose = .true.
+       verbose = .false.
+       !verbose = .true.
        noDiagonals = .true.
        !noDiagonals = .false.
+       eps = 1d-4
 
 c      some initializations
        ar(lstgrd) = dx*dy   ! area of regular grid cell 
@@ -177,9 +178,9 @@ c               count this cell
                 if (ioff .eq. 0 .and. joff .eq. 0) go to 22 ! no eqn to solve
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) go to 22
-                if (noDiagonals) then
-                  if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 22
-                endif
+c               if (noDiagonals) then
+c                 if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 22
+c               endif
                 call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                               xlow,ylow,dx,dy,koff)
                 if (IS_OUTSIDE(xcn,ycn)) go to 22
@@ -228,9 +229,9 @@ c      apply limiter if requested. Go over all neighbors, do BJ
               if (ioff .eq. 0 .and. joff .eq. 0) go to 31
               koff = irr(i+ioff,j+joff)
               if (koff .eq. -1) go to 31
-              if (noDiagonals) then
-                 if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 31
-              endif
+c             if (noDiagonals) then
+c                if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 31
+c             endif
               call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                             xlow,ylow,dx,dy,koff)
               if (IS_OUTSIDE(xcn,ycn)) go to 31
@@ -241,12 +242,16 @@ c      apply limiter if requested. Go over all neighbors, do BJ
             phimin = 1.d0
             do 32 joff = -nco, nco
             do 32 ioff = -nco, nco
-                if (ioff .eq. 0 .and. joff .eq. 0) go to 32 ! no eqn to solve
+                !! there may be an equation here since have to reconstruct
+                !! to cell center, not merge center
+                !! but presumably one would only check positivity since nothing
+                !! to limit using same qMerge nhood
+                if (ioff .eq. 0 .and. joff .eq. 0) go to 32 
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) go to 32
-                if (noDiagonals) then
-                   if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 32
-                endif
+c               if (noDiagonals) then
+c                  if (abs(ioff).eq.1 .and. abs(joff).eq.1) go to 32
+c               endif
                 call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                               xlow,ylow,dx,dy,koff)
                 if (IS_OUTSIDE(xcn,ycn)) go to 32
@@ -271,7 +276,7 @@ c      apply limiter if requested. Go over all neighbors, do BJ
                   ! one last check for positivity
                   xymomsq = recon(2)**2+recon(3)**2
                   press = .4d0*(recon(4)-0.5d0*xymomsq/recon(1))
-                  if (recon(1).le.0.d0 .or. press.le.0.d0) alpha = 0.d0
+                  if (recon(1).le.eps .or. press.le.eps) alpha = 0.d0
                   phimin = min(phimin, alpha)
  32         continue
             gradmx(:,i,j) = gradmx(:,i,j)*phimin(:)
@@ -290,8 +295,14 @@ c
 
       valnew = 0.d0  !  all cells initialized to 0
 
-      do 50 j = 1, mjtot
-      do 50 i = 1, mitot
+c     do 50 j = 1, mjtot
+c     do 50 i = 1, mitot
+c     next loop indices are assuming maxnco <= 2, so
+c     dont bother looking at ghost cells further away
+c     these ghost cells will be set next stage.
+c     dont to prevent verbose error that happen in ghost cells
+      do 50 j = lwidth-1, mjtot-lwidth+2
+      do 50 i = lwidth-1, mitot-lwidth+2
           k = irr(i,j)
           if (k .eq. -1) then
              ! set valnew to 'robust' fake state
@@ -320,9 +331,12 @@ c            check if physical state
      .                             + (ycn-ycentMerge(i,j))*gradmy(:,i,j)
              pr = .4d0*(qm(4)- 0.5d0*(qm(2)**2+qm(3)**2)/qm(1))
              if ((qm(1) .le. 0.d0) .or. (pr .le. 0.d0)) then
-                write(*,900)qm(1),pr,mptr,i,j
- 900            format("should not happen, rho,pr,mptr,i, j",
-     .                  2e15.7,3i4)
+                write(*,900)qm(1),pr,mptr,i,j,istage
+ 900            format("should not happen, rho,pr,mptr,i,j,istage",
+     .                  2e15.7,4i4)
+                write(*,901) ioff,joff,numHoods(i+ioff,j+joff)
+ 901            format("         reconstructing to offsets ",2i5,
+     .                " with ",i5," nhoods")
              endif
              valnew(:,i+ioff,j+joff) = valnew(:,i+ioff,j+joff) + 
      .              qm(:)/numHoods(i+ioff,j+joff)
@@ -332,6 +346,10 @@ c            check if physical state
 c
        q = valnew
 c
+c      check positivity
+       call checkPhysInt(q,mitot,mjtot,mptr,istage,
+     .                   lwidth,'from SRD_merge')
+
        if (verbose) then
           totmass2 =  bigconck(q,irr,mitot,mjtot,lwidth,nvar)
           dif = totmass2 - totmass
@@ -396,7 +414,8 @@ c
 
       ! merge until vqmerge at least this big (analogous to 1d where left and right nhoods each dx
       !!areaMin = 2.d0*ar(lstgrd)  
-      areaMin = 0.5d0*ar(lstgrd)  
+      !!areaMin = 0.5d0*ar(lstgrd)  
+      areaMin = 0.25d0*ar(lstgrd)  
       !!areaMin = ar(lstgrd)  
 
       numHoods = 0  ! initialize, loop below will add each cell to its own nhood
@@ -476,29 +495,35 @@ c merging, but is neighbor to too many other cut cells that do, so needs support
 
 c     needed number of neighbhoods to compute volMerge = which is not
 c     the real volume of the merging neighborhood
+      if (.false.) then
       do j = 3, mjtot-2
       do i = 3, mitot-2
           k = irr(i,j)
           if (k .eq. lstgrd .or. k .eq. -1) cycle
           if (ncount(i,j) .gt. 0) cycle ! should be ok
-          if (ncount(i,j) .eq. 0 .and. numHoods(i,j) .ge. 3) then
+          !check if big volume cut cell next to too many little guys
+          if (ncount(i,j) .eq. 0 .and. numHoods(i,j) .ge. 3) then 
              ncount(i,j) = 1
              ! adjust nhood count for new neighborhoods
              do joff = -1, 1
              do ioff = -1, 1
                 if (ioff .eq. 0 .and. joff .eq. 0) cycle ! already counted yourself
+	        if (noDiagonals) then
+                   if (abs(ioff).eq.1 .and. abs(joff).eq.1) cycle 
+                endif
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) cycle
                 if (IS_OUT_OF_RANGE(i+ioff,j+joff)) cycle
                 call getCellCentroid(lstgrd,i,j,xcn,
-     .                      ycn,xlow,ylow,dx,dy,k)
+     .                      ycn,xlow,ylow,dx,dy,koff)
                 if (IS_OUTSIDE(xcn,ycn)) cycle
-                numHoods(i+ioff,j+joff) = numHoods(i+ioff,j+joff)+1 !ignoring inside/outside stuff
+                numHoods(i+ioff,j+joff) = numHoods(i+ioff,j+joff) + 1
              end do
              end do
           endif
       end do
       end do
+      endif
 
 !   initialize array with  most common case, overwritten below as needed
       volMerge = ar(lstgrd) 
@@ -590,5 +615,34 @@ c
       endif
 
       minmod = ans
+      return
+      end
+c
+c ------------------------------------------------------------------------
+c
+      subroutine checkPhysInt(q,mitot,mjtot,mptr,istage,nghost,str)
+
+      implicit real*8 (a-h,o-z)
+      dimension q(4,mitot,mjtot)
+      character*14 str
+
+c     this only checks the interior of the grid and
+c     excluse ghost cells
+c
+      gamma1 = .4d0
+      do j = nghost+1, mjtot-nghost
+      do i = nghost+1, mitot-nghost
+         rho = q(1,i,j)
+         u = q(2,i,j)/rho
+         v = q(3,i,j)/rho
+         pr = gamma1*(q(4,i,j)-.5d0*rho*(u*u+v*v))
+         if (rho < 0 .or. pr < 0) then
+            write(*,901)rho,pr,i,j,mptr,istage,str
+ 901        format("non-physical den/pr",2e15.7," at i,j grid stage ",
+     .           4i5,2x,a14)
+         endif
+      end do
+      end do
+
       return
       end

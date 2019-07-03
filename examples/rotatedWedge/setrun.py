@@ -41,7 +41,7 @@ def setrun(claw_pkg='amrclaw'):
     probdata.add_param('mstage',  2,  ' number RK stages (<=2 for now')
     probdata.add_param('ismp',    0,  ' stabilization method')
     probdata.add_param('pwconst', False, ' no slopes for plotting ')
-    probdata.add_param('max1d', 100,  ' max size each dir for grid patches ')
+    probdata.add_param('max1d', 180,  ' max size each dir for grid patches ')
     probdata.add_param('nloops',    0,  '# this problem rotates the IC, not geom.')
 
 #  not quite working with cut cells due to lower left boundary
@@ -73,13 +73,14 @@ def setrun(claw_pkg='amrclaw'):
 
     # Lower and upper edge of computational domain:
     clawdata.lower[0] = 0.300000e+00          # xlower
-    clawdata.upper[0] = 1.300000e+00          # xupper
+    clawdata.upper[0] = 2.000000e+00          # xupper
     clawdata.lower[1] = 0.000000e+00          # ylower
-    clawdata.upper[1] = 0.2500000000           # yupper
+    clawdata.upper[1] = 0.30000000000           # yupper
 
     # Number of grid cells:
-    clawdata.num_cells[0] = 100*8     # mx
-    clawdata.num_cells[1] = 50*4      # my
+    clawdata.num_cells[0] = 90*8     # mx
+    #clawdata.num_cells[1] = 20*8      # my
+    clawdata.num_cells[1] = 148       # my
 
     # ---------------
     # Size of system:
@@ -109,7 +110,7 @@ def setrun(claw_pkg='amrclaw'):
 
     #clawdata.restart = True                # True to restart from prior results
     clawdata.restart = False               # True to restart from prior results
-    clawdata.restart_file = 'fort.chk03000'  # File to use for restart data
+    clawdata.restart_file = 'fort.chk16740'  # File to use for restart data
 
 
     # -------------
@@ -119,13 +120,13 @@ def setrun(claw_pkg='amrclaw'):
     # Specify at what times the results should be written to fort.q files.
     # Note that the time integration stops after the final output time.
 
-    clawdata.output_style = 3
+    clawdata.output_style = 1
 
     if clawdata.output_style==1:
         # Output ntimes frames at equally spaced times up to tfinal:
         # Can specify num_output_times = 0 for no output
         clawdata.num_output_times = 2
-        clawdata.tfinal = .120
+        clawdata.tfinal = .12
         #clawdata.tfinal = .00095
         #clawdata.output_t0 = True  # output at initial (or restart) time?
         clawdata.output_t0 = False  # output at initial (or restart) time?
@@ -177,9 +178,9 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.dt_max = 1.000000e+99
 
     # Desired Courant number if variable dt used
-    clawdata.cfl_desired = 0.250000
+    clawdata.cfl_desired = 0.50000
     # max Courant number to allow without retaking step with a smaller dt:
-    clawdata.cfl_max = 0.250000
+    clawdata.cfl_max = 0.50000
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 1000

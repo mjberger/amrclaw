@@ -249,7 +249,8 @@ c
             endif
  917     continue
 
-         call checkPhys(q,mitot,mjtot,mptr,istage,'from my_method')
+         call checkPhys(q,irr,mitot,mjtot,mptr,istage,
+     .                  lstgrd,'from my_method')
 
 c  postprocess for stability of cut cells. c
 c  do it in conserved variables for conservation purposes, (but maybe prim better?)

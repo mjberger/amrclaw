@@ -80,7 +80,7 @@ c
 
         if (unr .le. -cr) then   ! completely supersonic in right state
           fr_rho     = rhor(k)*unr
-          fr_thisMom = rhor(k)*unr*unr
+          fr_thisMom = rhor(k)*unr*unr + pr(k)
           fr_tanMom  = rhor(k)*unr*utanr
           etot       = .5d0*rhor(k)*(unr*unr+utanr*utanr) + pr(k)/gamma1
           fr_rhoE    = unr*(etot + pr(k))

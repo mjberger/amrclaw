@@ -27,7 +27,10 @@ c
               do 10 kside = 1, 6
                 if (poly(kside+2,1,k) .eq. -11) then
                    write(*,*)"missing side in getYface for ",i,jcol
-                   stop
+c                  cut cell situation - just return something to not bomb
+                   xface = poly(1,1,k)
+                   yface = poly(1,2,k)
+                   go to 99
                 endif
                 x1 = poly(kside,1,k)
                 y1 = poly(kside,2,k)

@@ -237,8 +237,9 @@ c
          ar(-1) = 1.d0   ! prevent zero divides for solid cells
          do 917 j = 1+istage, mjtot-istage
          do 917 i = 1+istage, mitot-istage
-         do 917 m = 1, nvar
-            k = irr(i,j)
+
+         k = irr(i,j)
+         do m = 1, nvar
             resid(m) = (f(m,i+1,j)-f(m,i,j)+g(m,i,j+1)-g(m,i,j))
      &                 - firreg(m,k)
             res(m,i,j) = resid(m) ! for debugging save both
@@ -247,10 +248,15 @@ c
             else
                q(m,i,j) = q(m,i,j) - dtn/ar(k)*resid(m)  ! second stage builds on first
             endif
+         end do
  917     continue
 
-         call checkPhys(q,irr,mitot,mjtot,mptr,istage,
-     .                  lstgrd,'from my_method')
+c        call checkPhys(q,irr,mitot,mjtot,mptr,istage,
+c    .                  lstgrd,'from my_method')
+
+c     write(*,*)"calling symcheck after update stage ",istage,
+c    .          " before srd"
+      call symcheck(q,irr,mitot,mjtot,nvar,lwidth)
 
 c  postprocess for stability of cut cells. c
 c  do it in conserved variables for conservation purposes, (but maybe prim better?)
@@ -345,6 +351,10 @@ c        dtnewn = cflcart* effh / speedmax
      &               aux,naux,cfl)
       endif
 
+c     symmetry check across y = 2 for debugging
+c     write(*,*)"calling symcheck after srd  stage ",istage
+      call symcheck(q,irr,mitot,mjtot,nvar,lwidth)
+
       return
       end
 c
@@ -370,5 +380,35 @@ c
 
       gridconck = totmass
 
+      return
+      end
+c
+c --------------------------------------------------------------------
+c
+      subroutine symcheck(q,irr,mitot,mjtot,nvar,nghost)
+
+      implicit real*8 (a-h,o-z)
+
+      dimension q(nvar,mitot,mjtot)
+      dimension irr(mitot,mjtot)
+
+      jend = (mjtot-nghost)/2
+      tol = 1.d-10
+
+      do i = nghost+1,mitot-nghost
+      do j = nghost+1,jend
+         if (irr(i,j) .eq. -1) cycle
+         j2 = mjtot - j + 1
+         dif1 = abs(q(1,i,j) - q(1,i,j2))
+         dif4 = abs(q(4,i,j) - q(4,i,j2))
+         dif2 = abs(q(2,i,j) - q(2,i,j2))
+         dif3 = abs(q(3,i,j) + q(3,i,j2))
+         if (dif1 .gt. tol .or. dif2 .gt. tol .or.
+     .       dif3 .gt. tol .or. dif4 .gt. tol) then
+            write(*,100) i,j,dif1,dif2,dif3,dif4
+ 100        format(2i5," difs ",5e12.5)
+         endif
+      end do
+      end do
       return
       end

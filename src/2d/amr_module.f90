@@ -343,7 +343,8 @@ module amr_module
                      points(24,2,irrsize),wt(24,-1:irrsize),      &
                      xcirr(irrsize),ycirr(irrsize)
      
-     integer ::     ixg(irrsize), iyg(irrsize), nxtirr(irrsize)
+     integer ::     ixg(irrsize), iyg(irrsize), nxtirr(irrsize),  &
+                    svi(irrsize), svj(irrsize)
 
      real(kind=8)   xloops(10), yloops(10)
      integer     :: nloops, lhead

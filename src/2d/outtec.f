@@ -1,9 +1,9 @@
 c
 c -------------------------------------------------------------
 c
-      subroutine outtec(q,nvar,mptr,irr,
-     1                  mitot,mjtot,lstgrd,
-     2                  dx,dy,xlow,ylow,time,ncount,numHoods)
+      subroutine outtec(q,nvar,mptr,irr,mitot,mjtot,
+     1                  lstgrd,dx,dy,xlow,ylow,time,
+     2                  ncount,numHoods,ibunit)
 c
       use amr_module
       implicit double precision (a-h,o-z)
@@ -122,6 +122,8 @@ c        # test again for kirr -1 in case want to view in tecplot
             xcen = xcirr(kirr)
             ycen = ycirr(kirr)
             ch = '+'
+c           reconstruct to midpt of solid bndry and output to special file for cylinder case
+            call dumpBndry(qp,qx,qy,irr,mitot,mjtot,i,j,nvar,ibunit)
          endif
 
          volFrac = ar(kirr)/ar(lstgrd)

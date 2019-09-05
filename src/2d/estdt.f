@@ -34,7 +34,7 @@ c
        endif
            
 
-c previous way
+c other way
        speedmax =  0.d0
        do 20 j = lwidth+1, mjtot-lwidth
        do 10 i = lwidth+1, mitot-lwidth

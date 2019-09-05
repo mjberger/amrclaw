@@ -10,6 +10,7 @@ c
       common /order2/ ssw, quad, nolimiter
       logical         flag,pwconst,quad,nolimiter
       character*23  filename 
+      character*11   filebndry
 c
 c dumptec = make tecplot file for finest level soln values over entire domain
 c (but for now assume only 1 level  -- output finest level)
@@ -19,12 +20,21 @@ c
       filename = 'disjointCutPlanesxx.dat'
       filename(18:18) = '0'
       filename(19:19) = char(ichar('0')+nplot)
-      nplot = nplot+1
 
       open(14,file=filename,status='unknown',form='formatted')
       write(*,*)" writing graphics file ",filename," at time ",time
       write(14,100) 
  100  format('TITLE = "Extracted cutting Planes through mesh"' )
+
+      ! also dump boundary plots at same time
+      filebndry = 'bndry0x.dat'
+      filebndry(7:7) = char(ichar('0')+nplot)
+      ibunit = 24
+      open(ibunit,file=filebndry,status='unknown',form='formatted')
+      write(ibunit,*)"# writing bndry file at time ",time
+      
+
+      nplot = nplot+1
 
  10   level = lfine
 
@@ -60,7 +70,8 @@ c     fill ghost cells if need them for output or to compute gradients
               call outtec(alloc(locnew),nvar,mptr,
      1                    alloc(locirr),mitot,mjtot,
      2                    lstgrd,hx,hy,xlow,ylow,time,
-     3                    alloc(locncount),alloc(locnumHoods))
+     3                    alloc(locncount),alloc(locnumHoods),
+     4                    ibunit)
 c
               mptr = node(levelptr,mptr)
           go to 20
@@ -68,6 +79,7 @@ c
  
 c
       close(14)
+      close(24)
 c
  99   return
       end

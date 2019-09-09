@@ -24,15 +24,16 @@ OVERWRITE ?= True                   # False ==> make a copy of OUTDIR first
 # Environment variable FC should be set to fortran compiler, e.g. gfortran
 
 # Compiler flags can be specified here or set as an environment variable
-FFLAGS ?= -g -C -CB -CU -fpe0 -ftrapuv -mcmodel=large 
-#FFLAGS ?= -g -C -CB -CU -fpe0 -ftrapuv -mcmodel=large  -O2 -qopenmp
+#FFLAGS ?= -g -C -CB -CU -fpe0 -ftrapuv -mcmodel=large 
+FFLAGS ?=  -C -CB -CU -fpe0 -ftrapuv -mcmodel=large  -O2 -qopenmp
 #FFLAGS ?= -O2 -fbounds-check -ffpe-trap=invalid,overflow,zero -fopenmp  mcmodel=large
 
 # ---------------------------------
 # package sources for this program:
 # ---------------------------------
 
-AMRLIB = $(CLAW)/amrclaw/src/2d
+#AMRLIB = $(CLAW)/amrclaw/src/2d
+AMRLIB = /home/berger/amrclaw-amrcart/src/2d
 include $(AMRLIB)/Makefile.amr_2d
 
 # ---------------------------------------
@@ -58,8 +59,9 @@ SOURCES = \
   fbody.f \
   bc2amr.f90 \
   pphysbdlin.f \
-  vrm_vl.f \
+  vrm_llf.f \
   SRD_normal.f \
+  dumpBndry.f \
   mymethod.f
 
 #-------------------------------------------------------------------

@@ -44,7 +44,7 @@ c interior cells can always trust 2 cells to the side after 1 stage
 c never use cells from exterior to the domain for SRD
 
        IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
-     .                  y .lt. ylower .or. y .gt. yupper)
+     .                    y .lt. ylower .or. y .gt. yupper)
        REG_NBORS(i,j,lstgrd) = (irr(i+1,j).eq.lstgrd .and. 
      .                          irr(i-1,j).eq.lstgrd .and. 
      .                          irr(i,j+1).eq.lstgrd .and. 
@@ -90,7 +90,7 @@ c      some initializations
 
        ! put in 'normal' values to prevent errors e.g. in converting to prim vars
        ! these fake vals are in conserved variables
-       fakeState(1) = 1.d0
+       fakeState(1) = 1.4d0
        fakeState(2) = 0.d0
        fakeState(3) = 0.d0
        fakeState(4) = 2.5d0 !(p/gm1, corresponding to fakestate in method)
@@ -108,8 +108,8 @@ c     nCount is size of neighborhood, numHoods is number of merged nhoods each c
        endif
 
 c       form qMerge vals 
-        do 10 j = 1, mjtot
-        do 10 i = 1, mitot
+        do 10 j = 5, mjtot-4
+        do 10 i = 5, mitot-4
             k = irr(i,j)
             if (k .eq. -1) go to 10 ! no solid cells
             call getCellCentroid(lstgrd,i,j,xc,yc,xlow,ylow,dx,dy,k)
@@ -136,16 +136,15 @@ c
 
             ! add the max of one other nbor cells and yourself
             ! to get merged val
-            qMerge(:,i,j) = ar(k)*q(:,i,j)/numHoods(i,j) +
-     .            ar(koff)*q(:,i+ioff,j+joff)/numHoods(i+ioff,j+joff)
-
-            qMerge(:,i,j) = qMerge(:,i,j) / volMerge(i,j)
-
+            qMerge(:,i,j) = (ar(k)*q(:,i,j)/numHoods(i,j) +
+     .            ar(koff)*q(:,i+ioff,j+joff)/numHoods(i+ioff,j+joff))/
+     .            volMerge(i,j)
  10     continue
 
         ! gradient of merge neighborhoods, initialized to 0. set using neighboring merged tiels
         gradmx = 0.d0
         gradmy = 0.d0
+        if (ssw .eq. 0.d0) go to 35
 
         do 20 j = 3, mjtot-2
         do 20 i = 3, mitot-2
@@ -217,8 +216,8 @@ c               endif
 c
 c      apply limiter if requested. Go over all neighbors, do BJ
         if (nolimiter) go to 35
-        do 30 j = 3, mjtot-2
-        do 30 i = 3, mitot-2
+        do 30 j = 5, mjtot-4
+        do 30 i = 5, mitot-4
             k = irr(i,j)
             if (k .eq. -1) go to 30 ! solid cells have no gradient
             if (numHoods(i,j).eq.1 .and. ncount(i,j) .eq.0) go to 30  ! CHECK THAT NOTHING TO DO AND VAL NOT CHANGED
@@ -286,9 +285,6 @@ c               endif
             gradmy(:,i,j) = gradmy(:,i,j)*phimin(:)
  30     continue
 
- 
-c      gradmx = 0.d0  
-c      gradmy = 0.d0 
 c
       ! redo neighborhood calc as in makeNHoods but putting merged vals INTO cells
       ! instead of getting FROm cells. have to do it this way because a cell doesn't 
@@ -298,12 +294,11 @@ c
 
       valnew = 0.d0  !  all cells initialized to 0
 
-c     do 50 j = 1, mjtot
-c     do 50 i = 1, mitot
 c     next loop indices are assuming maxnco <= 2, so
 c     dont bother looking at ghost cells further away
 c     these ghost cells will be set next stage.
-c     dont to prevent verbose error that happen in ghost cells
+c     need to look at some ghost cells because they may distribute
+c     to the last real cell
       do 50 j = lwidth-1, mjtot-lwidth+2
       do 50 i = lwidth-1, mitot-lwidth+2
           k = irr(i,j)
@@ -332,6 +327,7 @@ c     dont to prevent verbose error that happen in ghost cells
      &                            xlow,ylow,dx,dy,koff)
              if (IS_OUTSIDE(xcn,ycn)) go to 40  
 
+
              ! only 2 cases - i/joff 0,0 or the at most one nbor
              if ((ioff .eq. svi(k) .and. joff .eq. svj(k)) .or.
      .           (ioff .eq. 0      .and. joff .eq. 0))     then
@@ -341,12 +337,15 @@ c            form qm, check if state is physical
      .                    (ycn-ycentMerge(i,j))*gradmy(:,i,j)
                 pr = .4d0*(qm(4)- 0.5d0*(qm(2)**2+qm(3)**2)/qm(1))
                 if ((qm(1) .le. 0.d0) .or. (pr .le. 0.d0)) then
-                   write(*,900)qm(1),pr,mptr,i,j,istage
- 900               format("should not happen, rho,pr,mptr,i,j,istage",
-     .                     2e15.7,4i4)
-                   write(*,901) ioff,joff,numHoods(i+ioff,j+joff)
+                   write(*,900)qm(1),pr,mptr,i,j,k,istage
+ 900               format("shouldnt happen, rho,pr,mptr,i,j,k,istage",
+     .                     2e15.7,5i4)
+                   write(*,901) ioff,joff,numHoods(i+ioff,j+joff),
+     .             ncount(i,j)
  901               format("         reconstructing to offsets ",2i5,
-     .                   " with ",i5," nhoods")
+     .                   " with nhoods=",i5," & ncount(i,j)",i3)
+                   write(*,902) qmerge(:,i,j),q(:,i,j)
+ 902               format("qMerge ",4e15.7,/,"q      ",4e15.7)
                 endif
 c               each cell takes its own merged val
 c               shouldnt valnew be 0 for full cells?
@@ -434,8 +433,6 @@ c
       numHoods = 1  ! initialize, everyone at least a member of its own hood
       ncount = 0    ! and its nborhood only includes itself to start
       maxnco = 0    ! will keep track of max
-      svi = 0       
-      svj = 0
 
 c     this code below counts on fact that don't need more than
 c     2 cells to a side for a merging neighborhood
@@ -446,6 +443,8 @@ c     2 cells to a side for a merging neighborhood
          call getCellCentroid(lstgrd,i,j,xc,yc,
      &                         xlow,ylow,dx,dy,k)
          if (IS_OUTSIDE(xc,yc)) go to 10  
+         svi(k) = 0
+         svj(k) = 0
          if (k .eq. lstgrd) then
             go to 10 ! a full  flow cell doesnt have to merge with a nbor 
          endif
@@ -629,7 +628,7 @@ c take max over all and thats the neighbor
       ioff = iset(ispot)
       joff = jset(ispot)
 
-!!    will need to chceck that i+ioff,j+joff is inside
+!!    will need to check that i+ioff,j+joff is inside
 !!    domain and valid, but for cylinder case for now
 c     skip it
 

@@ -102,7 +102,7 @@ c
       else
          write(14,103) 4*nCellsinPlane,nCellsinPlane
  103     format('VARIABLES = x,y,Rho,U,V,Pressure,Xcent,Ycent,',
-     .                      'ncount,numHoods,i,j,k,volFrac,perim',/,
+     .                      'ncount,numHoods,i,j,k,volFrac,mptr',/,
      .          'Zone T="Cut",N =',i10,' E= ',i10,' F=FEPOINT')
       endif
 
@@ -127,17 +127,6 @@ c           reconstruct to midpt of solid bndry and output to special file for c
          endif
 
          volFrac = ar(kirr)/ar(lstgrd)
-         perim =  0.d0 ! maybe perim will indicate reason for instability?
-         if (kirr .eq. lstgrd) then 
-           perim = 2.d0*(dx+dy)
-         else if (kirr .ne. -1) then
-           do kside = 1,6
-             if (poly(kside+1,1,kirr).eq.-11) go to 62
-             hside=dsqrt((poly(kside,1,kirr)-poly(kside+1,1,kirr))**2 +
-     &                   (poly(kside,2,kirr)-poly(kside+1,2,kirr))**2)
-             perim = perim + hside
-           end do
-         endif
 
 62       continue
 
@@ -186,8 +175,7 @@ c            valprim(3) = valprim(3)
 c            valprim(4) = valprim(4)
              write(14,1022) xc,yc,(valprim(ivar),ivar=1,nvar),
      &                  xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
-     &                  kirr,volFrac,perim
-345          format(a1,2i3,2f6.3,4e15.7)
+     &                  kirr,volFrac,mptr
 
           else if (iprob .eq. 19) then  
             if (kirr .eq. lstgrd) then
@@ -203,10 +191,10 @@ c            valprim(4) = valprim(4)
           else
             write(14,1022) xc,yc,(valprim(ivar),ivar=1,nvar),
      &                  xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
-     &                  kirr,volFrac,perim
+     &                  kirr,volFrac,mptr
           endif
  102      format(9e18.9)
- 1022      format(8e25.15,5i8,2e10.2)
+ 1022      format(8e25.15,5i8,1e10.2,i5)
         end do
 
  15    continue

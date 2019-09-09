@@ -1,5 +1,6 @@
 #get the directory of this makefile
-AMRLIB:=$(CLAW)/amrclaw/src/2d
+#AMRLIB:=$(CLAW)/amrclaw/src/2d
+AMRLIB:=$(HOME)/amrclaw-amrcart/src/2d
 
 #list of common sources for amr 2d codes
 COMMON_MODULES += \
@@ -24,7 +25,6 @@ COMMON_SOURCES += \
   $(AMRLIB)/mymethod.f \
   $(AMRLIB)/cellsClose.f \
   $(AMRLIB)/DRD_cellMerge.f \
-  $(AMRLIB)/SRD_cellMerge.f \
   $(AMRLIB)/getCellCentroid.f \
   $(AMRLIB)/getirrlen.f \
   $(AMRLIB)/getXface.f \
@@ -39,6 +39,7 @@ COMMON_SOURCES += \
   $(AMRLIB)/isig.f \
   $(AMRLIB)/dumptec.f \
   $(AMRLIB)/outtec.f \
+  $(AMRLIB)/dumpBndry.f \
   $(AMRLIB)/zeroin.f \
   $(AMRLIB)/p19fn.f \
   $(AMRLIB)/p19tru.f \

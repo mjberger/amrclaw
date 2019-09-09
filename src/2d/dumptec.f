@@ -58,8 +58,8 @@ c     fill ghost cells if need them for output or to compute gradients
               hx   = hxposs(level)
               hy   = hyposs(level)
 
-             if (ssw .ne. 0 .and. .not. pwconst)
-     1         call bound(time,nvar,nghost,alloc(locnew),mitot,mjtot,
+             !!if (ssw .ne. 0 .and. .not. pwconst)
+               call bound(time,nvar,nghost,alloc(locnew),mitot,mjtot,
      2                    mptr,alloc(locaux),naux)
 
               ! remember got 3 times size of irr to include other arrays

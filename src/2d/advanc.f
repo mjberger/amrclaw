@@ -173,8 +173,8 @@ c
       integer omp_get_thread_num, omp_get_max_threads
       integer mythread/0/, maxthreads/1/
 
-      double precision fp(nvar,mitot,mjtot),fm(nvar,mitot,mjtot)
-      double precision gp(nvar,mitot,mjtot),gm(nvar,mitot,mjtot)
+c     double precision fp(nvar,mitot,mjtot),fm(nvar,mitot,mjtot)
+c     double precision gp(nvar,mitot,mjtot),gm(nvar,mitot,mjtot)
 
       logical vtime
 
@@ -281,18 +281,18 @@ c           # should never get here due to check in amr2
             stop
          endif
 
-      if (node(cfluxptr,mptr) .ne. 0)
-     2   call fluxsv(mptr,fm,fp,gm,gp,
-     3               alloc(node(cfluxptr,mptr)),mitot,mjtot,
-     4               nvar,listsp(level),delt,hx,hy)
-         if (node(ffluxptr,mptr) .ne. 0) then
-         lenbc = 2*(nx/intratx(level-1)+ny/intraty(level-1))
-            locsvf = node(ffluxptr,mptr)
-         call fluxad(fm,fp,gm,gp,
-     2               alloc(locsvf),mptr,mitot,mjtot,nvar,
-     4                  lenbc,intratx(level-1),intraty(level-1),
-     5               nghost,delt,hx,hy)
-         endif
+c     if (node(cfluxptr,mptr) .ne. 0)
+c    2   call fluxsv(mptr,fm,fp,gm,gp,
+c    3               alloc(node(cfluxptr,mptr)),mitot,mjtot,
+c    4               nvar,listsp(level),delt,hx,hy)
+c        if (node(ffluxptr,mptr) .ne. 0) then
+c        lenbc = 2*(nx/intratx(level-1)+ny/intraty(level-1))
+c           locsvf = node(ffluxptr,mptr)
+c        call fluxad(fm,fp,gm,gp,
+c    2               alloc(locsvf),mptr,mitot,mjtot,nvar,
+c    4                  lenbc,intratx(level-1),intraty(level-1),
+c    5               nghost,delt,hx,hy)
+c        endif
 c
 c        write(outunit,969) mythread,delt, dtnew
 c969     format(" thread ",i4," updated by ",e15.7, " new dt ",e15.7)

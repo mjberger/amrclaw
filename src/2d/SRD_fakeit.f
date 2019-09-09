@@ -3,7 +3,7 @@ c ---------------------------------------------------------------------
 c
        subroutine SRD_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,
      .                      dx,dy,lwidth,xlow,ylow,istage,
-     .                      ncount,numHoods,mptr)
+     .                      ncount,numHoods,mptr,ffluxlen,gfluxlen)
 
        use amr_module
        implicit double precision (a-h, o-z)
@@ -11,6 +11,7 @@ c
        dimension q(nvar,mitot,mjtot),  irr(mitot,mjtot)
        dimension qx(nvar,mitot,mjtot), qy(nvar,mitot,mjtot)
        dimension gradmx(nvar,mitot,mjtot), gradmy(nvar,mitot,mjtot)
+       dimension ffluxlen(mitot+1,mjtot+1),gfluxlen(mitot+1,mjtot+1)
 
        dimension valnew(nvar,mitot,mjtot), volMerge(mitot,mjtot)
        dimension qMerge(nvar,mitot,mjtot), numHoods(mitot,mjtot)

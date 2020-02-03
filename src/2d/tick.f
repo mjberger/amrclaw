@@ -323,13 +323,13 @@ c          make sure not to exceed largest permissible dt
 
        if ((abs(checkpt_style).eq.3 .and. 
      &      mod(ncycle,checkpt_interval).eq.0) .or. dumpchk) then
-                call check(ncycle,time,nvar,naux)
+                call check(ncycle,time,nvar,naux,nplot)
                 dumpchk = .true.
        endif
 
        if ((mod(ncycle,iout).eq.0) .or. dumpout) then
 c        call valout(1,lfine,time,nvar,naux)
-c        if (printout) call outtre(mstart,.true.,nvar,naux)
+         if (printout) call outtre(mstart,.true.,nvar,naux)
          call dumptec(1,lfine,nvar,naux,nplot,time)
        endif
 
@@ -376,7 +376,7 @@ c  # (unless we just did it based on dumpchk)
 c
       if (checkpt_style .ne. 0) then  ! want a chckpt
          ! check if just did it so dont do it twice
-         if (.not. dumpchk) call check(ncycle,time,nvar,naux)
+         if (.not. dumpchk) call check(ncycle,time,nvar,naux,nplot)
       else  ! no chkpt wanted, so need to print gauges separately
          if (num_gauges .gt. 0) then
             do ii = 1, num_gauges

@@ -1,7 +1,7 @@
 c
 c ---------------------------------------------------------
 c
-      subroutine check(nsteps,time,nvar,naux)
+      subroutine check(nsteps,time,nvar,naux,nplot)
 c
 c :::::::::::::::::::::: CHECK ::::::::::::::::::::::::::::::::;
 !>   check point routine - can only call at end of coarse grid cycle
@@ -81,10 +81,10 @@ c
      5               timeRegridding,timeRegriddingCPU,
      6               timeValout,timeValoutCPU 
 
-      ! this new piece is for irregular info
+      ! this new piece is for irregular info and for plotting
       write(chkunit) poly,ar,points,wt,xcirr,ycirr,
      1               ixg,iyg,nxtirr
-      write(chkunit) xloops,yloops,nloops,lhead
+      write(chkunit) xloops,yloops,nloops,lhead,nplot
 c
       close(chkunit)
 

@@ -17,10 +17,15 @@ c (but for now assume only 1 level  -- output finest level)
 c
 c nplot == plotnum (0 for initial conditions, 1 (or more) for final conditions
 c
+      filename = 'disjointErrPlanesxx.dat'
+      filename(18:18) = '0'
+      filename(19:19) = char(ichar('0')+nplot)
+      open(13,file=filename,status='unknown',form='formatted')
+      write(13,100) 
+
       filename = 'disjointCutPlanesxx.dat'
       filename(18:18) = '0'
       filename(19:19) = char(ichar('0')+nplot)
-
       open(14,file=filename,status='unknown',form='formatted')
       write(14,100) 
  100  format('TITLE = "Extracted cutting Planes through mesh"' )

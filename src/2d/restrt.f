@@ -2,7 +2,7 @@
 c
 c ---------------------------------------------------------
 c
-      subroutine restrt(nsteps,time,nvar,naux)
+      subroutine restrt(nsteps,time,nvar,naux,nplot)
 c
       use amr_module
       implicit double precision (a-h,o-z)
@@ -44,7 +44,7 @@ c     rstfile  = 'restart.data'
       read(rstunit) lenmax,lendim,isize,maxgr,max1dnew
       if (max1d .ne. max1dnew) then
          write(*,*)" changing max1d not yet implemented"
-         write(*,*)" it was ",max1d," now ",max1dnew
+         write(*,*)" it was ",max1dnew," now ",max1d
       endif
 
 c     # need to allocate for dynamic memory:
@@ -71,7 +71,7 @@ c     # need to allocate for dynamic memory:
       ! this new peice is for irregular info
       read(rstunit)poly,ar,points,wt,xcirr,ycirr,
      1             ixg,iyg,nxtirr
-      read(rstunit) xloops,yloops,nloops,lhead
+      read(rstunit) xloops,yloops,nloops,lhead,nplot
 
       close(rstunit) 
 

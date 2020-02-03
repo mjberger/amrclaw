@@ -25,24 +25,30 @@ c        ::: add neighbors of this point to nlist
          iy0 = nlist(n,2)
          k0  = irr(ix0,iy0)
 
-         do 20 ioff = -1, 1    
-         do 20 joff = -1, 1    
+         if (k0 .eq. lstgrd) then
+            nco = 1 ! will have enough nbors
+         else
+           nco = 2 ! larger stencil for cut cells
+c            nco = 1 ! will have enough nbors
+         endif
+         do 20 ioff = -nco,nco
+         do 20 joff = -nco,nco
            if (ioff .eq. 0 .and. joff .eq. 0) go to 20
 c           ::: prerequisite for edge sharing if one of the offsets = 0
 c           ## if next line commented out, then diagonal nbors are allwoed
            ixn = ix0 + ioff
            iyn = iy0 + joff
            if (outside(ixn,iyn)) go to 20
-c           ::: dont use points 2 away in each coordinate direction
-c          uncomment next line is for broader stencil
-c          if (l1_len(ixn,iyn) .ge. 3) go to 20
-c          this line says to use is edge nbors only
-           if (l1_len(ixn,iyn) .ge. 2) go to 20
+
+c          this next line says to use is edge nbors only if not commented out
+           dist1 =  l1_len(ixn,iyn)
+           if (dist1 .gt. 2) go to 20  ! this allows diag nbor or 2 away coord nbor
            kn  = irr(ixn,iyn)
            if (kn .eq. -1) go to 20
            if (kn .eq. lstgrd  .or. k0 .eq. lstgrd) go to 25
 c           ::: both cells cut. must check that really share
 c           ::: a common edge
+           go to 25  ! skip next check for larger stencil
            do 23 kside = 1,6
               if (poly(kside+2,1,k0) .eq. -11) go to 20
               x1 = poly(kside,1,k0)

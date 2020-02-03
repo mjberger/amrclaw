@@ -79,7 +79,8 @@ c
          mptr = lstart(1)
          dx   = hxposs(1)
          dy   = hyposs(1)
-         dt   = possk(1)
+         !dt   = possk(1)
+         dt   = rinfinity
          dtgrid = dt
  60           nx = node(ndihi,mptr)-node(ndilo,mptr) + 1 
               ny = node(ndjhi,mptr)-node(ndjlo,mptr) + 1

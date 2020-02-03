@@ -8,6 +8,7 @@ c
       implicit double precision (a-h,o-z)
 
       dimension  val(nvar,mitot,mjtot)
+      dimension  primval(nvar,mitot,mjtot)
       dimension  aux(naux,mitot,mjtot)
       logical    outgrd
 
@@ -24,21 +25,26 @@ c
       hy    = hyposs(level)
       cornx = rnode(cornxlo,mptr) -  nghost*hx
       corny = rnode(cornylo,mptr) -  nghost*hy
+      time = rnode(timemult,mptr)
+
+      ! need ghost cells to avoid zero divides
+      call bound(time,nvar,nghost,val,mitot,mjtot,mptr,aux,naux)
+      call vctoprm(val,primval,mitot,mjtot,nvar)
 c
-      do 25 j=nghost+1,mjtot-nghost
       do 20 i=nghost+1,mitot-nghost
+      write(outunit,*)
+      do 25 j=nghost+1,mjtot-nghost
 
           x  = cornx + hx*(dble(i)-.5d0)
           y  = corny + hy*(dble(j)-.5d0)
-          write(outunit,107) x,y,i,j,(val(ivar,i,j),ivar=1,nvar)
- 107      format(2hx=,f6.3,2hy=,f6.3,3h,i=,i3,3h,j=,i3,' a=',
-     *           e25.15)
-c    *           5(e9.3,1x))
+          write(outunit,107) x,y,i,j,(primval(ivar,i,j),ivar=1,nvar)
+ 107      format(2hx=,f7.3,3h y=,f7.3,4h, i=,i4,4h, j=,i4,' a=',
+     *           4(e10.4,1x))
           if (naux.gt.0) write(outunit,108) (aux(iaux,i,j),iaux=1,naux)
  108      format(1x,'aux = ',7(e10.3,1x))
 
- 20   continue
  25   continue
+ 20   continue
 
  99   return
       end

@@ -273,6 +273,13 @@ c    .                            ncount,numHoods,mptr)
 
          if (istage .eq. 2) then  
             q = 0.5d0*(q + qold)
+            rhodifmax = 0.d0
+            do j = lwidth+1, mjtot-lwidth
+            do i = lwidth+1, mitot-lwidth
+              rhodifmax =  max(rhodifmax,abs(qold(1,i,j)-q(1,i,j)))
+            end do
+            end do
+            write(*,*)" rhodifmax ",rhodifmax
          endif
 
 c

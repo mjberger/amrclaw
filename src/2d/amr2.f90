@@ -499,15 +499,17 @@ program amr2
         open(outunit, file=outfile, status='unknown', position='append', &
                       form='formatted')
 
-        call restrt(nsteps,time,nvar,naux)
+        ! Call user routine to set up problem parameters:
+        call setprob()
+!       setprob moved up so have max1d set before restrt called
+!       but maybe there is a reason it is at the end?
+        call restrt(nsteps,time,nvar,naux,nplot)
         nstart  = nsteps
         tstart_thisrun = time
         print *, ' '
         print *, 'Restarting from previous run'
         print *, '   at time = ',time
         print *, ' '
-        ! Call user routine to set up problem parameters:
-        call setprob()
 
         ! Non-user data files
         call set_regions()
@@ -633,6 +635,10 @@ program amr2
 
 
     call outtre (mstart,printout,nvar,naux)
+    ! turn on for debugging, after initial time
+    printout = .true.
+    !printout = .false.
+
     nplot = 0
     if (output_t0) then
         !call valout(1,lfine,time,nvar,naux)

@@ -20,7 +20,7 @@ c
      .                ismp,gradThreshold,pwconst
       common /order2/ ssw, quad, nolimiter
       logical  quad, nolimiter
-      logical pwconst, ghostOut
+      logical pwconst, ghostOut,errorOut
       logical isAllSolid,checkIfAllSolid
       character ch
 c
@@ -43,15 +43,8 @@ c     tecplot doesnt like zeroes
       ylowb = ylow - nghost*dy
 
       ! output primitive variables, not conserved
-      if (iprob .ne. 20)  call vctoprm(q,qp,mitot,mjtot,nvar)
+      call vctoprm(q,qp,mitot,mjtot,nvar)
 c
-c     ### call for exterior bcs at each stage so can use slopes
-c    ## NOTE THAT BNDRY CELLS FROM OTHER GRIDS NOT SET
-c           xhigh = xlowb + mitot*dx
-c           yhigh = ylowb + mjtot*dy
-c           call pphysbdlin(xlowb,xhigh,ylowb,yhigh,level,mitot,mjtot,
-c    &                   nvar,qp,time,dx,dy,qx,qy,irr,lstgrd)
- 
        qx = 0.d0
        qy = 0.d0
 
@@ -74,6 +67,7 @@ c  if want to output ghost cells too change this flag
 c  set pwconst true for piecewise constant plots, set to false for slopes in tec output
 c     pwconst =  .true.
 c     pwconst =  .false.
+!  do both with gradients (for plotting soln) and pwconst for error
       if (pwconst) go to 9
 
       if (ssw .ne. 0.d0) then
@@ -95,19 +89,20 @@ c  count needed for unstructured tec format (so dont have to look up new format)
          endif
  10   continue
 c
-      if (iprob .eq. 20) then
-         write(14,101) 4*nCellsinPlane,nCellsinPlane
- 101     format('VARIABLES = x,y,Rho,U,V,Pressure,Xcent,Ycent,Err',/,
-     .          'Zone T="Cut",N =',i8,' E= ',i8,' F=FEPOINT')
-      else
-         write(14,103) 4*nCellsinPlane,nCellsinPlane
- 103     format('VARIABLES = x,y,Rho,U,V,Pressure,Xcent,Ycent,',
-     .                      'ncount,numHoods,i,j,k,volFrac,mptr',/,
+      write(14,103) 4*nCellsinPlane,nCellsinPlane
+      write(13,103) 4*nCellsinPlane,nCellsinPlane
+ 103  format('VARIABLES = x,y,Rho,U,V,Pressure,Xcent,Ycent,',
+     .                   'ncount,numHoods,i,j,k,volFrac,mptr',/,
      .          'Zone T="Cut",N =',i10,' E= ',i10,' F=FEPOINT')
-      endif
 
 c  only output real rows and cols, no ghost cells 
 c
+      err_rhoL1    = 0.d0
+      afterr_rhoL1    = 0.d0
+      volume_rhoL1 = 0.d0
+      bndry_rhoL1  = 0.d0
+      berr_rhoL1   = 0.d0
+
       do 15 j = jst,jend
       do 15 i = ist, iend
          kirr = irr(i,j)
@@ -125,6 +120,7 @@ c        # test again for kirr -1 in case want to view in tecplot
 c           reconstruct to midpt of solid bndry and output to special file for cylinder case
             call dumpBndry(qp,qx,qy,irr,mitot,mjtot,i,j,
      &                     nvar,ibunit)
+            bLength = getBlength(irr,kirr,mitot,mjtot)
          endif
 
          volFrac = ar(kirr)/ar(lstgrd)
@@ -148,50 +144,48 @@ c           reconstruct to midpt of solid bndry and output to special file for c
                yc = ycorner 
             endif
 c
-c  reconstruct to corners to can contour through disjoint dataset
+c  reconstruct to corners so can contour through disjoint dataset
 c
          do ivar = 1, nvar
             valprim(ivar) = qp(ivar,i,j)+(xc-xcen)*qx(ivar,i,j) +
      .                                   (yc-ycen)*qy(ivar,i,j)
          end do
-c        if (iprob .eq. 20)then
-c           call p20fn(xcen,ycen,exactsoln,time)
-c            errprim =  q(i,j,1) - exactsoln(1)
-c        endif
 
-          if (iprob .eq. 20) then  ! output error and soln, nvar=1
-             write(14,102) xc,yc,(valprim(ivar),ivar=1,nvar),
-     &                  xcen,ycen,errprim
-          else if (iprob .eq. 16) then  ! only output soln
-c for debugging output error instead
-             rhoex = ycen - .1d0*xcen + .5d0
-             !rhoex = - .1d0*xcen + .5d0
-c            rhoex = 1.d0
-c            uncomment next line to output error
-c            stuffed into w field
-             valprim(3) = valprim(1) - rhoex
-c            uncomment next line to output density
-c            valprim(1) = valprim(1) 
-c            valprim(2) = valprim(2)
-c            valprim(3) = valprim(3)
-c            valprim(4) = valprim(4)
+          if (iprob .eq. 19) then  
+c           this uses integral average for higher order computations
+c           if (kirr .eq. lstgrd) then
+c              call makep(poly(1,1,kirr),i,j,xlowb,ylowb,dx,dy)
+c           endif
+c           call p19tru(xcen,ycen,rhot,ut,vt,pt,poly(1,1,kirr),kirr)
+c           below uses ptwise values
+
+            ! this outputs soln
              write(14,1022) xc,yc,(valprim(ivar),ivar=1,nvar),
      &                  xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
      &                  kirr,volFrac,mptr
 
-          else if (iprob .eq. 19) then  
-            if (kirr .eq. lstgrd) then
-               call makep(poly(1,1,kirr),i,j,xlowb,ylowb,dx,dy)
+            call ssvInit(xcen,ycen,rhot,ut,vt,pt)
+            errorOut = .true.
+            !errorOut = .false.
+            if (errorOut) then
+              valprim(1) = qp(1,i,j)  ! redo without gradient for error calc
+              densityError = valprim(1) - rhot
+              aftdensityError = (valprim(1) - rhot)/rhot
+              volume_rhoL1 = volume_rhoL1 + ar(kirr)*rhot
+              err_rhoL1 = err_rhoL1 + ar(kirr)*abs(densityError)
+              afterr_rhoL1 = afterr_rhoL1+ar(kirr)*abs(aftDensityError)
+              if (kirr .ne. lstgrd) then
+                ! should reconstruct to bndry?
+                berr_rhoL1 = berr_rhoL1 + bLength*abs(densityError)
+                bndry_rhoL1 = bndry_rhoL1 + bLength*abs(rhot)
+              endif
+              valprim(1) = densityError
+              valprim(2) = qp(2,i,j) - ut
+              valprim(3) = qp(3,i,j) - vt
+              valprim(4) = qp(4,i,j) - pt
             endif
-            call p19tru(xcen,ycen,rhot,ut,vt,pt,poly(1,1,kirr),kirr)
-            valprim(1) = valprim(1) - rhot
-            valprim(2) = valprim(2) - ut
-            valprim(3) = valprim(3) - vt
-            valprim(4) = valprim(4) - pt
-             write(14,1022) xc,yc,(valprim(ivar),ivar=1,nvar),
-     &                  xcen,ycen
-          else
-            write(14,1022) xc,yc,(valprim(ivar),ivar=1,nvar),
+            ! this outputs error
+             write(13,1022) xc,yc,(valprim(ivar),ivar=1,nvar),
      &                  xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
      &                  kirr,volFrac,mptr
           endif
@@ -200,12 +194,23 @@ c            valprim(4) = valprim(4)
         end do
 
  15    continue
+
+       write(*,*)
+       write(*,100) err_rhoL1,afterr_rhoL1
+       write(outunit,100) err_rhoL1,afterr_rhoL1       
+       write(*,101) berr_rhoL1, berr_rhoL1/bndry_rhoL1
+       write(outunit,101)berr_rhoL1, berr_rhoL1/bndry_rhoL1
+ 100   format(" L1 error   in density ",e15.7,
+     &        " aft ptwise vol error ",e15.7)
+ 101   format("bndry error in density ",e15.7,
+     &        " ptwise bndry err ",e15.7)
 c
 c write mesh
 c
        ico = 0
        do i = 1, nCellsinPlane
           write(14,104) ico+1,ico+2,ico+3,ico+4
+          write(13,104) ico+1,ico+2,ico+3,ico+4
  104      format(4i10)
           ico = ico + 4
        end do
@@ -254,5 +259,29 @@ c
          endif
  10   continue
 
+      return
+      end
+c
+c -----------------------------------------------------------------
+c
+      double precision function getBlength(irr,k,mitot,mjtot)
+
+      use amr_module
+      implicit double precision (a-h,o-z)
+      dimension irr(mitot,mjtot)
+
+      do 20 kside=1,6
+         if (poly(kside+2,1,k).eq.-11.) then
+            x1 = poly(kside,1,k)
+            y1 = poly(kside,2,k)
+            x2 = poly(kside+1,1,k)
+            y2 = poly(kside+1,2,k)
+            go to 25
+         endif
+ 20   continue
+ 25   continue
+      rlen = dsqrt((y2-y1)**2+(x2-x1)**2)
+
+      getBlength = rlen
       return
       end

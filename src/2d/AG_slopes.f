@@ -32,6 +32,7 @@ c
      .                  j .le. lwidth .or. j .gt. mjtot-lwidth)
 c
       isloperecon = 4
+      !isloperecon = 2
       if (isloperecon .eq. 4 .and. nolimiter) then
          isloperecon = 5
       endif
@@ -231,7 +232,7 @@ c              if (IS_GHOST(i+ioff,j+joff)) goto 31
                 ! one last check for positivity
                 if (recon(1) .le. 0.d0 .or. recon(4) .le. 0.d0) then
                   dalpha = 0.d0
-	          write(*,900) i,j,recon(1),recon(4),mptr,istage
+                  write(*,900) i,j,recon(1),recon(4),mptr,istage
  900              format("domain nonphysical: cell ",2i5,
      .            " rho, pr",2e15.7," grid ",i4," istage ",i2)
                 endif

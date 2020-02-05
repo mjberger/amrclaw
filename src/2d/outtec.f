@@ -43,15 +43,8 @@ c     tecplot doesnt like zeroes
       ylowb = ylow - nghost*dy
 
       ! output primitive variables, not conserved
-      if (iprob .ne. 20)  call vctoprm(q,qp,mitot,mjtot,nvar)
+      call vctoprm(q,qp,mitot,mjtot,nvar)
 c
-c     ### call for exterior bcs at each stage so can use slopes
-c    ## NOTE THAT BNDRY CELLS FROM OTHER GRIDS NOT SET
-c           xhigh = xlowb + mitot*dx
-c           yhigh = ylowb + mjtot*dy
-c           call pphysbdlin(xlowb,xhigh,ylowb,yhigh,level,mitot,mjtot,
-c    &                   nvar,qp,time,dx,dy,qx,qy,irr,lstgrd)
- 
        qx = 0.d0
        qy = 0.d0
 
@@ -95,16 +88,10 @@ c  count needed for unstructured tec format (so dont have to look up new format)
          endif
  10   continue
 c
-      if (iprob .eq. 20) then
-         write(14,101) 4*nCellsinPlane,nCellsinPlane
- 101     format('VARIABLES = x,y,Rho,U,V,Pressure,Xcent,Ycent,Err',/,
-     .          'Zone T="Cut",N =',i8,' E= ',i8,' F=FEPOINT')
-      else
-         write(14,103) 4*nCellsinPlane,nCellsinPlane
- 103     format('VARIABLES = x,y,Rho,U,V,Pressure,Xcent,Ycent,',
-     .                      'ncount,numHoods,i,j,k,volFrac,mptr',/,
+      write(14,103) 4*nCellsinPlane,nCellsinPlane
+ 103  format('VARIABLES = x,y,Rho,U,V,Pressure,Xcent,Ycent,',
+     .                   'ncount,numHoods,i,j,k,volFrac,mptr',/,
      .          'Zone T="Cut",N =',i10,' E= ',i10,' F=FEPOINT')
-      endif
 
 c  only output real rows and cols, no ghost cells 
 c
@@ -148,55 +135,17 @@ c           reconstruct to midpt of solid bndry and output to special file for c
                yc = ycorner 
             endif
 c
-c  reconstruct to corners to can contour through disjoint dataset
+c  reconstruct to corners so can contour through disjoint dataset
 c
          do ivar = 1, nvar
             valprim(ivar) = qp(ivar,i,j)+(xc-xcen)*qx(ivar,i,j) +
      .                                   (yc-ycen)*qy(ivar,i,j)
          end do
-c        if (iprob .eq. 20)then
-c           call p20fn(xcen,ycen,exactsoln,time)
-c            errprim =  q(i,j,1) - exactsoln(1)
-c        endif
 
-          if (iprob .eq. 20) then  ! output error and soln, nvar=1
-             write(14,102) xc,yc,(valprim(ivar),ivar=1,nvar),
-     &                  xcen,ycen,errprim
-          else if (iprob .eq. 16) then  ! only output soln
-c for debugging output error instead
-             rhoex = ycen - .1d0*xcen + .5d0
-             !rhoex = - .1d0*xcen + .5d0
-c            rhoex = 1.d0
-c            uncomment next line to output error
-c            stuffed into w field
-             valprim(3) = valprim(1) - rhoex
-c            uncomment next line to output density
-c            valprim(1) = valprim(1) 
-c            valprim(2) = valprim(2)
-c            valprim(3) = valprim(3)
-c            valprim(4) = valprim(4)
-             write(14,1022) xc,yc,(valprim(ivar),ivar=1,nvar),
+         write(14,102) xc,yc,(valprim(ivar),ivar=1,nvar),
      &                  xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
      &                  kirr,volFrac,mptr
-
-          else if (iprob .eq. 19) then  
-            if (kirr .eq. lstgrd) then
-               call makep(poly(1,1,kirr),i,j,xlowb,ylowb,dx,dy)
-            endif
-            call p19tru(xcen,ycen,rhot,ut,vt,pt,poly(1,1,kirr),kirr)
-            valprim(1) = valprim(1) - rhot
-            valprim(2) = valprim(2) - ut
-            valprim(3) = valprim(3) - vt
-            valprim(4) = valprim(4) - pt
-             write(14,1022) xc,yc,(valprim(ivar),ivar=1,nvar),
-     &                  xcen,ycen
-          else
-            write(14,1022) xc,yc,(valprim(ivar),ivar=1,nvar),
-     &                  xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
-     &                  kirr,volFrac,mptr
-          endif
- 102      format(9e18.9)
- 1022      format(8e25.15,5i8,1e10.2,i5)
+ 102     format(8e25.15,5i8,1e10.2,i5)
         end do
 
  15    continue

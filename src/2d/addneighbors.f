@@ -28,8 +28,8 @@ c        ::: add neighbors of this point to nlist
          if (k0 .eq. lstgrd) then
             nco = 1 ! will have enough nbors
          else
-           nco = 2 ! larger stencil for cut cells
-c            nco = 1 ! will have enough nbors
+c           nco = 2 ! larger stencil for cut cells
+            nco = 1 ! will have enough nbors
          endif
          do 20 ioff = -nco,nco
          do 20 joff = -nco,nco

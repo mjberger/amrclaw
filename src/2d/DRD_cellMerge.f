@@ -536,7 +536,9 @@ c         endif
       end do
 
 c     check positivity
-      call checkPhys(q,mitot,mjtot,mptr,istage,'from DRD_merge')
+      call checkPhys(q,irr,mitot,mjtot,mptr,istage,lstgrd,
+     .                  'from DRD_merge',lwidth+1,mitot-lwidth,
+     .                  lwidth+1,mjtot-lwidth)
 
       return
       end

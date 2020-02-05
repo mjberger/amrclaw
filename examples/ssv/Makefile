@@ -63,8 +63,6 @@ SOURCES = \
   bc2amr.f90 \
   bound.f90 \
   mymethod.f \
-  outtec.f \
-  dumptec.f \
   $(AMRLIB)/SRD_normal.f \
   $(AMRLIB)/vrm_colella.f \
   $(AMRLIB)/vrmc_colella.f \
@@ -72,6 +70,8 @@ SOURCES = \
   $(AMRLIB)/slopes.f \
   $(AMRLIB)/both_vector_lim_allineq.f \
   $(AMRLIB)/Simplex_allineq.f \
+  outtec.f \
+  dumptec.f \
 
 
 #-------------------------------------------------------------------

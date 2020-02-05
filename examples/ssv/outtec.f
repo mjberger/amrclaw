@@ -14,13 +14,13 @@ c
       integer ncount(mitot,mjtot), numHoods(mitot,mjtot) 
       integer irr(mitot,mjtot) 
       dimension qx(nvar,mitot,mjtot),qy(nvar,mitot,mjtot)
-      dimension valprim(4)
+      dimension valprim(4), errprim(4)
       dimension exactsoln(1)
       common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                ismp,gradThreshold,pwconst
       common /order2/ ssw, quad, nolimiter
       logical  quad, nolimiter
-      logical pwconst, ghostOut,errorOut
+      logical pwconst, ghostOut
       logical isAllSolid,checkIfAllSolid
       character ch
 c
@@ -67,7 +67,6 @@ c  if want to output ghost cells too change this flag
 c  set pwconst true for piecewise constant plots, set to false for slopes in tec output
 c     pwconst =  .true.
 c     pwconst =  .false.
-!  do both with gradients (for plotting soln) and pwconst for error
       if (pwconst) go to 9
 
       if (ssw .ne. 0.d0) then
@@ -90,19 +89,28 @@ c  count needed for unstructured tec format (so dont have to look up new format)
  10   continue
 c
       write(14,103) 4*nCellsinPlane,nCellsinPlane
-      write(13,103) 4*nCellsinPlane,nCellsinPlane
+      write(13,1033) 4*nCellsinPlane,nCellsinPlane
  103  format('VARIABLES = x,y,Rho,U,V,Pressure,Xcent,Ycent,',
      .                   'ncount,numHoods,i,j,k,volFrac,mptr',/,
      .          'Zone T="Cut",N =',i10,' E= ',i10,' F=FEPOINT')
+1033  format('VARIABLES = x,y,ErrRho,ErrU,ErrV,ErrPressure,Xcent,',
+     .                   'Ycent,ncount,numHoods,i,j,k,volFrac,mptr',/,
+     .          'Zone T="Cut",N =',i10,' E= ',i10,' F=FEPOINT')
+
+
+c     initialize for error computation
+      volDenErrorL1   = 0.d0
+      volExactDenL1   = 0.d0
+      exactVol        = 0.d0
+      bndryDenErrorL1 = 0.d0
+      bndryExactDenL1 = 0.d0
+      bndryCentExactDenL1 = 0.d0
+      bndryReconErrL1 = 0.d0
+      aftDenErrorL1   = 0.d0
+
 
 c  only output real rows and cols, no ghost cells 
 c
-      err_rhoL1    = 0.d0
-      afterr_rhoL1    = 0.d0
-      volume_rhoL1 = 0.d0
-      bndry_rhoL1  = 0.d0
-      berr_rhoL1   = 0.d0
-
       do 15 j = jst,jend
       do 15 i = ist, iend
          kirr = irr(i,j)
@@ -119,7 +127,7 @@ c        # test again for kirr -1 in case want to view in tecplot
             ch = '+'
 c           reconstruct to midpt of solid bndry and output to special file for cylinder case
             call dumpBndry(qp,qx,qy,irr,mitot,mjtot,i,j,
-     &                     nvar,ibunit)
+     &                     nvar,ibunit) 
             bLength = getBlength(irr,kirr,mitot,mjtot)
          endif
 
@@ -151,59 +159,42 @@ c
      .                                   (yc-ycen)*qy(ivar,i,j)
          end do
 
-          if (iprob .eq. 19) then  
-c           this uses integral average for higher order computations
-c           if (kirr .eq. lstgrd) then
-c              call makep(poly(1,1,kirr),i,j,xlowb,ylowb,dx,dy)
-c           endif
-c           call p19tru(xcen,ycen,rhot,ut,vt,pt,poly(1,1,kirr),kirr)
-c           below uses ptwise values
-
-            ! this outputs soln
-             write(14,1022) xc,yc,(valprim(ivar),ivar=1,nvar),
+         write(14,102) xc,yc,(valprim(ivar),ivar=1,nvar),
+     &                 xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
+     &                 kirr,volFrac,mptr
+         ! this computes and  outputs cell centered error for 2nd order scheme
+         call ssvInit(xcen,ycen,rhot,ut,vt,pt) 
+         errprim(1) = qp(1,i,j) - rhot
+         errprim(2) = qp(2,i,j) - ut
+         errprim(3) = qp(3,i,j) - vt
+         errprim(4) = qp(4,i,j) - pt
+         write(13,102) xc,yc,(errprim(ivar),ivar=1,nvar),
      &                  xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
      &                  kirr,volFrac,mptr
-
-            call ssvInit(xcen,ycen,rhot,ut,vt,pt)
-            errorOut = .true.
-            !errorOut = .false.
-            if (errorOut) then
-              valprim(1) = qp(1,i,j)  ! redo without gradient for error calc
-              densityError = valprim(1) - rhot
-              aftdensityError = (valprim(1) - rhot)/rhot
-              volume_rhoL1 = volume_rhoL1 + ar(kirr)*rhot
-              err_rhoL1 = err_rhoL1 + ar(kirr)*abs(densityError)
-              afterr_rhoL1 = afterr_rhoL1+ar(kirr)*abs(aftDensityError)
-              if (kirr .ne. lstgrd) then
-                ! should reconstruct to bndry?
-                berr_rhoL1 = berr_rhoL1 + bLength*abs(densityError)
-                bndry_rhoL1 = bndry_rhoL1 + bLength*abs(rhot)
-              endif
-              valprim(1) = densityError
-              valprim(2) = qp(2,i,j) - ut
-              valprim(3) = qp(3,i,j) - vt
-              valprim(4) = qp(4,i,j) - pt
-            endif
-            ! this outputs error
-             write(13,1022) xc,yc,(valprim(ivar),ivar=1,nvar),
-     &                  xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
-     &                  kirr,volFrac,mptr
-          endif
- 102      format(9e18.9)
- 1022      format(8e25.15,5i8,1e10.2,i5)
+ 102    format(8e25.15,5i8,1e10.2,i5)
         end do
 
- 15    continue
+c       add this point to error computation, get exact solution at bndry too
+        volDenErrorL1 = volDenErrorL1 + ar(kirr)*abs(errprim(1))
+        volExactDenL1 = volExactDenL1 + ar(kirr)*rhot
+        exactVol =  exactVol + ar(kirr)
 
-       write(*,*)
-       write(*,100) err_rhoL1,afterr_rhoL1
-       write(outunit,100) err_rhoL1,afterr_rhoL1       
-       write(*,101) berr_rhoL1, berr_rhoL1/bndry_rhoL1
-       write(outunit,101)berr_rhoL1, berr_rhoL1/bndry_rhoL1
- 100   format(" L1 error   in density ",e15.7,
-     &        " aft ptwise vol error ",e15.7)
- 101   format("bndry error in density ",e15.7,
-     &        " ptwise bndry err ",e15.7)
+        if (kirr .ne. lstgrd) then ! compute bndry error, 1st at  at centroids
+         bndryDenErrorL1 = bndryDenErrorL1 + bLength*abs(errprim(1))
+         bndryCentExactDenL1 = bndryCentExactDenL1 + bLength*abs(rhot)
+                                   ! now with reconstruction
+         call getBndryPt(xb,yb,irr(i,j))
+         call ssvInit(xb,yb,recon_rhot,recon_ut,recon_vt,recon_pt)
+         bndryExactDenL1 = bndryExactDenL1 + bLength*abs(recon_rhot)
+         rhoBndry = qp(1,i,j)+(xb-xcen)*qx(1,i,j)+(yb-ycen)*qy(1,i,j)
+         bndryReconErrL1 = bndryReconErrL1 + 
+     .                     bLength*abs(rhoBndry-recon_rhot)
+
+                                   ! finally in weird aftosmis pointwise way
+         aftDenErrorL1 = aftDenErrorL1 + ar(kirr)*(errprim(1)/rhot)
+        endif
+
+ 15    continue
 c
 c write mesh
 c
@@ -214,6 +205,26 @@ c
  104      format(4i10)
           ico = ico + 4
        end do
+
+c output errors
+      write(outunit,600) volDenErrorL1,volExactDenL1,
+     .                   volDenErrorL1/volExactDenL1,exactVol
+ 600  format("L1 density volume error ", e15.7,/,
+     .       "L1 density exact soln   ", e15.7,/,
+     .       "L1 Relative density error",e15.7,/,
+     .       "Computed volume          ",e15.7,//)
+      write(outunit,601) bndryDenErrorL1, bndryCentExactDenL1,
+     .                   bndryDenErrorL1/bndryCentExactDenL1
+ 601  format("L1 Bndry Density Error   ",e15.7,/,
+     .       "L1 Bndry exact soln      ",e15.7,/,
+     .       "L1 relative density error",e15.7,//)
+      write(outunit,602) bndryReconErrL1, bndryExactDenL1,
+     .                   bndryReconErrL1/bndryExactDenL1
+ 602  format("L1 Recon2Bndry   Error   ",e15.7,/,
+     .       "L1 Bndry exact soln      ",e15.7,/,
+     .       "L1 reconstructed relative  error",e15.7,//)
+      write(outunit,603) aftDenErrorL1
+ 603  format("Aftosmis relative error  ",e15.7)
 
       return
       end

@@ -638,7 +638,7 @@ c
          u = q(2,i,j)/rho
          v = q(3,i,j)/rho
          pr = gamma1*(q(4,i,j)-.5d0*rho*(u*u+v*v))
-         if (rho < 0 .or. pr < 0) then
+         if (rho <= 0 .or. pr <= 0) then
             write(*,901)rho,pr,i,j,mptr,istage,str
  901        format("non-physical den/pr",2e15.7," at i,j grid stage ",
      .           4i5,2x,a14)

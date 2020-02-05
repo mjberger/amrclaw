@@ -21,8 +21,8 @@ c
        pl = 1.0d0
        ul = 0.1d0
        vl = 0.01d0
-c      ul = 0.0d0
-c      vl = 0.0d0
+c       ul = 0.0d0
+c       vl = 0.0d0
 
 c      fill ghost cells too so can more easily plot before
 c      time stepping starts
@@ -38,7 +38,11 @@ c      time stepping starts
           endif
 
           rhol = ycen - 0.1d0*xcen + 0.5d0
+          !rhol = - 0.1d0*xcen + 0.5d0
           !rhol = 1.d0
+          if (kuse .eq. -1) then  ! for easier debugging
+            rhol = 1.4d0 
+          endif
 
           q(1,i,j) = rhol
           q(2,i,j) = rhol * ul

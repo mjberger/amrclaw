@@ -24,9 +24,9 @@ OVERWRITE ?= True                   # False ==> make a copy of OUTDIR first
 # Environment variable FC should be set to fortran compiler, e.g. gfortran
 
 # Compiler flags can be specified here or set as an environment variable
-#FFLAGS ?= -g -fbounds-check -ffpe-trap=invalid,overflow,zero 
-#FFLAGS ?= -O2 -C -CB -CU -fpe0 -ftrapuv -qopenmp  -mcmodel=large
 FFLAGS ?= -g -C -CB -CU -fpe0 -ftrapuv 
+#FFLAGS ?= -O2 -C -CB -CU -fpe0 -ftrapuv -qopenmp  -mcmodel=large
+#FFLAGS ?= -g -fbounds-check -ffpe-trap=invalid,overflow,zero 
 
 # ---------------------------------
 # package sources for this program:
@@ -45,6 +45,9 @@ include $(AMRLIB)/Makefile.amr_2d
 EXCLUDE_MODULES = \
 
 EXCLUDE_SOURCES = \
+  $(AMRLIB)/AG_qslopes.f \
+  $(AMRLIB)/AG_slopes.f \
+  $(AMRLIB)/mymethod.f \
 
 # ----------------------------------------
 # List of custom sources for this program:
@@ -58,8 +61,14 @@ SOURCES = \
   fbody.f \
   bc2amr.f90 \
   bound.f90 \
-  vrm_vl.f \
   $(AMRLIB)/SRD_normal.f \
+  $(AMRLIB)/vrm_colella.f \
+  $(AMRLIB)/vrmc_colella.f \
+  $(AMRLIB)/lp_qslopes.f \
+  $(AMRLIB)/slopes.f \
+  $(AMRLIB)/both_vector_lim_allineq.f \
+  $(AMRLIB)/Simplex_allineq.f \
+  $(AMRLIB)/revdivmusclmethod2.f \
 
 #-------------------------------------------------------------------
 # Include Makefile containing standard definitions and make options:

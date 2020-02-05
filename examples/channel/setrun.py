@@ -38,12 +38,12 @@ def setrun(claw_pkg='amrclaw'):
     #------------------------------------------------------------------
 
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
-    probdata.add_param('mstage ',2, 'RK method order (coeffs set in setprob)')
+    probdata.add_param('mstage ',1, 'RK method order (coeffs set in setprob)')
     probdata.add_param('ismp',    1,  ' stabilization method')
     ## 1 = SRD
     ## 2 = DRD
     probdata.add_param('pwconst', True,  ' no slopes in plotting ')
-    probdata.add_param('max1d', 60,' max size each dir for grid patches')
+    probdata.add_param('max1d', 120,' max size each dir for grid patches')
     probdata.add_param('nloops',     2,  '# closed loops or segments')
     probdata.add_param('xloop1',    0.,  ' starting pt x')
     probdata.add_param('yloop1',    .11, ' starting pt y')
@@ -138,8 +138,8 @@ def setrun(claw_pkg='amrclaw'):
 
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
-        clawdata.output_step_interval = 10000
-        clawdata.total_steps = 100
+        clawdata.output_step_interval = 1
+        clawdata.total_steps = 1
         clawdata.output_t0 = True  # output at initial (or restart) time?
         #clawdata.output_t0 = False  # output at initial (or restart) time?
 
@@ -178,9 +178,9 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.dt_max = 1.000000e+99
 
     # Desired Courant number if variable dt used
-    clawdata.cfl_desired = 0.250000
+    clawdata.cfl_desired = 0.850000
     # max Courant number to allow without retaking step with a smaller dt:
-    clawdata.cfl_max = 0.250000
+    clawdata.cfl_max = 0.850000
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 1000
@@ -214,8 +214,8 @@ def setrun(claw_pkg='amrclaw'):
     #   2 or 'superbee' ==> superbee
     #   3 or 'vanleer'  ==> van Leer
     #   4 or 'mc'       ==> MC limiter
-    #clawdata.limiter = ['mc']
-    clawdata.limiter = [0,0,0]
+    clawdata.limiter = ['mc','mc','mc']
+    #clawdata.limiter = [0,0,0]
 
     clawdata.use_fwaves = False    # True ==> use f-wave version of algorithms
 
@@ -231,7 +231,7 @@ def setrun(claw_pkg='amrclaw'):
     # --------------------
 
     # Number of ghost cells (usually 2)
-    clawdata.num_ghost = 6  # needed for 2 stage RK + delta distrib
+    clawdata.num_ghost = 3  # needed for 2 stage RK + delta distrib
 
     # Choice of BCs at xlower and xupper:
     #   0 or 'user'     => user specified (must modify bcNamr.f to use this option)

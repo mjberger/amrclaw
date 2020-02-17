@@ -7,10 +7,8 @@ c      convert to primitie variables. note for future
 c      that may be overwriting conserved variables
 c
        implicit double precision(a-h,o-z)
+       include "cuserdt.i" 
        dimension q(nvar,mitot,mjtot),qp(nvar,mitot,mjtot)
-       common   /userdt/cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold,pwconst
-       logical pwconst
 c
        gamma1 = .4d0
        do 10 j = 1, mjtot

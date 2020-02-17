@@ -16,11 +16,10 @@ c
       dimension qx(nvar,mitot,mjtot),qy(nvar,mitot,mjtot)
       dimension valprim(4)
       dimension exactsoln(1)
-      common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold,pwconst
+      include "cuserdt.i"
       common /order2/ ssw, quad, nolimiter
       logical  quad, nolimiter
-      logical pwconst, ghostOut
+      logical ghostOut
       logical isAllSolid,checkIfAllSolid
       character ch
 c
@@ -111,7 +110,7 @@ c        # test again for kirr -1 in case want to view in tecplot
             ch = '+'
 c           reconstruct to midpt of solid bndry and output to special file for cylinder case
             call dumpBndry(qp,qx,qy,irr,mitot,mjtot,i,j,
-     &                     nvar,ibunit)
+     &                     nvar,ibunit,mptr)
          endif
 
          volFrac = ar(kirr)/ar(lstgrd)

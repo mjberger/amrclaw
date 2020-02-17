@@ -6,9 +6,7 @@ c
 
        implicit double precision(a-h,o-z)
        dimension q(nvar,mitot,mjtot)
-       logical pwconst
-       common   /userdt/cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold,pwconst
+       include "cuserdt.i"
 c
 c NB: new dimensioning so can use on scrath arrays and actual soln arrays
 c

@@ -7,8 +7,7 @@ c
        use amr_module, only : rinfinity
        implicit double precision (a-h, o-z)
        dimension val(nvar,mitot,mjtot), irr(mitot,mjtot)
-       common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                 ismp,gradThreshold
+       include "cuserdt.i"
        common /RKmethod/ coeff(5),mstage
 
 c

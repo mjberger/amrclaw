@@ -19,10 +19,9 @@ c
       use amr_module
       implicit double precision (a-h,o-z)
       logical first
-      logical pwconst, quad, nolimiter
+      logical quad, nolimiter
       common /order2/ ssw, quad, nolimiter
-      common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold,pwconst
+      include "cuserdt.i"
 
       
 

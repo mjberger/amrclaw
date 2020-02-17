@@ -7,12 +7,16 @@ c
        use amr_module
        implicit double precision (a-h, o-z)
 
-      common   /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                  ismp,gradThreshold,pwconst
+       include "cuserdt.i"
        dimension nlist(25,2), irr(mitot,mjtot)
-       logical outside, quad, pwconst
+       logical outofbounds, outside, quad
        logical verbose/.false./
-       outside(i,j) = (i .lt. 1 .or. i .gt. mitot .or.
+       integer nxb(4) 
+       data nxb/-1,1,0,0/
+       integer nyb(4) 
+       data nyb/0,0,-1,1/
+       integer cutoffDist
+       outofbounds(i,j) = (i .lt. 1 .or. i .gt. mitot .or.
      &                 j .lt. 1 .or. j .gt. mjtot)
        l1_len(ixn,iyn) = iabs(ixn-nlist(1,1))+iabs(iyn-nlist(1,2))
 
@@ -26,10 +30,26 @@ c        ::: add neighbors of this point to nlist
          k0  = irr(ix0,iy0)
 
          if (k0 .eq. lstgrd) then
-            nco = 1 ! will have enough nbors
+            !nco = 1 ! reg cell has 4 nbors so will have enough 
+            nco = 2 ! do quadratic fit for both cut and one adjacent
+            !cutoffDistReg = 4 ! for reg cell this means use all nbors
+            cutoffDistReg = 3 ! for reg cell this means use all nbors
+            ! cutoffDistReg = 2 ! means use only 2 away in l1 norm
+            ! cutoffDistReg = 1 means use edge nbors only
          else
-c           nco = 2 ! larger stencil for cut cells
-            nco = 1 ! will have enough nbors
+            nco = 2 ! try larger stencil for cut cells?
+c           nco = 1 ! will have enough nbors
+            ! count how many edge nbors for use below
+            nb = 0
+            do in = 1, 4
+              if (irr(ix0+nxb(in),iy0+nyb(in)) .ne. -1) nb = nb + 1
+            end do
+            if (nb .ge. 4) then
+               cutoffDist = 2
+            else
+               cutoffDist = 3
+            endif
+            !cutoffDist = 4
          endif
          do 20 ioff = -nco,nco
          do 20 joff = -nco,nco
@@ -38,11 +58,20 @@ c           ::: prerequisite for edge sharing if one of the offsets = 0
 c           ## if next line commented out, then diagonal nbors are allwoed
            ixn = ix0 + ioff
            iyn = iy0 + joff
-           if (outside(ixn,iyn)) go to 20
+           if (outofbounds(ixn,iyn)) go to 20
 
 c          this next line says to use is edge nbors only if not commented out
            dist1 =  l1_len(ixn,iyn)
-           if (dist1 .gt. 2) go to 20  ! this allows diag nbor or 2 away coord nbor
+
+           ! if reg cell use only edge nbors (dist 1)
+           if (k0.eq.lstgrd .and. dist1 .gt. cutoffDistReg) go to 20
+
+           ! if cut cell include vertex nbors (dist 2)
+           ! but never allow more than 2 (test in case nco = 2)
+           !!if (k0.ne.lstgrd .and. dist1 .gt. 2) go to 20  
+           ! new test - use edge nbors only for cut cell if have enough
+           if (k0.ne.lstgrd .and. dist1 .gt. cutoffDist) go to 20  
+
            kn  = irr(ixn,iyn)
            if (kn .eq. -1) go to 20
            if (kn .eq. lstgrd  .or. k0 .eq. lstgrd) go to 25

@@ -8,6 +8,7 @@ c
        use amr_module
        implicit double precision (a-h, o-z)
 
+       include "cuserdt.i"
        dimension q(nvar,mitot,mjtot),  irr(mitot,mjtot)
        dimension qx(nvar,mitot,mjtot), qy(nvar,mitot,mjtot)
        dimension gradmx(nvar,mitot,mjtot), gradmy(nvar,mitot,mjtot)
@@ -17,10 +18,8 @@ c
        dimension qMerge(nvar,mitot,mjtot), numHoods(mitot,mjtot)
        dimension nCount(mitot,mjtot)
        dimension xcentMerge(mitot,mjtot),ycentMerge(mitot,mjtot)
-       dimension fakeState(nvar), qm(nvar), rhs(2,nvar)
-       dimension dumax(nvar),dumin(nvar),phimin(nvar)
-       dimension graddot(nvar),alpha(nvar),recon(nvar)
-       dimension a(2,2),b(2)
+       dimension fakeState(nvar), qm(nvar), rhs(5,nvar)
+       dimension a(5,5),b(5),db(nvar)
        character ch
 
        logical IS_OUTSIDE, REG_NBORS,NOT_OK_GHOST
@@ -67,6 +66,7 @@ c
        verbose = .false.
        !verbose = .true.
        eps = 1d-4
+       nterms = 5
 
 c      some initializations
        ar(lstgrd) = dx*dy   ! area of regular grid cell 
@@ -96,6 +96,7 @@ c     nCount is size of neighborhood, numHoods is number of merged nhoods each c
 c       form qMerge vals 
         do 10 j = lwidth-1, mjtot-lwidth+1
         do 10 i = lwidth-1, mitot-lwidth+1
+            nTermsToUse = nterms
             k = irr(i,j)
             if (k .eq. -1) go to 10 ! no solid cells
             call getCellCentroid(lstgrd,i,j,xc,yc,xlow,ylow,dx,dy,k)
@@ -156,9 +157,9 @@ c
 !--               nco = ncount(i,j)
 !--            endif
 
-            nco = 1 ! this means use 3 by 3 nhood to compute gradients of merging tiles
-            ! this code does not check for ill conditioned reconstruction and  larger nhood
-            ! if did, might need larger nhood than 3 by 3
+            !!!nco = 1 ! this means use 3 by 3 nhood to compute gradients of merging tiles
+            nco = 2 ! this means use 5 by 5 nhood to compute gradients of merging tiles
+            nborCount = 0 ! if not enough cant use quad, drop to linear
 
             ! can reconstruct high order poly here, but for now do linear reconstruction
             ! solving least squares problem with all neighboring merged vals. 
@@ -176,6 +177,8 @@ c
                call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
      &                              xlow,ylow,dx,dy,koff)
                if (IS_OUTSIDE(xcn,ycn)) go to 22
+
+               nborCount = nborCount + 1
                deltax = xcentMerge(i+ioff,j+joff) - x0
                deltay = ycentMerge(i+ioff,j+joff) - y0
                a(1,1) = a(1,1) + deltax*deltax
@@ -185,38 +188,146 @@ c
      .                    (qMerge(:,i+ioff,j+joff) - qMerge(:,i,j))
                rhs(2,:) = rhs(2,:) + deltay * 
      .                    (qMerge(:,i+ioff,j+joff) - qMerge(:,i,j))
+               if (nterms .eq. 5) then
+                  a(1,3) = a(1,3) + deltax*deltax**2
+                  a(1,4) = a(1,4) + deltax*deltax*deltay
+                  a(1,5) = a(1,5) + deltax*deltay**2
+                  a(2,3) = a(2,3) + deltay*deltax**2
+                  a(2,4) = a(2,4) + deltay*deltax*deltay
+                  a(2,5) = a(2,5) + deltay*deltay**2
+                  a(3,3) = a(3,3) + deltax**2*deltax**2
+                  a(3,4) = a(3,4) + deltax**2*deltax*deltay
+                  a(3,5) = a(3,5) + deltax**2*deltay**2
+                  a(4,4) = a(4,4) + deltax*deltay * deltax*deltay
+                  a(4,5) = a(4,5) + deltax*deltay * deltay**2
+                  a(5,5) = a(5,5) + deltay**4
+                  rhs(3,:) = rhs(3,:) + deltax**2*
+     .                      (qMerge(:,i+ioff,j+joff) - qMerge(:,i,j))
+                  rhs(4,:) = rhs(4,:) + deltax*deltay*
+     .                      (qMerge(:,i+ioff,j+joff) - qMerge(:,i,j))
+                  rhs(5,:) = rhs(5,:) + deltay**2*
+     .                      (qMerge(:,i+ioff,j+joff) - qMerge(:,i,j))
+               endif
  22          continue
+
+             if (ghost_ccg) then
+                call getBndryInfo(alf,beta,k,bxpt,bypt)
+                distx = x0 - bxpt
+                disty = y0 - bypt
+                d_dot_n = distx*alf + disty*beta
+                dNormx = d_dot_n * alf
+                dNormy = d_dot_n * beta
+                dnx = 2.d0*dNormx
+                dny = 2.d0*dNormy
+                xghost = x0 - dnx
+                yghost = y0 - dny
+
+                !irow = irow+1
+                !a(irow,1) = xghost - x0
+                !a(irow,2) = yghost - y0
+                a(1,1) = a(1,1) + dnx*dnx
+                a(1,2) = a(1,2) + dnx*dny
+                a(2,2) = a(2,2) + dny*dny
+! check that signs cancel, since my normal is inward pointing
+                uvel = qMerge(2,i,j)
+                vvel = qMerge(3,i,j)
+                dot = uvel*alf + vvel*beta
+                ughost = uvel - 2.d0*dot*alf
+                vghost = vvel - 2.d0*dot*beta
+
+                db(1) = 0.d0 ! pw const extrap of density
+                db(2) = ughost - uvel
+                db(3) = vghost - vvel
+                db(4) = 0.d0 ! and pressure
+
+                rhs(1,:) = rhs(1,:) + dx * db(:)
+                rhs(2,:) = rhs(2,:) + dy * db(:)
+              endif
+
+             ntermsToUse = nterms
+             if (nterms .eq. 5 .and. nborCount .lt.6) then
+                write(*,222) i,j,nborCount
+ 222            format("Cell i,j = ",2i5," has only ",i6," neighbors",
+     &                 /,"Drop to first order gradient")
+                ntermsToUse = 2
+
+             endif
+
+             if (ntermsToUse .eq. 2) then
+               c11 = sqrt(a(1,1))
+               c12 = a(1,2) / c11
+               c22 = sqrt(a(2,2) - c12**2)
+
+               if (c22 .ne. 0.d0) then ! might have to test c11 too?
+                  do m = 1, nvar
+                    b(1) = rhs(1,m) / c11
+                    b(2) = (rhs(2,m) - c12*b(1))/c22
+                    gradmy(m,i,j) = b(2) / c22
+                    gradmx(m,i,j) = (b(1) - c12*gradmy(m,i,j))/c11
+                  end do
+               else
+                 write(*,*)"found c22=0 for cell ",i,j
+                 ! set gradient to zero?
+               endif
 
              ! solve a^t*a  * grad = a^t rhs.  First form cholesky factors.
              ! will have to add robustness checks
-             c11 = sqrt(a(1,1))
-             c12 = a(1,2) / c11
-             c22 = sqrt(a(2,2) - c12**2)
+             else ! larger matrix, larger cholesky, 
+               c11 = sqrt(a(1,1))
+               c12 = a(1,2) / c11   
+               c13 = a(1,3) / c11   
+               c14 = a(1,4) / c11   
+               c15 = a(1,5) / c11   
 
-             ! now back solve (C^t C = rhs of A^tdu ) to get x and y gradient for all variables
-             if (c22 .ne. 0.d0) then ! might have to test c11 too?
-                do m = 1, nvar
-                  b(1) = rhs(1,m) / c11
-                  b(2) = (rhs(2,m) - c12*b(1))/c22
-                  gradmy(m,i,j) = b(2) / c22
-                  gradmx(m,i,j) = (b(1) - c12*gradmy(m,i,j))/c11
-                end do
-             else
-               write(*,*)"found c22=0 for cell ",i,j
-               ! set gradient to zero?
+               c22 = sqrt(a(2,2)-c12**2)
+               c23 = (a(2,3)-c12*c13)/c22
+               c24 = (a(2,4)-c12*c14)/c22
+               c25 = (a(2,5)-c12*c15)/c22
+
+               c33 = sqrt(a(3,3)-c13**2-c23**2)
+               c34 = (a(3,4)- c13*c14-c23*c24)/c33
+               c35 = (a(3,5)- c13*c15-c23*c25)/c33
+
+               c44 = sqrt(a(4,4)-c14**2-c24**2-c34**2)
+               c45 = (a(4,5)-c14*c15-c24*c25-c34*c35)/c44
+               c55 = sqrt(a(5,5)-c15**2-c25**2-c35**2-c45**2)
+                  
+             ! solving c^t b = rhs, then c b = gradients
+             do m = 1, nvar
+                b(1) = rhs(1,m)/c11
+                b(2) = (rhs(2,m)-c12*b(1))/c22
+                b(3) = (rhs(3,m)-c13*b(1)-c23*b(2))/c33
+                b(4) = (rhs(4,m)-c14*b(1)-c24*b(2)-c34*b(3))/c44
+                b(5) = (rhs(5,m)-c15*b(1)-c25*b(2)-c35*b(3) -
+     &                            -c45*b(4))/c55
+
+                w5 = b(5)/c55
+                w4 = (b(4)-c45*w5)/c44
+                w3 = (b(3)-c35*w5-c34*w4)/c33
+                w2 = (b(2)-c25*w5-c24*w4-c23*w3)/c22
+                w1 = (b(1)-c15*w5-c14*w4-c13*w3-c12*w2)/c11
+
+                gradmy(m,i,j) = w2
+                gradmx(m,i,j) = w1
+             end do
+
              endif
  20     continue
 c
 c      apply limiter if requested. Go over all neighbors, do BJ
         if (nolimiter) go to 35
 
-        call limitTileGradientBJ(qmerge,gradmx,gradmy,xcentMerge,
+       if (limitTile .eq. 1) then
+          call limitTileGradientBJ(qmerge,gradmx,gradmy,xcentMerge,
      &                           ycentMerge,xlow,ylow,dx,dy,irr,lwidth,
      &                           nvar,mitot,mjtot,lstgrd,areaMin) 
 
-c      call limitTileGradientLP(qmerge,gradmx,gradmy,xcentMerge,
-c    &                           ycentMerge,xlow,ylow,dx,dy,irr,lwidth,
-c    &                           nvar,mitot,mjtot,lstgrd,areaMin,mptr)
+        else
+           call limitTileGradientLP(qmerge,gradmx,gradmy,xcentMerge,
+     &                           ycentMerge,xlow,ylow,dx,dy,irr,lwidth,
+     &                           nvar,mitot,mjtot,lstgrd,areaMin,mptr,
+     &                           lpChoice)
+       endif
         
 
 c

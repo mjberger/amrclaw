@@ -5,10 +5,9 @@ c
 c
       use amr_module
       implicit double precision (a-h,o-z)
-      common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold,pwconst
+      include "cuserdt.i"
       common /order2/ ssw, quad, nolimiter
-      logical         flag,pwconst,quad,nolimiter
+      logical         flag,quad,nolimiter
       character*23  filename 
       character*11   filebndry
 c
@@ -31,6 +30,8 @@ c
       ibunit = 24
       open(ibunit,file=filebndry,status='unknown',form='formatted')
       write(ibunit,*)"# writing bndry file at time ",time
+      write(ibunit,*)"#      x_bndry  y_bndry  rho    u     v     p",
+     &               "   i       j      mptr"
       
 
       nplot = nplot+1

@@ -12,8 +12,7 @@ c
 
       logical  pwconst
       common /order2/ ssw, quad, nolimiter
-      common   /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold,pwconst
+      include cuserdt.i 
 
       dimension rhsmax(nvar), rhsmin(nvar)
       dimension dumax(nvar),dumin(nvar),phimin(nvar)

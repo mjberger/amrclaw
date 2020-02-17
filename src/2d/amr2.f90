@@ -110,6 +110,8 @@ program amr2
     real(kind=8) :: time, ratmet, cut, dtinit, dt_max, ssw
     logical :: vtime, rest, output_t0    
     logical :: quad, nolimiter
+    logical :: ghost_ccg, pwconst
+    integer :: limitTile, lpChoice
 
     ! Timing variables
     integer ::  ttotal
@@ -128,6 +130,7 @@ program amr2
     integer :: hdf_error
 #endif
 
+
     ! Common block variables
     real(kind=8) :: dxmin, dymin
     real(kind=8) :: cflcart,gamma,gamma1,xprob,yprob,alpha
@@ -138,8 +141,9 @@ program amr2
 
     common /order2/ ssw, quad, nolimiter
     common /RKmethod/ coeff, mstage
-    common   /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,    &
-                      ismp,gradThreshold
+
+    common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,   &
+                    ismp,gradThreshold,pwconst,ghost_ccg,limitTile,lpChoice
 
     character(len=364) :: format_string
     character(len=*), parameter :: clawfile = 'claw.data'
@@ -636,8 +640,8 @@ program amr2
 
     call outtre (mstart,printout,nvar,naux)
     ! turn on for debugging, after initial time
-    printout = .true.
-    !printout = .false.
+    !printout = .true.
+    printout = .false.
 
     nplot = 0
     if (output_t0) then

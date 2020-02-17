@@ -8,6 +8,7 @@ c
        use amr_module
        implicit double precision (a-h, o-z)
 
+       include "cuserdt.i"
        dimension q(nvar,mitot,mjtot),  irr(mitot,mjtot)
        dimension qx(nvar,mitot,mjtot), qy(nvar,mitot,mjtot)
        dimension gradmx(nvar,mitot,mjtot), gradmy(nvar,mitot,mjtot)
@@ -18,9 +19,7 @@ c
        dimension nCount(mitot,mjtot)
        dimension xcentMerge(mitot,mjtot),ycentMerge(mitot,mjtot)
        dimension fakeState(nvar), qm(nvar), rhs(2,nvar)
-       dimension dumax(nvar),dumin(nvar),phimin(nvar)
-       dimension graddot(nvar),alpha(nvar),recon(nvar)
-       dimension a(2,2),b(2)
+       dimension a(5,5),b(5),db(nvar)
        character ch
 
        logical IS_OUTSIDE, REG_NBORS,NOT_OK_GHOST
@@ -156,7 +155,8 @@ c
 !--               nco = ncount(i,j)
 !--            endif
 
-            nco = 1 ! this means use 3 by 3 nhood to compute gradients of merging tiles
+            !!!nco = 1 ! this means use 3 by 3 nhood to compute gradients of merging tiles
+            nco = 2 ! this means use 3 by 3 nhood to compute gradients of merging tiles
             ! this code does not check for ill conditioned reconstruction and  larger nhood
             ! if did, might need larger nhood than 3 by 3
 
@@ -185,7 +185,61 @@ c
      .                    (qMerge(:,i+ioff,j+joff) - qMerge(:,i,j))
                rhs(2,:) = rhs(2,:) + deltay * 
      .                    (qMerge(:,i+ioff,j+joff) - qMerge(:,i,j))
+               if (nterms .eq. 5) then
+                  a(1,3) = a(1,3) + deltax*deltax**2
+                  a(1,4) = a(1,4) + deltax*deltax*deltay
+                  a(1,5) = a(1,5) + deltax*deltay**2
+                  a(2,3) = a(2,3) + deltay*deltax**2
+                  a(2,4) = a(2,4) + deltay*deltax*deltay
+                  a(2,5) = a(2,5) + deltay*deltay**2
+                  a(3,3) = a(3,3) + deltax**2*deltax**2
+                  a(3,4) = a(3,4) + deltax**2*deltax*deltay
+                  a(3,5) = a(3,5) + deltax**2*deltay**2
+                  a(4,4) = a(4,4) + deltax*deltay * deltax*deltay
+                  a(4,5) = a(4,5) + deltax*deltay * deltay**2
+                  a(5,5) = a(5,5) + deltay**4
+                  rhs(3,:) = rhs(3,:) + deltax**2*
+     .                      (qMerge(:,i+ioff,j+joff) - qMerge(:,i,j))
+                  rhs(4,:) = rhs(4,:) + deltax*deltay*
+     .                      (qMerge(:,i+ioff,j+joff) - qMerge(:,i,j))
+                  rhs(5,:) = rhs(5,:) + deltay**2*
+     .                      (qMerge(:,i+ioff,j+joff) - qMerge(:,i,j))
+               endif
  22          continue
+
+             if (ghost_ccg) then
+                call getBndryInfo(alf,beta,k,bxpt,bypt)
+                distx = x0 - bxpt
+                disty = y0 - bypt
+                d_dot_n = distx*alf + disty*beta
+                dNormx = d_dot_n * alf
+                dNormy = d_dot_n * beta
+                dnx = 2.d0*dNormx
+                dny = 2.d0*dNormy
+                xghost = x0 - dnx
+                yghost = y0 - dny
+
+                !irow = irow+1
+                !a(irow,1) = xghost - x0
+                !a(irow,2) = yghost - y0
+                a(1,1) = a(1,1) + dnx*dnx
+                a(1,2) = a(1,2) + dnx*dny
+                a(2,2) = a(2,2) + dny*dny
+! check that signs cancel, since my normal is inward pointing
+                uvel = qMerge(2,i,j)
+                vvel = qMerge(3,i,j)
+                dot = uvel*alf + vvel*beta
+                ughost = uvel - 2.d0*dot*alf
+                vghost = vvel - 2.d0*dot*beta
+
+                db(1) = 0.d0 ! pw const extrap of density
+                db(2) = ughost - uvel
+                db(3) = vghost - vvel
+                db(4) = 0.d0 ! and pressure
+
+                rhs(1,:) = rhs(1,:) + dx * db(:)
+                rhs(2,:) = rhs(2,:) + dy * db(:)
+             endif
 
              ! solve a^t*a  * grad = a^t rhs.  First form cholesky factors.
              ! will have to add robustness checks
@@ -210,13 +264,17 @@ c
 c      apply limiter if requested. Go over all neighbors, do BJ
         if (nolimiter) go to 35
 
-        call limitTileGradientBJ(qmerge,gradmx,gradmy,xcentMerge,
+       if (limitTile .eq. 1) then
+          call limitTileGradientBJ(qmerge,gradmx,gradmy,xcentMerge,
      &                           ycentMerge,xlow,ylow,dx,dy,irr,lwidth,
      &                           nvar,mitot,mjtot,lstgrd,areaMin) 
 
-c      call limitTileGradientLP(qmerge,gradmx,gradmy,xcentMerge,
-c    &                           ycentMerge,xlow,ylow,dx,dy,irr,lwidth,
-c    &                           nvar,mitot,mjtot,lstgrd,areaMin,mptr)
+        else
+           call limitTileGradientLP(qmerge,gradmx,gradmy,xcentMerge,
+     &                           ycentMerge,xlow,ylow,dx,dy,irr,lwidth,
+     &                           nvar,mitot,mjtot,lstgrd,areaMin,mptr,
+     &                           lpChoice)
+       endif
         
 
 c

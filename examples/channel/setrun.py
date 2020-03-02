@@ -42,13 +42,18 @@ def setrun(claw_pkg='amrclaw'):
     probdata.add_param('ismp',    1,  ' stabilization method')
     ## 1 = SRD
     ## 2 = DRD
-    probdata.add_param('pwconst', True,  ' no slopes in plotting ')
+    #probdata.add_param('pwconst', True,  ' no slopes in plotting ')
+    probdata.add_param('pwconst', False,  ' no slopes in plotting ')
     probdata.add_param('max1d', 120,' max size each dir for grid patches')
     probdata.add_param('nloops',     2,  '# closed loops or segments')
     probdata.add_param('xloop1',    0.,  ' starting pt x')
     probdata.add_param('yloop1',    .11, ' starting pt y')
     probdata.add_param('xloop2',    .999999,  ' starting pt x')
     probdata.add_param('yloop2',    .91,  ' starting pt y')
+    probdata.add_param('ghost_ccg',  False,  ' use ghost cells in cutcell/tile gradients')
+    probdata.add_param('limitTile',  1, ' 1 = BJ, 2 = LP')
+    probdata.add_param('lpChoice',   2, ' 1 = restrictive, 2 = relaxed, if LP limiter use')
+
 
     #------------------------------------------------------------------
     # Standard Clawpack parameters to be written to claw.data:
@@ -138,10 +143,10 @@ def setrun(claw_pkg='amrclaw'):
 
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
-        clawdata.output_step_interval = 1
-        clawdata.total_steps = 1
-        clawdata.output_t0 = True  # output at initial (or restart) time?
-        #clawdata.output_t0 = False  # output at initial (or restart) time?
+        clawdata.output_step_interval = 10
+        clawdata.total_steps = 10
+        #clawdata.output_t0 = True  # output at initial (or restart) time?
+        clawdata.output_t0 = False  # output at initial (or restart) time?
 
 
     clawdata.output_format = 'ascii'       # 'ascii', 'binary', 'netcdf'
@@ -192,6 +197,7 @@ def setrun(claw_pkg='amrclaw'):
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
     clawdata.order = 2
+    #clawdata.order = 1
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -214,8 +220,8 @@ def setrun(claw_pkg='amrclaw'):
     #   2 or 'superbee' ==> superbee
     #   3 or 'vanleer'  ==> van Leer
     #   4 or 'mc'       ==> MC limiter
-    clawdata.limiter = ['mc','mc','mc']
-    #clawdata.limiter = [0,0,0]
+    #clawdata.limiter = ['mc','mc','mc']
+    clawdata.limiter = [0,0,0]
 
     clawdata.use_fwaves = False    # True ==> use f-wave version of algorithms
 
@@ -231,7 +237,7 @@ def setrun(claw_pkg='amrclaw'):
     # --------------------
 
     # Number of ghost cells (usually 2)
-    clawdata.num_ghost = 3  # needed for 2 stage RK + delta distrib
+    clawdata.num_ghost = 4  # needed for 2 stage RK + delta distrib
 
     # Choice of BCs at xlower and xupper:
     #   0 or 'user'     => user specified (must modify bcNamr.f to use this option)
@@ -262,7 +268,7 @@ def setrun(claw_pkg='amrclaw'):
     # Specify when checkpoint files should be created that can be
     # used to restart a computation.
 
-    clawdata.checkpt_style = 0
+    clawdata.checkpt_style = 1
 
     if clawdata.checkpt_style == 0:
         # Do not checkpoint at all

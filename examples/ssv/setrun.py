@@ -49,6 +49,10 @@ def setrun(claw_pkg='amrclaw'):
     probdata.add_param('yloop1',    .999, ' starting pt y')
     probdata.add_param('xloop2',    1.382,  ' starting pt x')
     probdata.add_param('yloop2',    0.0,  ' starting pt y')
+    probdata.add_param('ghost_ccg',  False,  ' use ghost cells in cutcell/tile gradients')
+    probdata.add_param('limitTile',  1, ' 1 = BJ, 2 = LP')
+    probdata.add_param('lpChoice',   2,  ' 1 = restrictive, 2 = relaxed, if LP limiter used')
+
 
     #------------------------------------------------------------------
     # Standard Clawpack parameters to be written to claw.data:
@@ -76,12 +80,12 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.upper[1] = 1.4301e+00          # yupper
 
     # Number of grid cells:
-    #clawdata.num_cells[0] = 54      # mx
-    #clawdata.num_cells[1] = 54      # my
+    clawdata.num_cells[0] = 54      # mx
+    clawdata.num_cells[1] = 54      # my
     #clawdata.num_cells[0] = 26      # mx
     #clawdata.num_cells[1] = 26      # my
-    clawdata.num_cells[0] = 108     # mx
-    clawdata.num_cells[1] = 108     # my
+    #clawdata.num_cells[0] = 108     # mx
+    #clawdata.num_cells[1] = 108     # my
 
     # ---------------
     # Size of system:
@@ -109,9 +113,9 @@ def setrun(claw_pkg='amrclaw'):
     # restart_file 'fort.chkNNNNN' specified below should be in
     # the OUTDIR indicated in Makefile.
 
-    #clawdata.restart = True                # True to restart from prior results
-    clawdata.restart = False               # True to restart from prior results
-    clawdata.restart_file = 'fort.chk01000'  # File to use for restart data
+    clawdata.restart = True                # True to restart from prior results
+    #clawdata.restart = False               # True to restart from prior results
+    clawdata.restart_file = 'fort.chk02728'  # File to use for restart data
 
 
     # -------------
@@ -133,12 +137,12 @@ def setrun(claw_pkg='amrclaw'):
     elif clawdata.output_style == 2:
         # Specify a list or numpy array of output times:
         # Include t0 if you want output at the initial time.
-        clawdata.output_times =  [0., .1721,  0.2222, 1.0]
+        clawdata.output_times =  [0., .9,   10., 12.]
 
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
         clawdata.output_step_interval = 1500
-        clawdata.total_steps = 1500
+        clawdata.total_steps = 3000
         #clawdata.output_t0 = True  # output at initial (or restart) time?
         clawdata.output_t0 = False  # output at initial (or restart) time?
 

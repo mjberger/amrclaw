@@ -18,12 +18,6 @@ c
        integer irr(1-mbc:mx+mbc, 1-mbc:my+mbc)
 
 c
-       pl = 1.0d0
-       ul = 0.1d0
-       vl = 0.01d0
-c       ul = 0.0d0
-c       vl = 0.0d0
-
 c      fill ghost cells too so can more easily plot before
 c      time stepping starts
        do 20 i = 1-mbc, mx+mbc
@@ -37,9 +31,10 @@ c      time stepping starts
              ycen = ycorn + (j-0.5d0)*dy
           endif
 
-          rhol = ycen - 0.1d0*xcen + 0.5d0
-          !rhol = - 0.1d0*xcen + 0.5d0
+          !rhol = ycen - 0.1d0*xcen + 0.5d0
+          !rhol = -0.1d0*xcen + 0.5d0
           !rhol = 1.d0
+          call channelInit(xcen,ycen,rhol,ul,vl,pl)
           if (kuse .eq. -1) then  ! for easier debugging
             rhol = 1.4d0 
           endif

@@ -107,12 +107,6 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
   hxmarg = hx * .01d0
   hymarg = hy * .01d0
 
-  !rho = 1.d0
-  !u = 0.d0
-  !v = 0.d0
-  u = 0.1d0
-  v = 0.01d0
-  pr = 1.d0
 
   ! Use periodic boundary condition specialized code only, if only one 
   ! boundary is periodic we still proceed below
@@ -141,9 +135,10 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
                  ycen = ylo_patch + (dfloat(j)-.5d0)* hy
                  xcen = xlo_patch + (dfloat(i)-.5d0)* hx
               endif
-              rho =  ycen - .1d0*xcen + .5d0
+              !rho =  ycen - .1d0*xcen + .5d0
               !rho =  - .1d0*xcen + .5d0
               !rho = 1.d0
+              call channelInit(xcen,ycen,rho,u,v,pr)
 
               val(1, i, j) = rho
               val(2, i, j) = rho*u
@@ -206,9 +201,10 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
                  ycen = ylo_patch + (dfloat(j)-.5d0)* hy
                  xcen = xlo_patch + (dfloat(i)-.5d0)* hx
               endif
-              rho =  ycen - .1d0*xcen + .5d0
+              !rho =  ycen - .1d0*xcen + .5d0
               !rho =  - .1d0*xcen + .5d0
               !rho = 1.d0
+              call channelInit(xcen,ycen,rho,u,v,pr)
 
               val(1, i, j) = rho
               val(2, i, j) = rho*u

@@ -61,14 +61,24 @@ SOURCES = \
   fbody.f \
   bc2amr.f90 \
   bound.f90 \
+  channelInit.f \
+  outtec.f \
+  dumptec.f \
   $(AMRLIB)/SRD_normal.f \
   $(AMRLIB)/vrm_colella.f \
   $(AMRLIB)/vrmc_colella.f \
-  $(AMRLIB)/lp_qslopes.f \
+  $(AMRLIB)/lp_qslopesPtQuad2.f \
   $(AMRLIB)/slopes.f \
-  $(AMRLIB)/both_vector_lim_allineq.f \
-  $(AMRLIB)/Simplex_allineq.f \
   $(AMRLIB)/revdivmusclmethod2.f \
+  $(AMRLIB)/fixed_vector_lim_allineq.f \
+  $(AMRLIB)/fixed2_Simplex_allineq.f \
+
+# $(AMRLIB)/revdivmusclmethod2.f \
+# $(AMRLIB)/mymethod.f \
+#  $(AMRLIB)/lp_qslopesWithGhostQuadratic.f \
+#  $(AMRLIB)/lp_qslopesPtQuad2.f \
+#  $(AMRLIB)/SRD_normalWithGhostQuadratic.f \
+#  $(AMRLIB)/both_vector_lim_allineq.f \
 
 #-------------------------------------------------------------------
 # Include Makefile containing standard definitions and make options:

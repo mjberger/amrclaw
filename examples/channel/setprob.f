@@ -4,10 +4,8 @@
       implicit real*8 (a-h,o-z)
       character(len=25) fname
 c
-      logical pwconst
       common /RKmethod/ coeff(5), mstage
-      common /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold,pwconst
+      include "cuserdt.i"
 c
       iunit = 7
       fname = 'setprob.data'
@@ -31,30 +29,49 @@ c     # comment lines starting with #:
       ! or need more scratch storage etc
       read(7,*) ismp
       write(*,*)"Using stabilization ismp = ",ismp
+      write(outunit,*)"Using stabilization ismp = ",ismp
 
       read(7,*) pwconst
       write(*,*)"Plotting output with pwconst = ",pwconst
+      write(outunit,*)"Plotting output with pwconst = ",pwconst
 
       read(7,*) max1d
       write(*,*)"Using grid patches of size  max1d = ",max1d
+      write(outunit,*)"Using grid patches of size  max1d = ",max1d
 
       read(7,*) nloops
       write(*,*) "This geometry has ", nloops," loops"
+      write(outunit,*) "This geometry has ", nloops," loops"
 
       do n= 1, nloops
         read(7,*) xloops(n)
         read(7,*) yloops(n)
       end do
 
+      read(7,*) ghost_ccg
+      write(*,*)"Use of ghost cells in gradients = ",ghost_ccg
+      write(outunit,*)"Use of ghost cells in gradients = ",ghost_ccg
+
+      read(7,*) limitTile
+      write(*,*)"Tile limiter: 1 (BJ), 2 (LP) = ",limitTile
+      write(outunit,*)"Tile limiter: 1 (BJ), 2 (LP) = ",limitTile
+
+      read(7,*) lpChoice
+      write(*,*)"lpChoice (if used): 1 (standard), 2 (relaxed) = ",
+     &           lpChoice
+      write(outunit,*)"lpChoice (if used): 1 (standard), 2 (relaxed)= ",
+     &           lpChoice
 
       iprob = 16
       write(*,*)"Setprob is setting iprob = ",iprob
+      write(outunit,*)"Setprob is setting iprob = ",iprob
 
       gamma = 1.4d0
       gamma1 = gamma - 1.d0
       xprob = xupper
       yprob = yupper
       cflcart = cfl  ! have to go through and only use one
+      gradThreshold = 1.d-4
 
 
       return

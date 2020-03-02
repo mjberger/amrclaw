@@ -63,13 +63,13 @@ SOURCES = \
   bc2amr.f90 \
   bound.f90 \
   mymethod.f \
-  $(AMRLIB)/SRD_normal.f \
+  $(AMRLIB)/SRD_normalWithGhostQuadratic.f \
   $(AMRLIB)/vrm_colella.f \
   $(AMRLIB)/vrmc_colella.f \
-  $(AMRLIB)/lp_qslopes.f \
+  $(AMRLIB)/lp_qslopesPtQuad2.f \
   $(AMRLIB)/slopes.f \
-  $(AMRLIB)/both_vector_lim_allineq.f \
-  $(AMRLIB)/Simplex_allineq.f \
+  $(AMRLIB)/fixed_vector_lim_allineq.f \
+  $(AMRLIB)/fixed2_Simplex_allineq.f \
   outtec.f \
   dumptec.f \
 

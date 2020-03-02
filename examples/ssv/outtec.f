@@ -127,7 +127,7 @@ c        # test again for kirr -1 in case want to view in tecplot
             ch = '+'
 c           reconstruct to midpt of solid bndry and output to special file for cylinder case
             call dumpBndry(qp,qx,qy,irr,mitot,mjtot,i,j,
-     &                     nvar,ibunit) 
+     &                     nvar,ibunit,mptr) 
             bLength = getBlength(irr,kirr,mitot,mjtot)
          endif
 

@@ -20,10 +20,9 @@
 
       common   /RKmethod/ coeff(5),mstage
       common   /order2/ ssw,quad,nolimiter
-      common   /userdt/ cflcart,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                  ismp,gradThreshold,pwconst
+      include "cuserdt.i"
 
-      logical   debug, vtime, pwconst  
+      logical   debug, vtime 
       dimension firreg(nvar,-1:irrsize)
       dimension resid(nvar)
       dimension fakeState(nvar)

@@ -143,6 +143,7 @@ COMMON_SOURCES += \
   $(AMRLIB)/lstput.f \
   $(AMRLIB)/lstget.f \
   $(AMRLIB)/setirr.f \
+  $(AMRLIB)/weights.f \
   $(AMRLIB)/mkbdry.f \
   $(AMRLIB)/centrd.f \
   $(AMRLIB)/fs.f \

@@ -33,6 +33,7 @@ c
       common  /order2/ ssw,quad,nolimiter
       logical    debug, vtime, tranvd/.true./
       logical   divterm/.true./
+      !logical   divterm/.false./
 
       integer    xrp, yrp, istage
       data       debug/.false./

@@ -3,6 +3,7 @@ c ---------------------------------------------------------------
 c
       subroutine weights(p,xc,yc,totxx,totxy,totyy,wt,area,points,
      .                   hx,hy,k)
+
       implicit double precision (a-h,o-z)
       dimension  p(10,2), wt(24)
       dimension  subar(20), points(24,2)
@@ -20,7 +21,6 @@ c
       x0 = xc
       y0 = yc
       do 100 i=2,20
-c        if (p(i+1,1) .eq. -1) then
          if (p(i,1) .eq. -11) then
            if (i.eq.2) then
              write(6,*) 'degenerate polygon in weights'

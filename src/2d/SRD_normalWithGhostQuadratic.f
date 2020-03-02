@@ -20,9 +20,10 @@ c
        dimension xcentMerge(mitot,mjtot),ycentMerge(mitot,mjtot)
        dimension fakeState(nvar), qm(nvar), rhs(5,nvar)
        dimension a(5,5),b(5),db(nvar)
+       dimension nborList(25,2)
        character ch
 
-       logical IS_OUTSIDE, REG_NBORS,NOT_OK_GHOST
+       logical IS_OUTSIDE, NOT_OK_GHOST
        logical quad, nolimiter,verbose
        common /order2/ ssw, quad, nolimiter
        integer omp_get_max_threads
@@ -43,10 +44,7 @@ c never use cells from exterior to the domain for SRD
 
       IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
      .                   y .lt. ylower .or. y .gt. yupper)
-      REG_NBORS(i,j,lstgrd) = (irr(i+1,j).eq.lstgrd .and. 
-     .                         irr(i-1,j).eq.lstgrd .and. 
-     .                         irr(i,j+1).eq.lstgrd .and. 
-     .                         irr(i,j-1).eq.lstgrd)
+      
       NOT_OK_GHOST(i,j) = (i .lt. 3 .or. 
      .                     i .gt. mitot-2 .or.
      .                     j .lt. 3 .or. 
@@ -65,8 +63,8 @@ c ::::::::::::::::
 c
        verbose = .false.
        !verbose = .true.
-       eps = 1d-4
-       nterms = 5
+       !nterms = 5
+       nterms = 2
 
 c      some initializations
        ar(lstgrd) = dx*dy   ! area of regular grid cell 
@@ -179,6 +177,8 @@ c
                if (IS_OUTSIDE(xcn,ycn)) go to 22
 
                nborCount = nborCount + 1
+               nborList(nborCount,1) = i+ioff
+               nborList(nborCount,2) = j+joff
                deltax = xcentMerge(i+ioff,j+joff) - x0
                deltay = ycentMerge(i+ioff,j+joff) - y0
                a(1,1) = a(1,1) + deltax*deltax
@@ -245,7 +245,7 @@ c
               endif
 
              ntermsToUse = nterms
-             if (nterms .eq. 5 .and. nborCount .lt.6) then
+             if (nterms .eq. 5 .and. nborCount .lt.7) then
                 write(*,222) i,j,nborCount
  222            format("Cell i,j = ",2i5," has only ",i6," neighbors",
      &                 /,"Drop to first order gradient")
@@ -312,23 +312,23 @@ c
              end do
 
              endif
- 20     continue
 c
 c      apply limiter if requested. Go over all neighbors, do BJ
-        if (nolimiter) go to 35
+        if (nolimiter) go to 20
 
        if (limitTile .eq. 1) then
-          call limitTileGradientBJ(qmerge,gradmx,gradmy,xcentMerge,
-     &                           ycentMerge,xlow,ylow,dx,dy,irr,lwidth,
-     &                           nvar,mitot,mjtot,lstgrd,areaMin) 
+          call limitTileCellBJ(qmerge,gradmx,gradmy,xcentMerge,
+     &                         ycentMerge,irr,nvar,mitot,mjtot,
+     &                         nborList,nborCount,i,j) 
 
         else
            call limitTileGradientLP(qmerge,gradmx,gradmy,xcentMerge,
      &                           ycentMerge,xlow,ylow,dx,dy,irr,lwidth,
      &                           nvar,mitot,mjtot,lstgrd,areaMin,mptr,
-     &                           lpChoice)
+     &                           lpChoice,nborList,nborCount)
        endif
         
+ 20     continue
 
 c
       ! redo neighborhood calc as in makeNHoods but putting merged vals INTO cells

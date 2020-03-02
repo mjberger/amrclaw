@@ -94,13 +94,13 @@ c     skip it
 
       return
       end
+
 c
 c -------------------------------------------------------------------------
 c
-      subroutine limitTileGradientBJ(qmerge,gradmx,gradmy,xcentMerge,
-     &                               ycentMerge,xlow,ylow,dx,dy,irr,
-     &                               lwidth,nvar,mitot,mjtot,
-     &                               lstgrd,areaMin)
+      subroutine limitTileCellBJ(qmerge,gradmx,gradmy,xcentMerge,
+     &                           ycentMerge,irr,nvar,mitot,mjtot,
+     &                           nborList,nborCount,i,j)
 
        use amr_module
        implicit double precision (a-h,o-z)
@@ -111,6 +111,67 @@ c
 
        dimension dumax(nvar),dumin(nvar),phimin(nvar),graddot(nvar)
        dimension alpha(nvar),recon(nvar)
+       dimension nborList(25,2)
+
+          
+            ! find max and min needed for BJ limiting. Use all nbors used in gradient comp
+       eps = 1d-4
+       dumax = 0.d0 
+       dumin = 0.d0
+       do 31 ico = 1, nborCount
+          inbor = nborList(ico,1)
+          jnbor = nborList(ico,2)
+          dumax = max(dumax,qmerge(:,inbor,jnbor)-qmerge(:,i,j))
+          dumin = min(dumin,qmerge(:,inbor,jnbor)-qmerge(:,i,j))
+ 31    continue
+
+       phimin = 1.d0
+       do 32 ico = 1, nborCount
+          inbor = nborList(ico,1)
+          jnbor = nborList(ico,2)
+          diffx = xcentMerge(inbor,jnbor)-xcentMerge(i,j)
+          diffy = ycentMerge(inbor,jnbor)-ycentMerge(i,j)
+          graddot  = gradmx(:,i,j)*diffx + gradmy(:,i,j)*diffy
+          do m = 1,nvar
+             if (graddot(m) > 0.d0) then
+                alpha(m) = min(1.d0, dumax(m)/graddot(m))
+             else if (graddot(m) < 0.d0) then
+                alpha(m) = min(1.d0, dumin(m)/graddot(m))
+             else
+                alpha(m) = 1.d0
+             endif
+          end do
+
+! one last check for positivity
+          recon = qMerge(:,i,j) + graddot  
+          xymomsq = recon(2)**2+recon(3)**2
+          press = .4d0*(recon(4)-0.5d0*xymomsq/recon(1))
+          if (recon(1).le.eps .or. press.le.eps) alpha = 0.d0
+          phimin = min(phimin, alpha)
+ 32    continue
+       gradmx(:,i,j) = gradmx(:,i,j)*phimin(:)
+       gradmy(:,i,j) = gradmy(:,i,j)*phimin(:)
+
+       return 
+       end
+c
+c -------------------------------------------------------------------------
+c
+      subroutine limitTileGradientBJ(qmerge,gradmx,gradmy,xcentMerge,
+     &                               ycentMerge,xlow,ylow,dx,dy,irr,
+     &                               lwidth,nvar,mitot,mjtot,lstgrd,
+     &                               areaMin,nborList,nborCount)
+
+       use amr_module
+       implicit double precision (a-h,o-z)
+
+       dimension qmerge(nvar,mitot,mjtot), irr(mitot,mjtot)
+       dimension gradmx(nvar,mitot,mjtot), gradmy(nvar,mitot,mjtot)
+       dimension xcentMerge(mitot,mjtot),ycentMerge(mitot,mjtot)
+
+       dimension dumax(nvar),dumin(nvar),phimin(nvar),graddot(nvar)
+       dimension alpha(nvar),recon(nvar)
+       dimension nborList(25,2)
        logical  IS_OUTSIDE
 
        IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
@@ -198,7 +259,8 @@ c
       subroutine limitTileGradientLP(qmerge,gradmx,gradmy,xcentMerge,
      &                               ycentMerge,xlow,ylow,dx,dy,irr,
      &                               lwidth,nvar,mitot,mjtot,
-     &                               lstgrd,areaMin,mptr,lpChoice)
+     &                               lstgrd,areaMin,mptr,lpChoice,
+     &                               nborList,nborCount)
 
        use amr_module
        implicit double precision (a-h,o-z)
@@ -208,7 +270,7 @@ c
        dimension xcentMerge(mitot,mjtot),ycentMerge(mitot,mjtot)
 
        dimension dumax(nvar),dumin(nvar),phimin(nvar),graddot(nvar)
-       dimension alpha(nvar),recon(nvar)
+       dimension alpha(nvar),recon(nvar), nborList(25,2)
        logical  IS_OUTSIDE, INDEX_OUTSIDE
 
 c      sandras variables

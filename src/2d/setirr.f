@@ -130,33 +130,31 @@ c
 c  for each cell with a boundary segment, calculate the weight
 c  needed for quadratic reconstruction if nec.
 c
-cc     if (quad) then
-cc     ###  compute weights all the time, even if not used
-cc
-c         do 70 i = 1, mitot
-c         do 70 j = 1, mjtot
-c           k = irr(i,j)
-c           if (k .eq. -1) go to 70
-c           if (k .ne. lstgrd) then
-c              call weights(poly(1,1,k),xcirr(k),ycirr(k),totxx,totxy,
-c     &                     totyy,wt(1,k),ar(k),points(1,1,k),hx,hy,k)
-cc             save tots in rest of poly
-c              poly( 8,1,k) = totxx
-c              poly( 9,1,k) = totxy
-c              poly(10,1,k) = totyy
-c           else if (.not. done) then
-c               call makep(poly(1,1,lstgrd),i,j,xlow,ylow,hx,hy)
-c               xc = (poly(1,1,lstgrd) + poly(3,1,lstgrd))/2.d0
-c               yc = (poly(1,2,lstgrd) + poly(2,2,lstgrd))/2.d0
-c               call weights(poly(1,1,lstgrd),xc,yc,totxx,totxy,totyy,wt,
-c     .                  ar(lstgrd),points(1,1,lstgrd),hx,hy,k)
-c               poly(8,1,lstgrd)  = totxx
-c               poly(9,1,lstgrd)  = totxy
-c               poly(10,1,lstgrd) = totyy
-c               done = .true.
-c            endif
-c 70      continue
-cc     endif
+c     ###  compute weights all the time, even if not used
+c
+          do 70 i = 1, mitot
+          do 70 j = 1, mjtot
+            k = irr(i,j)
+            if (k .eq. -1) go to 70
+            if (k .ne. lstgrd) then
+               call weights(poly(1,1,k),xcirr(k),ycirr(k),totxx,totxy,
+     &                     totyy,wt(1,k),ar(k),points(1,1,k),hx,hy,k)
+c             save tots in rest of poly
+               poly( 8,1,k) = totxx
+               poly( 9,1,k) = totxy
+               poly(10,1,k) = totyy
+            else if (.not. done) then !use 1st regular cell found for this
+              call makep(poly(1,1,lstgrd),i,j,xlow,ylow,hx,hy)
+              xc = (poly(1,1,lstgrd) + poly(3,1,lstgrd))/2.d0
+              yc = (poly(1,2,lstgrd) + poly(2,2,lstgrd))/2.d0
+              call weights(poly(1,1,lstgrd),xc,yc,totxx,totxy,totyy,wt,
+     &                  ar(lstgrd),points(1,1,lstgrd),hx,hy,k)
+              poly(8,1,lstgrd)  = totxx
+              poly(9,1,lstgrd)  = totxy
+              poly(10,1,lstgrd) = totyy
+              done = .true.
+            endif
+  70      continue
 
        if (debug) then
            write(*,*)" setirr irr grid ", mptr

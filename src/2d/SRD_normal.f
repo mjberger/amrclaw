@@ -7,6 +7,7 @@ c
 
        use amr_module
        implicit double precision (a-h, o-z)
+       include "cuserdt.i"
 
        dimension q(nvar,mitot,mjtot),  irr(mitot,mjtot)
        dimension qx(nvar,mitot,mjtot), qy(nvar,mitot,mjtot)
@@ -18,8 +19,6 @@ c
        dimension nCount(mitot,mjtot)
        dimension xcentMerge(mitot,mjtot),ycentMerge(mitot,mjtot)
        dimension fakeState(nvar), qm(nvar), rhs(2,nvar)
-       dimension dumax(nvar),dumin(nvar),phimin(nvar)
-       dimension graddot(nvar),alpha(nvar),recon(nvar)
        dimension a(2,2),b(2)
        character ch
 
@@ -129,9 +128,14 @@ c
  10     continue
 
         ! gradient of merging neighborhoods, initialized to 0. set using neighboring tiles
-        gradmx = rinfinity   ! 0.d0 for debugging
-        gradmy = rinfinity   ! 0.d0
-        if (ssw .eq. 0.d0) go to 35   ! ssw = 0 means no slopes
+        if (ssw .eq. 0.d0) then
+           gradmx = 0.d0
+           gradmy = 0.d0
+           go to 35   ! ssw = 0 means no slopes
+        else
+           gradmx = rinfinity   ! 0.d0 for debugging
+           gradmy = rinfinity   ! 0.d0
+        endif
 
         !do 20 j = 3, mjtot-2
         !do 20 i = 3, mitot-2
@@ -210,13 +214,17 @@ c
 c      apply limiter if requested. Go over all neighbors, do BJ
         if (nolimiter) go to 35
 
-        call limitTileGradientBJ(qmerge,gradmx,gradmy,xcentMerge,
+       if (limitTile .eq. 1) then
+          call limitTileGradientBJ(qmerge,gradmx,gradmy,xcentMerge,
      &                           ycentMerge,xlow,ylow,dx,dy,irr,lwidth,
      &                           nvar,mitot,mjtot,lstgrd,areaMin) 
 
-c      call limitTileGradientLP(qmerge,gradmx,gradmy,xcentMerge,
-c    &                           ycentMerge,xlow,ylow,dx,dy,irr,lwidth,
-c    &                           nvar,mitot,mjtot,lstgrd,areaMin,mptr)
+        else
+           call limitTileGradientLP(qmerge,gradmx,gradmy,xcentMerge,
+     &                           ycentMerge,xlow,ylow,dx,dy,irr,lwidth,
+     &                           nvar,mitot,mjtot,lstgrd,areaMin,mptr,
+     &                           lpChoice)
+       endif
         
 
 c

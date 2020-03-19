@@ -94,7 +94,6 @@ c     nCount is size of neighborhood, numHoods is number of merged nhoods each c
 c       form qMerge vals 
         do 10 j = lwidth-1, mjtot-lwidth+1
         do 10 i = lwidth-1, mitot-lwidth+1
-            nTermsToUse = nterms
             k = irr(i,j)
             if (k .eq. -1) go to 10 ! no solid cells
             call getCellCentroid(lstgrd,i,j,xc,yc,xlow,ylow,dx,dy,k)
@@ -128,9 +127,14 @@ c
  10     continue
 
         ! gradient of merging neighborhoods, initialized to 0. set using neighboring tiles
-        gradmx = rinfinity   ! 0.d0 for debugging
-        gradmy = rinfinity   ! 0.d0
-        if (ssw .eq. 0.d0) go to 35   ! ssw = 0 means no slopes
+        if (ssw .eq. 0.d0) then
+           gradmx = 0.d0
+           gradmy = 0.d0
+           go to 35   ! ssw = 0 means no slopes
+        else
+           gradmx = rinfinity   ! 0.d0 for debugging
+           gradmy = rinfinity   ! 0.d0
+        endif
 
         !do 20 j = 3, mjtot-2
         !do 20 i = 3, mitot-2

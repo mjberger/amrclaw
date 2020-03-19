@@ -30,10 +30,10 @@ c        ::: add neighbors of this point to nlist
          k0  = irr(ix0,iy0)
 
          if (k0 .eq. lstgrd) then
-            !nco = 1 ! reg cell has 4 nbors so will have enough 
-            nco = 2 ! do quadratic fit for both cut and one adjacent
-            !cutoffDistReg = 4 ! for reg cell this means use all nbors
-            cutoffDistReg = 3 ! for reg cell this means use all nbors
+            nco = 1 ! reg cell has 4 nbors so will have enough 
+            !nco = 2 ! do quadratic fit for both cut and one adjacent
+            cutoffDistReg = 4 ! for reg cell this means use all nbors
+            !cutoffDistReg = 3 ! for reg cell this means use all nbors
             ! cutoffDistReg = 2 ! means use only 2 away in l1 norm
             ! cutoffDistReg = 1 means use edge nbors only
          else
@@ -49,7 +49,7 @@ c           nco = 1 ! will have enough nbors
             else
                cutoffDist = 3
             endif
-            !cutoffDist = 4
+            cutoffDist = 6
          endif
          do 20 ioff = -nco,nco
          do 20 joff = -nco,nco

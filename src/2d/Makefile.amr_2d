@@ -25,7 +25,6 @@ COMMON_SOURCES += \
   $(AMRLIB)/mymethod.f \
   $(AMRLIB)/checkPhys.f \
   $(AMRLIB)/cellsClose.f \
-  $(AMRLIB)/DRD_cellMerge.f \
   $(AMRLIB)/SRD_helpers.f \
   $(AMRLIB)/getCellCentroid.f \
   $(AMRLIB)/getirrlen.f \

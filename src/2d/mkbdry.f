@@ -315,7 +315,7 @@ c     if (poly(i,1,k).eq.-1) go to 62
      1                 (poly(i,2,k)-poly(i-1,2,k))**2 )) / hmax
                   write(13,901) poly(i,1,k),poly(i,2,k),rat
                endif
- 901           format(2e16.8,4x,e15.7)
+ 901           format(2e25.15,4x,e15.7)
  61         continue
          endif
  62      continue

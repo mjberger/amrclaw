@@ -135,18 +135,15 @@ c         endif
             go to 110    ! leave 0 gradient
          endif
 
-         if (newend  .ge. 7) then
-            nterms = 5
-         else 
-            nterms = 2
+         nToUse = nTerms
+         if (nToUse .eq. 5 .and. newend .lt. 7) then
+            nToUse = 2
          endif
-         nterms = 2
 
 c        changed code to directly do second order diff in one direction on full cell
          no_good_dir = .not. GOODX(ix0,iy0) .and. .not. GOODY(ix0,iy0)
 
          if (k .eq. lstgrd .or. no_good_dir) then ! regular lst sq fit
-         nterms = 2
          adj_reg = .false.
          do 22 n = 2, newend
             irow = irow + 1
@@ -165,7 +162,7 @@ c     # code treating q as pt.wise values
             dely = yn - y0
             a(irow,1) = delx
             a(irow,2) = dely
-            if (nterms .eq. 5) then
+            if (nToUse .eq. 5) then
 c            # code doing quadratic but pointwise not cell averaged right
               a(irow,3) = (xn-x0)**2
               a(irow,4) = (xn-x0)*(yn-y0)
@@ -179,7 +176,7 @@ c
          else if (GOODX(ix0,iy0)) then ! linear fit in other dir for now
             adj_reg = .true.
             qx(:,ix0,iy0)=(qp(:,ix0+1,iy0)-qp(:,ix0-1,iy0))/(2.d0*hx)
-            nterms = 1
+            nToUse = 1
             ! solve directly since only using 2 nbors
             sxx(:) = qp(:,ix0+1,iy0)-2.d0*qp(:,ix0,iy0)+qp(:,ix0-1,iy0)
             call getCellCentroid(lstgrd,ix0,iy0+1,xtop,ytop,xlow,ylow,
@@ -204,7 +201,7 @@ c
          else !  must be GOODY true
             adj_reg = .true.
             qy(:,ix0,iy0) = (qp(:,ix0,iy0+1)-qp(:,ix0,iy0-1))/(2.d0*hy)
-            nterms = 1
+            nToUse = 1
             ! solve directly since only using 2 nbors
             syy(:) = qp(:,ix0,iy0+1)-2.d0*qp(:,ix0,iy0)+qp(:,ix0,iy0-1)
             call getCellCentroid(lstgrd,ix0+1,iy0,xrgt,yrgt,xlow,ylow,
@@ -260,12 +257,12 @@ c  if cut cell add ghost cell state  (but not used for limiting?)
 c
 
               do 30 it = 1, irow
-                 do 30 jt = 1, nterms
+                 do 30 jt = 1, nToUse
                     at(jt,it) = a(it,jt)
  30              continue
 
-                 do 50 it = 1, nterms
-                    do 50 jt = 1, nterms
+                 do 50 it = 1, nToUse
+                    do 50 jt = 1, nToUse
                        c(it,jt) = 0.d0
                        do m = 1, nvar
                           d(it,m)  = 0.d0
@@ -284,7 +281,7 @@ c
 c       do linear fit
 c     # solve C*w = d for least squares slopes. use cholesky
 c     # put factors back in a
-           if (nterms .eq. 2) then
+           if (nToUse .eq. 2) then
              a(1,1) = dsqrt(c(1,1))
              a(1,2) = c(1,2)/a(1,1)
              a(2,2) = dsqrt(c(2,2)-a(1,2)**2)

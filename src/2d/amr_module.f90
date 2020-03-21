@@ -342,7 +342,8 @@ module amr_module
      real(kind=8) :: poly(10,2,irrsize),ar(-1:irrsize),               &
                      points(24,2,irrsize),wt(24,-1:irrsize),          &
                      xcirr(irrsize),ycirr(irrsize),volMerge(irrsize), &
-                     xcentMerge(irrsize),ycentMerge(irrsize)
+                     xcentMerge(irrsize),ycentMerge(irrsize),         &
+                     qmshifts(3,irrsize)
      
      integer ::     ixg(irrsize), iyg(irrsize), nxtirr(irrsize),  &
                     svi(irrsize), svj(irrsize)

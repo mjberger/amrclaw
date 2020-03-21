@@ -147,5 +147,9 @@ COMMON_SOURCES += \
   $(AMRLIB)/centrd.f \
   $(AMRLIB)/fs.f \
   $(AMRLIB)/zero2.f \
+  $(AMRLIB)/merge_shifts.f \
+  $(AMRLIB)/cholesky.f \
+  $(AMRLIB)/solve.f \
+  $(AMRLIB)/qmslopes.f \
 # $(AMRLIB)/resize_alloc_static.f90 \
 # $(AMRLIB)/fbody.f \

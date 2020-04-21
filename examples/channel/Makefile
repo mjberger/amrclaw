@@ -47,7 +47,6 @@ EXCLUDE_MODULES = \
 EXCLUDE_SOURCES = \
   $(AMRLIB)/AG_qslopes.f \
   $(AMRLIB)/AG_slopes.f \
-  $(AMRLIB)/mymethod.f \
 
 # ----------------------------------------
 # List of custom sources for this program:
@@ -60,25 +59,23 @@ SOURCES = \
   qinit.f \
   fbody.f \
   bc2amr.f90 \
-  bound.f90 \
   channelInit.f \
-  outtec.f \
-  dumptec.f \
-  $(AMRLIB)/SRD_normal.f \
-  $(AMRLIB)/vrm_colella.f \
-  $(AMRLIB)/vrmc_colella.f \
-  $(AMRLIB)/lp_qslopesPtQuad2.f \
+  bound.f90 \
+  $(AMRLIB)/SRD_quadratic.f \
+  $(AMRLIB)/vrm_llf.f \
+  $(AMRLIB)/vrmc_llf.f \
+  $(AMRLIB)/lp_qslopesWithGhostAvgQuadratic.f \
   $(AMRLIB)/slopes.f \
-  $(AMRLIB)/revdivmusclmethod2.f \
   $(AMRLIB)/fixed_vector_lim_allineq.f \
   $(AMRLIB)/fixed2_Simplex_allineq.f \
+  outtec.f \
+  dumptec.f \
 
-# $(AMRLIB)/revdivmusclmethod2.f \
-# $(AMRLIB)/mymethod.f \
-#  $(AMRLIB)/lp_qslopesWithGhostQuadratic.f \
-#  $(AMRLIB)/lp_qslopesPtQuad2.f \
 #  $(AMRLIB)/SRD_normalWithGhostQuadratic.f \
+#  $(AMRLIB)/lp_qslopesPtQuad2.f \
+# $(AMRLIB)/SRD_normal2.f \
 #  $(AMRLIB)/both_vector_lim_allineq.f \
+#  $(AMRLIB)/lp_qslopesWithGhostQuadratic.f \
 
 #-------------------------------------------------------------------
 # Include Makefile containing standard definitions and make options:

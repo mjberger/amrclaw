@@ -30,8 +30,8 @@ c
       ibunit = 24
       open(ibunit,file=filebndry,status='unknown',form='formatted')
       write(ibunit,*)"# writing bndry file at time ",time
-      write(ibunit,*)"#      x_bndry  y_bndry  rho    u     v     p",
-     &               "   i       j      mptr"
+      write(ibunit,*)"#  dist     x_bndry  y_bndry  rho    u     v  ",
+     &               "   p       i       j      mptr"
       
 
       nplot = nplot+1

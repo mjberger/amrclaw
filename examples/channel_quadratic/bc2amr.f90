@@ -86,7 +86,7 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
 
   use amr_module, only: mthbc, xlower, ylower, xupper, yupper
   use amr_module, only: xperdom,yperdom,spheredom
-  use amr_module, only: xcirr,ycirr 
+  use amr_module, only: xcirr,ycirr,poly
 
   implicit none
 
@@ -102,14 +102,16 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
   ! Local storage
   integer :: i, j, ibeg, jbeg, nxl, nxr, nyb, nyt,kuse
   real(kind=8) :: hxmarg, hymarg
-  real(kind=8) :: pr,u,v,rho,xcen,ycen,quad
+  real(kind=8) :: pr,u,v,rho,xcen,ycen
+  real(kind=8) :: prSolid,uSolid,vSolid,rhoSolid
   integer mytest
 
   hxmarg = hx * .01d0
   hymarg = hy * .01d0
-  u = .1d0
-  v = .01d0
-  pr = 1.d0
+  uSolid = .1d0
+  vSolid = .01d0
+  prSolid = 1.d0
+  rhoSolid = 1.4d0
 
 
   ! Use periodic boundary condition specialized code only, if only one 
@@ -132,14 +134,23 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
         do j = 1, ncol
            do i=1, nxl
               kuse = irr(i,j)
-              if (kuse .ne. -1 .and. kuse .ne. lstgrd) then
-                 xcen = xcirr(kuse)
-                 ycen = ycirr(kuse)
+              if (kuse .ne. -1) then
+                if (kuse .ne. lstgrd) then
+                   xcen = xcirr(kuse)
+                   ycen = ycirr(kuse)
+                else
+                   ycen = ylo_patch + (dfloat(j)-.5d0)* hy
+                   xcen = xlo_patch + (dfloat(i)-.5d0)* hx
+                   call makep(poly(1,1,lstgrd),i,j,xlo_patch,ylo_patch,hx,hy)
+                endif
+                !call channelPtInit(xcen,ycen,rho,u,v,pr)
+                call channelAvgInit(poly(1,1,kuse),xcen,ycen,rho,u,v,pr)
               else
-                 ycen = ylo_patch + (dfloat(j)-.5d0)* hy
-                 xcen = xlo_patch + (dfloat(i)-.5d0)* hx
+                rho = rhoSolid
+                u   = uSolid
+                v   = vSolid
+                pr  = prSolid
               endif
-              rho = quad(xcen,ycen)
 
               val(1, i, j) = rho
               val(2, i, j) = rho*u
@@ -195,14 +206,23 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
         do j = 1, ncol
            do i=ibeg, nrow
               kuse = irr(i,j)
-              if (kuse .ne. -1 .and. kuse .ne. lstgrd) then
+              if (kuse .ne. -1) then
+                 if (kuse .ne. lstgrd) then
                  xcen = xcirr(kuse)
                  ycen = ycirr(kuse)
+                else
+                   ycen = ylo_patch + (dfloat(j)-.5d0)* hy
+                   xcen = xlo_patch + (dfloat(i)-.5d0)* hx
+                   call makep(poly(1,1,kuse),i,j,xlo_patch,ylo_patch,hx,hy)
+                endif
+                !call channelPtInit(xcen,ycen,rho,u,v,pr)
+                call channelAvgInit(poly(1,1,kuse),xcen,ycen,rho,u,v,pr)
               else
-                 ycen = ylo_patch + (dfloat(j)-.5d0)* hy
-                 xcen = xlo_patch + (dfloat(i)-.5d0)* hx
+                rho = rhoSolid
+                u   = uSolid
+                v   = vSolid
+                pr  = prSolid
               endif
-              rho =  quad(xcen,ycen,rho,u,v,pr)
 
               val(1, i, j) = rho
               val(2, i, j) = rho*u
@@ -259,14 +279,24 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
            do j = 1, nyb
            do i = 1, nrow
               kuse = irr(i,j)
-              if (kuse .ne. -1 .and. kuse .ne. lstgrd) then
-                 xcen = xcirr(kuse)
-                 ycen = ycirr(kuse)
+              if (kuse .ne. -1) then
+                if (kuse .ne. lstgrd) then
+                   xcen = xcirr(kuse)
+                   ycen = ycirr(kuse)
+                else
+                   ycen = ylo_patch + (dfloat(j)-.5d0)* hy
+                   xcen = xlo_patch + (dfloat(i)-.5d0)* hx
+                   call makep(poly(1,1,kuse),i,j,xlo_patch,ylo_patch,hx,hy)
+                endif
+                !call channelPtInit(xcen,ycen,rho,u,v,pr)
+                call channelAvgInit(poly(1,1,kuse),xcen,ycen,rho,u,v,pr)
               else
-                 ycen = ylo_patch + (dfloat(j)-.5d0)* hy
-                 xcen = xlo_patch + (dfloat(i)-.5d0)* hx
+                rho = rhoSolid
+                u   = uSolid
+                v   = vSolid
+                pr  = prSolid
               endif
-              rho =  quad(xcen,ycen,rho,u,v,pr)
+
               val(1,i,j) = rho
               val(2,i,j) = rho*u
               val(3,i,j) = rho*v
@@ -321,14 +351,24 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
            do j = jbeg, ncol
            do i = 1, nrow
               kuse = irr(i,j)
-              if (kuse .ne. -1 .and. kuse .ne. lstgrd) then
-                 xcen = xcirr(kuse)
-                 ycen = ycirr(kuse)
+              if (kuse .ne. -1) then
+                if (kuse .ne. lstgrd) then
+                   xcen = xcirr(kuse)
+                   ycen = ycirr(kuse)
+                else
+                   ycen = ylo_patch + (dfloat(j)-.5d0)* hy
+                   xcen = xlo_patch + (dfloat(i)-.5d0)* hx
+                   call makep(poly(1,1,kuse),i,j,xlo_patch,ylo_patch,hx,hy)
+                endif
+                !call channelPtInit(xcen,ycen,rho,u,v,pr)
+                call channelAvgInit(poly(1,1,kuse),xcen,ycen,rho,u,v,pr)
               else
-                 ycen = ylo_patch + (dfloat(j)-.5d0)* hy
-                 xcen = xlo_patch + (dfloat(i)-.5d0)* hx
+                rho = rhoSolid
+                u   = uSolid
+                v   = vSolid
+                pr  = prSolid
               endif
-              rho =  quad(xcen,ycen,rho,u,v,pr)
+
               val(1,i,j) = rho
               val(2,i,j) = rho*u
               val(3,i,j) = rho*v
@@ -371,12 +411,3 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
   end if
 
 end subroutine bc2amr
-!
-! ==================================================
-!
-       double precision function quad(xcen,ycen)
-       double precision xcen, ycen
-
-       quad =  2.d0*xcen**2 - ycen**2 - 0.1d0*xcen + 5.5d0
-
-end function quad

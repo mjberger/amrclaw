@@ -62,7 +62,20 @@ c     # comment lines starting with #:
       write(outunit,*)"lpChoice (if used): 1 (standard), 2 (relaxed)= ",
      &           lpChoice
 
-      iprob = 16
+
+      read(7,*) nTerms
+      write(*,*) "Use ",nTerms," terms in cell gradient"
+      write(outunit,*) "Use ", nTerms," terms in tile gradient"
+      write(*,*)" 2 terms means first order gradient, 5 means 2nd order"
+      write(outunit,*)" 2 means first order gradient, 5 means 2nd order"
+
+      read(7,*) numMergeTerms
+      write(*,*) "Use ",numMergeTerms," terms in tile gradient"
+      write(outunit,*) "Use ", numMergeTerms," terms in tile gradient"
+      write(*,*)" 2 terms means first order gradient, 5 means 2nd order"
+      write(outunit,*)" 2 means first order gradient, 5 means 2nd order"
+
+      iprob = 19
       write(*,*)"Setprob is setting iprob = ",iprob
       write(outunit,*)"Setprob is setting iprob = ",iprob
 

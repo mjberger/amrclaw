@@ -43,15 +43,17 @@ def setrun(claw_pkg='amrclaw'):
     ## 1 = SRD
     ## 2 = DRD
     probdata.add_param('pwconst', False,  ' no slopes in plotting ')
-    probdata.add_param('max1d', 120,' max size each dir for grid patches')
+    probdata.add_param('max1d',1900,' max size each dir for grid patches')
     probdata.add_param('nloops',     2,  '# closed loops or segments')
-    probdata.add_param('xloop1',    .001,  ' starting pt x')
-    probdata.add_param('yloop1',    .999, ' starting pt y')
-    probdata.add_param('xloop2',    1.382,  ' starting pt x')
+    probdata.add_param('xloop1',    .00001,  ' starting pt x')
+    probdata.add_param('yloop1',    .99999, ' starting pt y')
+    probdata.add_param('xloop2',    1.384,  ' starting pt x')
     probdata.add_param('yloop2',    0.0,  ' starting pt y')
     probdata.add_param('ghost_ccg',  False,  ' use ghost cells in cutcell/tile gradients')
     probdata.add_param('limitTile',  1, ' 1 = BJ, 2 = LP')
     probdata.add_param('lpChoice',   2,  ' 1 = restrictive, 2 = relaxed, if LP limiter used')
+    probdata.add_param('nTerms',     5,  ' 2 = first order cell gradient, 5 = second order')
+    probdata.add_param('numMergeTerms', 5,' 2 = first order tile gradient, 5 = second order')
 
 
     #------------------------------------------------------------------
@@ -80,12 +82,20 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.upper[1] = 1.4301e+00          # yupper
 
     # Number of grid cells:
-    clawdata.num_cells[0] = 54      # mx
-    clawdata.num_cells[1] = 54      # my
-    #clawdata.num_cells[0] = 26      # mx
-    #clawdata.num_cells[1] = 26      # my
+    #clawdata.num_cells[0] = 54      # mx
+    #clawdata.num_cells[1] = 54      # my
+    clawdata.num_cells[0] = 27      # mx
+    clawdata.num_cells[1] = 27      # my
     #clawdata.num_cells[0] = 108     # mx
     #clawdata.num_cells[1] = 108     # my
+    #clawdata.num_cells[0] = 216     # mx
+    #clawdata.num_cells[1] = 216     # my
+    #clawdata.num_cells[0] = 324     # mx
+    #clawdata.num_cells[1] = 324     # my
+    #clawdata.num_cells[0] = 432     # mx
+    #clawdata.num_cells[1] = 432     # my
+    #clawdata.num_cells[0] = 864     # mx
+    #clawdata.num_cells[1] = 864     # my
 
     # ---------------
     # Size of system:
@@ -113,9 +123,9 @@ def setrun(claw_pkg='amrclaw'):
     # restart_file 'fort.chkNNNNN' specified below should be in
     # the OUTDIR indicated in Makefile.
 
-    clawdata.restart = True                # True to restart from prior results
-    #clawdata.restart = False               # True to restart from prior results
-    clawdata.restart_file = 'fort.chk02728'  # File to use for restart data
+    #clawdata.restart = True                # True to restart from prior results
+    clawdata.restart = False               # True to restart from prior results
+    clawdata.restart_file = 'fort.chk12000'  # File to use for restart data
 
 
     # -------------
@@ -141,8 +151,8 @@ def setrun(claw_pkg='amrclaw'):
 
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
-        clawdata.output_step_interval = 1500
-        clawdata.total_steps = 3000
+        clawdata.output_step_interval =  2000
+        clawdata.total_steps =  2000
         #clawdata.output_t0 = True  # output at initial (or restart) time?
         clawdata.output_t0 = False  # output at initial (or restart) time?
 

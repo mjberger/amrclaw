@@ -145,16 +145,23 @@ c      apply limiter if requested. Go over all neighbors, do BJ
         if (nolimiter) go to 20
 
        if (limitTile .eq. 1) then
-          call limitTileBJ2(qmerge,gradmx,gradmy,
+c         CELL based version
+c         call limitTileBJ2(qmerge,gradmx,gradmy,
+c    &                         xlow,ylow,dx,dy,
+c    &                         irr,nvar,mitot,mjtot,lstgrd,
+c    &                         i,j,k,mioff,mjoff,lwidth) 
+c         limit all of grid all at once
+          call limitTileGradientBJ(qmerge,gradmx,gradmy,
      &                         xlow,ylow,dx,dy,
-     &                         irr,nvar,mitot,mjtot,lstgrd,
-     &                         i,j,k,mioff,mjoff,lwidth) 
+     &                         mioff,mjoff, 
+     &                         irr,nvar,mitot,mjtot,lstgrd,lwidth)
 
-!--        else
-!--           call limitTileGradientLP(qmerge,gradmx,gradmy,
-!--     &                           xlow,ylow,dx,dy,irr,lwidth,
-!--     &                           nvar,mitot,mjtot,lstgrd,areaMin,mptr,
-!--     &                           lpChoice,nborList,nborCount)
+        else
+           call limitTileGradientLP(qmerge,gradmx,gradmy,
+     &                           xlow,ylow,dx,dy,irr,lwidth,
+     &                           nvar,mitot,mjtot,lstgrd,areaMin,mptr,
+     &                           lpChoice,mioff,mjoff,
+     &                           nborList,nborCount)
        endif
         
  20     continue
@@ -210,14 +217,14 @@ c     to the last real cell
 c            now contribute to neighboring cell
              koff = irr(i+ioff,j+joff)
              call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
-     &                           xlow,ylow,dx,dy,koff)
+     &                            xlow,ylow,dx,dy,koff)
              qm(:) = qMerge(:,i,j) + 
      .               (xcn-xcentMerge(k))*gradmx(:,i,j) +
      .               (ycn-ycentMerge(k))*gradmy(:,i,j)
-             pr = .4d0*(qm(4)- 0.5d0*(qm(2)**2+qm(3)**2)/qm(1))
-             if (qm(1) .le. 0.d0 .or. pr .le. 0.d0) then
-                qm(:) = qMerge(:,i,j) ! is this conservative
-             endif
+c            pr = .4d0*(qm(4)- 0.5d0*(qm(2)**2+qm(3)**2)/qm(1))
+c            if (qm(1) .le. 0.d0 .or. pr .le. 0.d0) then
+c               qm(:) = qMerge(:,i,j) ! is this conservative
+c            endif
              valnew(:,i+ioff,j+joff) = valnew(:,i+ioff,j+joff) +
      .                                 qm(:)/numHoods(i+ioff,j+joff)
 
@@ -421,7 +428,7 @@ c
         include "cuserdt.i"
         dimension irr(mitot,mjtot)
         dimension mioff(mitot,mjtot),mjoff(mitot,mjtot)
-        logical NOT_OK_GHOST, OKstencil, IS_OUTSIDE
+        logical NOT_OK_GHOST, OKstencil, IS_OUTSIDE, OUT_OF_RANGE
         logical debug/.false./
 
         IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
@@ -432,6 +439,8 @@ c
      .                       j .lt. 3 .or. 
      .                       j .gt. mjtot-2)
 
+        OUT_OF_RANGE(i,j) = (i .lt. 1 .or. i .gt. mitot .or.
+     .                       j .lt. 1 .or. j .gt. mjtot)
 
 
         ! to get same as previous behavior uncomment next line
@@ -462,6 +471,7 @@ c
              OKstencil = .true.
              do joff = -mjoff(i,j), mjoff(i,j)
              do ioff = -mioff(i,j), mioff(i,j)
+                if (OUT_OF_RANGE(i+ioff,j+joff)) cycle
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) cycle
                 if (koff .eq. lstgrd) then

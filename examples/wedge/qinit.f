@@ -32,7 +32,8 @@ c
 
        !sloc = 0.4d0 j! change to match original, which had bad indexing
        !sloc = 0.39d0
-       sloc = 0.486d0
+       ! sloc = 0.486d0
+       sloc = 1.d0/6.d0
 
        do 20 i=1,mx
        do 20 j=1,my

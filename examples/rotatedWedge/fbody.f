@@ -8,18 +8,26 @@ c
       implicit double precision (a-h,o-z)
       common /userdt/ cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
      .                ismp,gradThreshold
+      common /moredata/ sloc
 c
 c  negative inside the body (exterior to the domain), positive otherwise.
 c
 
-      fbody = 1.d0
-      return
+      sloc = 0.39d0
+      !bottom = .00001d0
+      bottom = .01001d0
 
-c     not quite working with cut cells due to lower left boundary
+c     no geometry - bottom of domain is (mostly) wall bndry condition
+c     fbody = 1.d0
+c     return
+
+c     next lines use cut cells at bottom
       fbody = 1.d0
-      if ((x .gt. xlower .and. y .lt. .00001d0) .or.
-     .    (x .lt. xlower .and. y .lt. (x-xlower)/sqrt(3.d0))) then
-	 fbody = -1.d0
+      if (x .gt. sloc .and. y .lt. bottom) then
+         fbody = -1.d0
+      endif
+      if (x .le. sloc .and. y .lt. -(x-sloc)/sqrt(3.d0)+bottom) then
+         fbody = -1.d0
       endif
 
       return

@@ -22,7 +22,6 @@ COMMON_SOURCES += \
   $(AMRLIB)/src1d.f90 \
   $(AMRLIB)/advanc.f \
   $(AMRLIB)/bound.f90 \
-  $(AMRLIB)/mymethod.f \
   $(AMRLIB)/checkPhys.f \
   $(AMRLIB)/cellsClose.f \
   $(AMRLIB)/SRD_helpers.f \
@@ -151,5 +150,6 @@ COMMON_SOURCES += \
   $(AMRLIB)/cholesky.f \
   $(AMRLIB)/solve.f \
   $(AMRLIB)/qmslopes.f \
+  $(AMRLIB)/limiterBJ.f \
 # $(AMRLIB)/resize_alloc_static.f90 \
 # $(AMRLIB)/fbody.f \

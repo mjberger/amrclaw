@@ -243,6 +243,7 @@ c
                q(m,i,j) = q(m,i,j) - dtn/ar(k)*resid(m)  ! second stage builds on first
             endif
          end do
+         if (irr(i,j) .eq. -1) cycle
  917     continue
 
 c       call checkPhys(q,irr,mitot,mjtot,mptr,istage,

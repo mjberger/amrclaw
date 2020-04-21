@@ -1,0 +1,2 @@
+sort -g bndry01.dat > sortedbndry
+xmgrace -block sortedbndry01.dat -bxy 1:4 -bxy 1:7 &

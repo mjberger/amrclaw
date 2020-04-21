@@ -43,6 +43,7 @@ c
 c cell (i,j) owns the fluxes to the left and bottom
 c
       msize = max(mitot,mjtot)
+      dtn = 0.d0
       if ( msize .lt. max(mitot,mjtot) ) then
           write(6,*) 'Not enough memory allocated for rowwise flux'
           write(6,*) 'Calculations. Allocated Size ',msize

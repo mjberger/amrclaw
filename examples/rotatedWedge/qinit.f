@@ -17,11 +17,14 @@ c
        dimension aux(maux,1-mbc:mx+mbc, 1-mbc:my+mbc)
        integer irr(1-mbc:mx+mbc, 1-mbc:my+mbc)
 
+       common /moredata/ sloc
+
 c
 c      mach 10 flow 30 degree ramp
 c
-       pi = 3.14159265358979
-       alpha = 30.d0 * pi/180.d0
+       pi = 3.14159265358979d0
+c      alpha = 30.d0 * pi/180.d0
+       alpha = pi/6.d0
 
        rhol = 8.d0
        ul   = cos(alpha)*8.25d0
@@ -32,9 +35,6 @@ c
        ur   = 0.d0
        vr   = 0.d0
        pr   = 1.0d0
-
-       !sloc = 0.4d0 j! change to match original, which had bad indexing
-       sloc = 0.39d0  ! this is at bottom of domain
 
 c      do 20 i=1,mx
 c      do 20 j=1,my

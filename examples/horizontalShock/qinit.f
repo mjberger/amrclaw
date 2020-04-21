@@ -30,7 +30,13 @@ c
        vr   = 0.d0
        pr   = 1.0d0
 
-       sloc = 0.45d0
+       sloc = 0.125d0
+
+       ! to match old code
+       !sloc = xlower + .1d0*(xupper-xlower)
+
+       ! for debugging make uniform constant flow
+       !sloc = -0.45d0
 
        do 20 i=1,mx
        do 20 j=1,my

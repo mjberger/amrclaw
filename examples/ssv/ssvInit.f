@@ -21,5 +21,10 @@ c
        v = -vel*dcos(theta)
        p = (1.d0/1.4d0)*rho**1.4d0
 
+       rho = xcen**2 + 1.d0
+       u = 0.d0
+       v= 0.d0
+       p = 1.d0
+
        return
        end

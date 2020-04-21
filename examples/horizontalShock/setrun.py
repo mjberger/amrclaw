@@ -38,13 +38,14 @@ def setrun(claw_pkg='amrclaw'):
     #------------------------------------------------------------------
 
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
-    probdata.add_param('mstage',    2, ' num RK stages')
-    probdata.add_param('ismp',    0,  ' stabilization method')
+    probdata.add_param('mstage',    1, ' num RK stages')
+    probdata.add_param('ismp',    1,  ' stabilization method')
     probdata.add_param('pwconst', True,' no slopes in plotting ')
-    probdata.add_param('max1d', 40,' max size each dir for grid patches')
+    probdata.add_param('max1d',140,' max size each dir for grid patches')
     probdata.add_param('nloops',    1,  '# closed loops or segments')
     probdata.add_param('xloop1',    0.0,  ' starting pt x')
     probdata.add_param('yloop1',    .00001, ' starting pt y')
+    #probdata.add_param('nloops',    0,  '# closed loops or segments')
     ## 1 = SRD
     ## 2 = DRD
 
@@ -74,8 +75,8 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.upper[1] = 1.000000000           # yupper
 
     # Number of grid cells:
-    clawdata.num_cells[0] = 310     # mx
-    clawdata.num_cells[1] = 310     # my
+    clawdata.num_cells[0] = 110    # mx
+    clawdata.num_cells[1] = 110    # my
 
     # ---------------
     # Size of system:
@@ -115,15 +116,15 @@ def setrun(claw_pkg='amrclaw'):
     # Specify at what times the results should be written to fort.q files.
     # Note that the time integration stops after the final output time.
 
-    clawdata.output_style = 3
+    clawdata.output_style = 1
 
     if clawdata.output_style==1:
         # Output ntimes frames at equally spaced times up to tfinal:
         # Can specify num_output_times = 0 for no output
-        clawdata.num_output_times = 2
-        clawdata.tfinal = 2.0
-        #clawdata.output_t0 = True  # output at initial (or restart) time?
-        clawdata.output_t0 = False  # output at initial (or restart) time?
+        clawdata.num_output_times =  1
+        clawdata.tfinal = 0.3
+        clawdata.output_t0 = True  # output at initial (or restart) time?
+        #clawdata.output_t0 = False  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
         # Specify a list or numpy array of output times:
@@ -132,11 +133,11 @@ def setrun(claw_pkg='amrclaw'):
 
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
-        clawdata.output_step_interval = 5
-        clawdata.total_steps = 15
+        clawdata.output_step_interval = 1
+        clawdata.total_steps = 4
         #clawdata.total_steps = 148
-        clawdata.output_t0 = True  # output at initial (or restart) time?
-        #clawdata.output_t0 = False  # output at initial (or restart) time?
+        #clawdata.output_t0 = True  # output at initial (or restart) time?
+        clawdata.output_t0 = False  # output at initial (or restart) time?
 
 
     clawdata.output_format = 'ascii'       # 'ascii', 'binary', 'netcdf'
@@ -173,9 +174,9 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.dt_max = 1.000000e+99
 
     # Desired Courant number if variable dt used
-    clawdata.cfl_desired = 0.500000
+    clawdata.cfl_desired = 0.8500000
     # max Courant number to allow without retaking step with a smaller dt:
-    clawdata.cfl_max = 0.500000
+    clawdata.cfl_max = 0.8500000
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 1000
@@ -226,7 +227,8 @@ def setrun(claw_pkg='amrclaw'):
     # --------------------
 
     # Number of ghost cells (usually 2)
-    clawdata.num_ghost = 6
+    #clawdata.num_ghost = 6
+    clawdata.num_ghost = 2
 
     # Choice of BCs at xlower and xupper:
     #   0 or 'user'     => user specified (must modify bcNamr.f to use this option)

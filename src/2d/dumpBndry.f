@@ -47,7 +47,7 @@ c     copy to local example directory for something better
       dist = sqrt((bxpt-xlower)**2+(bypt-ylower)**2)
 
       write(ibunit,100) dist,bxpt,bypt,rhob,ub,vb,pb,i,j,mptr
- 100  format(7e12.4,3i4)
+ 100  format(7e12.4,3i6)
  
       return
       end

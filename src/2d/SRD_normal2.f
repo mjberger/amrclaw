@@ -575,7 +575,7 @@ c
         include "cuserdt.i"
         dimension irr(mitot,mjtot)
         dimension mioff(mitot,mjtot),mjoff(mitot,mjtot)
-        logical NOT_OK_GHOST, OKstencil, IS_OUTSIDE
+        logical NOT_OK_GHOST, OKstencil, IS_OUTSIDE, OUT_OF_RANGE
         logical debug/.false./
 
         IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
@@ -586,6 +586,9 @@ c
      .                       j .lt. 3 .or. 
      .                       j .gt. mjtot-2)
 
+
+        OUT_OF_RANGE(i,j) =  (i .lt. 1 .or. i .gt. mitot .or.
+     .                        j .lt. 1 .or. j .gt. mjtot)
 
 
         ! to get same as previous behavior uncomment next line
@@ -616,6 +619,7 @@ c
              OKstencil = .true.
              do joff = -mjoff(i,j), mjoff(i,j)
              do ioff = -mioff(i,j), mioff(i,j)
+                if (OUT_OF_RANGE(i+ioff,j+joff)) cycle
                 koff = irr(i+ioff,j+joff)
                 if (koff .eq. -1) cycle
                 if (koff .eq. lstgrd) then

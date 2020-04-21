@@ -42,6 +42,7 @@ def setrun(claw_pkg='amrclaw'):
     probdata.add_param('ismp',    1,  ' stabilization method')
     ## 1 = SRD
     ## 2 = DRD
+    #probdata.add_param('pwconst', True,  ' no slopes in plotting ')
     probdata.add_param('pwconst', False,  ' no slopes in plotting ')
     probdata.add_param('max1d', 120,' max size each dir for grid patches')
     probdata.add_param('nloops',     2,  '# closed loops or segments')
@@ -51,8 +52,9 @@ def setrun(claw_pkg='amrclaw'):
     probdata.add_param('yloop2',    .91,  ' starting pt y')
     probdata.add_param('ghost_ccg',  False,  ' use ghost cells in cutcell/tile gradients')
     probdata.add_param('limitTile',  1, ' 1 = BJ, 2 = LP')
-    probdata.add_param('lpChoice',   2,  ' 1 = restrictive, 2 = relaxed, if LP limiter
-use
+    probdata.add_param('lpChoice',   2,  ' 1 = restrictive, 2 = relaxed, if LP limiter used')
+    probdata.add_param('nTerms',     5,  ' 2 = first order cell gradient, 5 = second order')
+    probdata.add_param('numMergeTerms', 5,' 2 = first order tile gradient, 5 = second order')
 
 
     #------------------------------------------------------------------
@@ -85,10 +87,10 @@ use
 
     # Number of grid cells:
     #clawdata.num_cells[0] = 44      # mx
-    clawdata.num_cells[0] = 43      # mx
-    clawdata.num_cells[1] = 44      # my
-    #clawdata.num_cells[0] = 12      # mx
-    #clawdata.num_cells[1] = 12      # my
+    #clawdata.num_cells[0] = 43      # mx
+    #clawdata.num_cells[1] = 44      # my
+    clawdata.num_cells[0] = 12      # mx
+    clawdata.num_cells[1] = 12      # my
 
     # ---------------
     # Size of system:
@@ -116,8 +118,9 @@ use
     # restart_file 'fort.chkNNNNN' specified below should be in
     # the OUTDIR indicated in Makefile.
 
+    #clawdata.restart = True                # True to restart from prior results
     clawdata.restart = False               # True to restart from prior results
-    clawdata.restart_file = 'fort.chk00006'  # File to use for restart data
+    clawdata.restart_file = 'fort.chk01500'  # File to use for restart data
 
 
     # -------------
@@ -183,9 +186,11 @@ use
     clawdata.dt_max = 1.000000e+99
 
     # Desired Courant number if variable dt used
-    clawdata.cfl_desired = 0.850000
+    clawdata.cfl_desired = 0.450000
+    clawdata.cfl_desired = 0.0000
     # max Courant number to allow without retaking step with a smaller dt:
-    clawdata.cfl_max = 0.850000
+    clawdata.cfl_max = 0.450000
+    clawdata.cfl_max = 0.0000
 
     # Maximum number of time steps to allow between output times:
     clawdata.steps_max = 1000
@@ -197,6 +202,7 @@ use
 
     # Order of accuracy:  1 => Godunov,  2 => Lax-Wendroff plus limiters
     clawdata.order = 2
+    #clawdata.order = 1
 
     # Use dimensional splitting? (not yet available for AMR)
     clawdata.dimensional_split = 'unsplit'
@@ -219,8 +225,8 @@ use
     #   2 or 'superbee' ==> superbee
     #   3 or 'vanleer'  ==> van Leer
     #   4 or 'mc'       ==> MC limiter
-    #clawdata.limiter = ['mc','mc','mc']
-    clawdata.limiter = [0,0,0]
+    clawdata.limiter = ['mc','mc','mc']
+    #clawdata.limiter = [0,0,0]
 
     clawdata.use_fwaves = False    # True ==> use f-wave version of algorithms
 
@@ -236,7 +242,7 @@ use
     # --------------------
 
     # Number of ghost cells (usually 2)
-    clawdata.num_ghost = 3  # needed for 2 stage RK + delta distrib
+    clawdata.num_ghost = 4  # needed for 2 stage RK + delta distrib
 
     # Choice of BCs at xlower and xupper:
     #   0 or 'user'     => user specified (must modify bcNamr.f to use this option)
@@ -267,7 +273,7 @@ use
     # Specify when checkpoint files should be created that can be
     # used to restart a computation.
 
-    clawdata.checkpt_style = 0
+    clawdata.checkpt_style = 1
 
     if clawdata.checkpt_style == 0:
         # Do not checkpoint at all

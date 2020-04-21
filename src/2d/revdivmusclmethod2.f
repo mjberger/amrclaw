@@ -902,8 +902,9 @@ c
 c      dimension u(mitot,mjtot),v(mitot,mjtot)
        logical ALL4REG, ALL5REG, all9reg
 
-       parameter (qm=.2d0)
-c       parameter (qm=.10d0)
+c      parameter (qm=.2d0)
+       parameter (qm=.30d0)
+c      parameter (qm=.250d0)
 
 c :::::::::::::::::::::: DIVCORN :::::::::::::::::::::::::::::::::::::;1438
 c  compute divergence to use in artificial viscosity in method

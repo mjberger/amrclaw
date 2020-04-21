@@ -15,7 +15,7 @@ CLAWMAKE = $(CLAW)/clawutil/src/Makefile.common
 CLAW_PKG = amrclaw                  # Clawpack package to use
 EXE = xamr                          # Executable to create
 SETRUN_FILE = setrun.py             # File containing function to make data
-OUTDIR = _output                    # Directory for output
+OUTDIR = _output
 SETPLOT_FILE = setplot.py           # File containing function to set plots
 PLOTDIR = _plots                    # Directory for plots
 
@@ -63,15 +63,18 @@ SOURCES = \
   bc2amr.f90 \
   bound.f90 \
   mymethod.f \
-  $(AMRLIB)/SRD_normalWithGhostQuadratic.f \
-  $(AMRLIB)/vrm_colella.f \
-  $(AMRLIB)/vrmc_colella.f \
+  $(AMRLIB)/SRD_normal2.f \
+  $(AMRLIB)/vrm_llf.f \
+  $(AMRLIB)/vrmc_llf.f \
   $(AMRLIB)/lp_qslopesPtQuad2.f \
   $(AMRLIB)/slopes.f \
   $(AMRLIB)/fixed_vector_lim_allineq.f \
   $(AMRLIB)/fixed2_Simplex_allineq.f \
   outtec.f \
   dumptec.f \
+
+#  $(AMRLIB)/SRD_normalWithGhostQuadratic.f \
+#  $(AMRLIB)/lp_qslopesPtQuad2.f \
 
 
 #-------------------------------------------------------------------

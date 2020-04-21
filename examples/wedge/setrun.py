@@ -38,13 +38,19 @@ def setrun(claw_pkg='amrclaw'):
     #------------------------------------------------------------------
 
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
-    probdata.add_param('mstage',  2,  ' number RK stages (<=2 for now')
+    # 1 stage means muscl scheme
+    probdata.add_param('mstage',  1,  ' number RK stages (<=2 for now')
     probdata.add_param('ismp',    1,  ' stabilization method')
     probdata.add_param('pwconst', False,  ' no slopes for plotting ')
-    probdata.add_param('max1d',  146,  ' max size each dir for grid patches ')
+    probdata.add_param('max1d', 3000,  ' max size each dir for grid patches ')
     probdata.add_param('nloops',    1,  '# closed loops or segments')
-    probdata.add_param('xloop1',    .50676,  ' starting pt x')
+    probdata.add_param('xloop1',    .1616666,  ' starting pt x')
     probdata.add_param('yloop1',    .00001, ' starting pt y')
+    probdata.add_param('ghost_ccg',  False,  ' use ghost cells in cutcell/tile gradients')
+    probdata.add_param('limitTile',  1, ' 1 = BJ, 2 = LP')
+    probdata.add_param('lpChoice',   2,  ' 1 = restrictive, 2 = relaxed, if LP limiter used')
+    probdata.add_param('nTerms',     2,  ' 2 = first order cell gradient, 5 = second order')
+    probdata.add_param('numMergeTerms', 2,' 2 = first order tile gradient, 5 = second order')
     ## 1 = SRD
     ## 2 = DRD
 
@@ -72,13 +78,22 @@ def setrun(claw_pkg='amrclaw'):
     clawdata.upper[0] = 3.000000e+00          # xupper
     clawdata.lower[1] = 0.000000e+00          # ylower
     #clawdata.upper[1] = 2.027027027           # yupper
-    clawdata.upper[1] = 2.327027027           # yupper
+    clawdata.upper[1] = 1.75                  # yupper
 
     # Number of grid cells:
-    #clawdata.num_cells[0] = 148     # mx
-    #clawdata.num_cells[1] = 100     # my
-    clawdata.num_cells[0] = 128*10    # mx
-    clawdata.num_cells[1] = 100*10    # my
+    #clawdata.num_cells[0] = 128*12    # mx
+    #clawdata.num_cells[1] = 100*12    # my
+    #clawdata.num_cells[0] = 128*16   # mx
+    #clawdata.num_cells[1] = 100*16   # my
+    clawdata.num_cells[0] = 720      # mx
+    clawdata.num_cells[1] = 420      # my
+    #clawdata.num_cells[0] = 1440      # mx# clawdata.num_cells[1] = 840      # my
+    #clawdata.num_cells[0] = 2880      # mx
+    #clawdata.num_cells[1] = 1680     # my
+    #clawdata.num_cells[0] = 768   # mx
+    #clawdata.num_cells[1] = 600   # my
+    #clawdata.num_cells[0] = 256   # mx
+    #clawdata.num_cells[1] = 200   # my
 
     # ---------------
     # Size of system:
@@ -108,7 +123,7 @@ def setrun(claw_pkg='amrclaw'):
 
     #clawdata.restart = True                # True to restart from prior results
     clawdata.restart = False               # True to restart from prior results
-    clawdata.restart_file = 'fort.chk01258'  # File to use for restart data
+    clawdata.restart_file = 'fort.chk07179'  # File to use for restart data
 
 
     # -------------
@@ -124,19 +139,19 @@ def setrun(claw_pkg='amrclaw'):
         # Output ntimes frames at equally spaced times up to tfinal:
         # Can specify num_output_times = 0 for no output
         clawdata.num_output_times = 1
-        clawdata.tfinal = .120
-        #clawdata.tfinal = .0463790
-        clawdata.output_t0 = True  # output at initial (or restart) time?
-        #clawdata.output_t0 = False  # output at initial (or restart) time?
+        clawdata.tfinal = .2
+        #clawdata.tfinal = .17789  
+        #clawdata.output_t0 = True  # output at initial (or restart) time?
+        clawdata.output_t0 = False  # output at initial (or restart) time?
 
     elif clawdata.output_style == 2:
         # Specify a list or numpy array of output times:
         # Include t0 if you want output at the initial time.
-        clawdata.output_times =  [0., 0.5, 1.0]
+        clawdata.output_times =  [.176907,.17789]
 
     elif clawdata.output_style == 3:
         # Output every step_interval timesteps over total_steps timesteps:
-        clawdata.output_step_interval = 50 
+        clawdata.output_step_interval = 1 
         clawdata.total_steps = 1
         #clawdata.output_t0 = True  # output at initial (or restart) time?
         clawdata.output_t0 = False  # output at initial (or restart) time?
@@ -229,7 +244,7 @@ def setrun(claw_pkg='amrclaw'):
     # --------------------
 
     # Number of ghost cells (usually 2)
-    clawdata.num_ghost = 6
+    clawdata.num_ghost = 4
 
     # Choice of BCs at xlower and xupper:
     #   0 or 'user'     => user specified (must modify bcNamr.f to use this option)
@@ -260,7 +275,7 @@ def setrun(claw_pkg='amrclaw'):
     # Specify when checkpoint files should be created that can be
     # used to restart a computation.
 
-    clawdata.checkpt_style = 1
+    clawdata.checkpt_style = 2
 
     if clawdata.checkpt_style == 0:
         # Do not checkpoint at all
@@ -277,7 +292,7 @@ def setrun(claw_pkg='amrclaw'):
     elif clawdata.checkpt_style == 3:
         # Checkpoint every checkpt_interval timesteps (on Level 1)
         # and at the final time.
-        clawdata.checkpt_interval = 95  
+        clawdata.checkpt_interval = 1  
 
     # ---------------
     # AMR parameters:

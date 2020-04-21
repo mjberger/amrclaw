@@ -103,6 +103,8 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
     real(kind=8) :: pl,ul,vl,rhol
     real(kind=8) :: xcen,ycen,sloc,sloc_top,rhot,ut,vt,pt
 
+    common /moredata/ sloc
+
     hxmarg = hx * .01d0
     hymarg = hy * .01d0
 
@@ -111,7 +113,6 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
     ul = 8.25d0*cos(30.d0*pi/180.d0)
     vl = -8.25d0*sin(30.d0*pi/180.d0)
     rhol = 8.d0
-    sloc = .39d0
 
     ! Use periodic boundary condition specialized code only, if only one 
     ! boundary is periodic we still proceed below
@@ -247,8 +248,8 @@ subroutine bc2amr(val,aux,nrow,ncol,meqn,naux, hx, hy, level, time,   &
                 do j = 1, nyb
                     do i = 1, nrow
                         val(:,i,j) = val(:, i, 2 * nyb + 1 - j)
-			xcen = xlo_patch  + (dfloat(i)-.5d0)* hx
-			if (xcen .gt. sloc) val(3,i,j) = -val(3,i,j)
+                        xcen = xlo_patch  + (dfloat(i)-.5d0)* hx
+                        if (xcen .gt. sloc) val(3,i,j) = -val(3,i,j)
                     end do
                 end do
 

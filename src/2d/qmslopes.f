@@ -122,10 +122,13 @@
                        icurr = i+ioff
                        jcurr = j+joff
                        kcurr = irr(icurr,jcurr)
-                    else  !nbor had its own nhood
+                    else if (ic .eq. 2) then  !nbor had its own nhood
                        kcurr = irr(i+ioff,j+joff)
                        icurr = i+ioff + svi(kcurr)
                        jcurr = j+joff + svj(kcurr)
+                       kcurr = irr(icurr,jcurr)
+                    else
+                       write(*,*)"shouldnt have ic = ",i3," in qmslopes"
                     endif
 
                     nhc = numHoods(icurr, jcurr) ! num hoods current
@@ -209,6 +212,9 @@
                qmy(mm,i,j)  =  rhs(2,mm)/dy
                qmx(mm,i,j)  =  rhs(1,mm)/dx
             end do
+c           write(*,*)i,j,qmx(1,i,j),0.d0,qmy(1,i,j),2.*y0
+c           write(*,900)i,j,qmx(1,i,j),qmy(1,i,j)
+ 900        format(2i4,4e15.7)
 
  820    continue ! iterate over merging tiles on entire grid
 

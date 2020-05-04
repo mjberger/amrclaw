@@ -481,13 +481,14 @@ c     2 cells to a side for a merging neighborhood
               endif
          endif
  
-        if (vqmerge > areaMin) then
+        if (vqmerge >= areaMin) then
            ncount(i,j) = 1  ! this subroutine wont work if need > 1
            maxnco = max(maxnco,nco)
            go to 10
         else   ! redo with larger neighborhood
-           write(*,909)i,j,ioff,joff
- 909       format("cell ",2i4," not large enough w/ nhbor",2i4)
+           write(*,909)i,j,ioff,joff,vqmerge,areaMin
+ 909       format("cell ",2i4," not large enough w/ nhbor",2i4,
+     .            " vqmerge ",e15.7," areamin r", e15.7)
            works = .false.
         endif
             

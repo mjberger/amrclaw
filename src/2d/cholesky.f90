@@ -28,8 +28,7 @@
       ! [1]
       G(:,:)=0.0d0
       do j = 1, n
-
-        G(j,j) = sqrt( A(j,j) - dot_product(G(j,1:j-1),G(j,1:j-1)) )
+        G(j,j) = sqrt( max(1.d-14, A(j,j) - dot_product(G(j,1:j-1),G(j,1:j-1))))
         do i = j+1, n
           G(i,j) = (A(i,j)-dot_product(G(i,1:j-1),G(j,1:j-1)) ) / G(j,j)
         end do

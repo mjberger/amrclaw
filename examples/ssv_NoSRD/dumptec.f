@@ -42,6 +42,18 @@ c
 
  10   level = lfine
 
+c     initialize for error computation
+      volDenErrorL1   = 0.d0
+      volExactDenL1   = 0.d0
+      volDenErrorMax  = 0.d0
+      exactVol        = 0.d0
+      bndryDenErrorL1 = 0.d0
+      bndryExactDenL1 = 0.d0
+      bndryCentExactDenL1 = 0.d0
+      bndryReconErrL1 = 0.d0
+      exactBndry      = 0.d0
+      aftDenErrorL1   = 0.d0
+
 c     fill ghost cells if need them for output or to compute gradients
       mptr = lstart(level)
  20       if (mptr .eq. 0) go to 50
@@ -74,8 +86,12 @@ c     fill ghost cells if need them for output or to compute gradients
               call outtec(alloc(locnew),nvar,mptr,
      1                    alloc(locirr),mitot,mjtot,
      2                    lstgrd,hx,hy,xlow,ylow,time,
-     3                    alloc(locncount),alloc(locnumHoods),
-     4                    ibunit)
+     3                    alloc(locncount),alloc(locnumHoods),ibunit,
+     4              volDenErrorL1,volExactDenL1,volDenErrorMax,
+     5              exactVol,bndryDenErrorL1,bndryExactDenL1,
+     6              bndryCentExactDenL1,bndryReconErrL1,
+     7              exactBndry,aftDenErrorL1)
+              write(*,*)" after aftDenError  = ",aftDenError
 c
               mptr = node(levelptr,mptr)
           go to 20
@@ -85,6 +101,31 @@ c
       close(14)
       close(24)
       write(*,*)"done writing ",filename," at time",time
+
+c output errors
+      write(outunit,600) volDenErrorL1,volExactDenL1,
+     .  volDenErrorL1/volExactDenL1,exactVol,volDenErrorMax
+ 600  format("L1 density volume error ", e15.7,/,
+     .       "L1 density exact soln   ", e15.7,/,
+     .       "L1 Relative density error",e15.7,/,
+     .       "Computed volume          ",e15.7,/,
+     .       "Max density error        ",e15.7,//)
+      write(outunit,601) bndryDenErrorL1, bndryCentExactDenL1,
+     .                   bndryDenErrorL1/bndryCentExactDenL1
+ 601  format("L1 Bndry Density Error   ",e15.7,/,
+     .       "L1 Bndry exact soln      ",e15.7,/,
+     .       "L1 relative density error",e15.7,//)
+      write(outunit,602) bndryReconErrL1, bndryExactDenL1,
+     .                   bndryReconErrL1/bndryExactDenL1
+ 602  format("L1 Recon2Bndry   Error   ",e15.7,/,
+     .       "L1 Bndry exact soln      ",e15.7,/,
+     .       "L1 reconstructed relative  error",e15.7,//)
+
+      write(outunit,603) exactBndry
+ 603  format("Length of Bndry segments ", e15.7,//)
+
+      write(outunit,604) aftDenErrorL1
+ 604  format("Aftosmis relative error  ",e15.7)
 c
  99   return
       end

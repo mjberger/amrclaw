@@ -3,7 +3,11 @@ c -------------------------------------------------------------
 c
       subroutine outtec(q,nvar,mptr,irr,mitot,mjtot,
      1                  lstgrd,dx,dy,xlow,ylow,time,
-     2                  ncount,numHoods,ibunit)
+     2                  ncount,numHoods,ibunit,
+     3                  volDenErrorL1,volExactDenL1,volDenErrorMax,
+     4                  exactVol,bndryDenErrorL1,bndryExactDenL1,
+     5                  bndryCentExactDenL1,bndryReconErrL1,
+     6                  exactBndry,aftDenErrorL1)
 c
       use amr_module
       implicit double precision (a-h,o-z)
@@ -27,6 +31,7 @@ c
 c
 c     first count to see if any non solid cells on grid
 c     tecplot doesnt like zeroes
+
       isAllSolid = checkIfAllSolid(irr,mitot,mjtot,nghost)
       call countCellType(irr,mitot,mjtot,nghost,numSolid,numCut,
      &                         numFull,lstgrd)
@@ -101,18 +106,6 @@ c
      .                   'Ycent,ncount,numHoods,i,j,k,volFrac,mptr',/,
      .          'Zone T="Cut",N =',i10,' E= ',i10,' F=FEPOINT')
 
-
-c     initialize for error computation
-      volDenErrorL1   = 0.d0
-      volExactDenL1   = 0.d0
-      volDenErrorMax  = 0.d0
-      exactVol        = 0.d0
-      bndryDenErrorL1 = 0.d0
-      bndryExactDenL1 = 0.d0
-      bndryCentExactDenL1 = 0.d0
-      bndryReconErrL1 = 0.d0
-      exactBndry      = 0.d0
-      aftDenErrorL1   = 0.d0
 
 
 c  only output real rows and cols, no ghost cells 
@@ -213,31 +206,6 @@ c
  104      format(4i10)
           ico = ico + 4
        end do
-
-c output errors
-      write(outunit,600) volDenErrorL1,volExactDenL1,
-     .  volDenErrorL1/volExactDenL1,exactVol,volDenErrorMax
- 600  format("L1 density volume error ", e15.7,/,
-     .       "L1 density exact soln   ", e15.7,/,
-     .       "L1 Relative density error",e15.7,/,
-     .       "Computed volume          ",e15.7,/,
-     .       "Max density error        ",e15.7,//)
-      write(outunit,601) bndryDenErrorL1, bndryCentExactDenL1,
-     .                   bndryDenErrorL1/bndryCentExactDenL1
- 601  format("L1 Bndry Density Error   ",e15.7,/,
-     .       "L1 Bndry exact soln      ",e15.7,/,
-     .       "L1 relative density error",e15.7,//)
-      write(outunit,602) bndryReconErrL1, bndryExactDenL1,
-     .                   bndryReconErrL1/bndryExactDenL1
- 602  format("L1 Recon2Bndry   Error   ",e15.7,/,
-     .       "L1 Bndry exact soln      ",e15.7,/,
-     .       "L1 reconstructed relative  error",e15.7,//)
-
-      write(outunit,603) exactBndry
- 603  format("Length of Bndry segments ", e15.7,//)
-
-      write(outunit,604) aftDenErrorL1
- 604  format("Aftosmis relative error  ",e15.7)
 
       return
       end

@@ -42,9 +42,16 @@
 
       dimension mioff(mitot,mjtot), mjoff(mitot,mjtot)
 
-       logical IS_GHOST
+       logical IS_GHOST, IS_OUTSIDE, NOT_OK_GHOST
+
        IS_GHOST(i,j) = (i .le. lwidth .or. i .gt. mitot-lwidth .or.
      .                  j .le. lwidth .or. j .gt. mjtot-lwidth)
+
+       NOT_OK_GHOST(i,j) = (i .lt. 3 .or. i .gt. mitot-2 .or.
+     .                      j .lt. 3 .or. j .gt. mjtot-2)
+
+       IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
+     .                    y .lt. ylower .or. y .gt. yupper)
 
       ! QUADRATURE RULE ON TRIANGLES
       ! This quadrature rule integrates quadratics exactly
@@ -66,11 +73,20 @@
       qmx = 0.d0
       qmy = 0.d0
 
+      jst = max(2,lwidth/2)
+      jend = min(mjtot-1,mjtot-lwidth/2)
+      ist = max(2,lwidth/2)
+      iend = min(mitot-1,mitot-lwidth/2)
+      ! this only works if the first "real" cells only needs info
+      ! from 1 away. Otherwise need to copy more or make larger num ghost cell
 
-        do 820 j = lwidth+1, mjtot-lwidth
-        do 820 i = lwidth+1, mitot-lwidth
+        do 820 j = jst+1, jend-1
+        do 820 i = ist+1, iend-1
              k = irr(i,j)
              if (k .eq. -1 .or. k .eq. lstgrd) cycle
+             if (ar(k) .gt. areaMin) cycle
+             call getCellCentroid(lstgrd,i,j,xc,yc,xlow,ylow,dx,dy,k)
+             if (IS_OUTSIDE(xc,yc) .or. NOT_OK_GHOST(i,j)) cycle
 
              rhs = 0.d0 ! initialize for accumulation
              a = 0.d0
@@ -80,9 +96,14 @@
 
             do 834 joff = -mjoff(i,j), mjoff(i,j)
             do 834 ioff = -mioff(i,j), mioff(i,j)
-                 if (IS_GHOST(i+ioff,j+joff)) go to 834
+                 !if (IS_GHOST(i+ioff,j+joff)) go to 834
+                 if (ioff .eq. 0 .and. joff .eq. 0) go to 834
+                 if (NOT_OK_GHOST(i+ioff,j+joff)) go to 834
                  koff = irr(i+ioff,j+joff)
                  if (koff .eq. -1) goto 834
+                 call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
+     &                                xlow,ylow,dx,dy,koff)
+                 if (IS_OUTSIDE(xcn,ycn)) go to 834
 
                  if(koff .eq. lstgrd) then
                      xcoff = xlow + (i+ioff-0.5d0)*dx

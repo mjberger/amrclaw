@@ -77,7 +77,9 @@ c output the grid
       mjtot   = node(ndjhi,mptr) - node(ndjlo,mptr) + 1 + 2*nghost
       loc     = node(store1,mptr)
       locaux  = node(storeaux,mptr)
+      locirr = node(permstore,mptr)
+      lstgrd = node(lstptr,mptr)
       call outval(alloc(loc),nvar,mitot,mjtot,mptr,outgrd,
-     1            naux,alloc(locaux))
+     1            naux,alloc(locaux),alloc(locirr),lstgrd)
  99   return
       end

@@ -1,7 +1,8 @@
 c
 !> print solution and aux. variables to output. 
 c =======================================================================
-      subroutine outval(val,nvar,mitot,mjtot,mptr,outgrd,naux,aux)
+      subroutine outval(val,nvar,mitot,mjtot,mptr,outgrd,naux,aux,
+     &                  irr,lstgrd)
 c =======================================================================
 c
       use amr_module
@@ -10,6 +11,7 @@ c
       dimension  val(nvar,mitot,mjtot)
       dimension  primval(nvar,mitot,mjtot)
       dimension  aux(naux,mitot,mjtot)
+      integer    irr(mitot,mjtot)
       logical    outgrd
 
 
@@ -35,13 +37,20 @@ c
       write(outunit,*)
       do 25 j=nghost+1,mjtot-nghost
 
+          if (irr(i,j) .eq. -1) cycle
           x  = cornx + hx*(dble(i)-.5d0)
           y  = corny + hy*(dble(j)-.5d0)
+          if (irr(i,j) .eq. lstgrd) then
           write(outunit,107) x,y,i,j,(primval(ivar,i,j),ivar=1,nvar)
- 107      format(2hx=,f7.3,3h y=,f7.3,4h, i=,i4,4h, j=,i4,' a=',
+ 107      format(1x,2hx=,f7.3,3h y=,f7.3,4h, i=,i4,4h, j=,i4,' a=',
      *           4(e10.4,1x))
-          if (naux.gt.0) write(outunit,108) (aux(iaux,i,j),iaux=1,naux)
- 108      format(1x,'aux = ',7(e10.3,1x))
+          else
+             write(outunit,108) x,y,i,j,(primval(ivar,i,j),ivar=1,nvar)
+ 108         format('*',2hx=,f7.3,3h y=,f7.3,4h, i=,i4,4h, j=,i4,' a=',
+     *              4(e10.4,1x))
+          endif
+          if (naux.gt.0) write(outunit,109) (aux(iaux,i,j),iaux=1,naux)
+ 109      format(1x,'aux = ',7(e10.3,1x))
 
  25   continue
  20   continue

@@ -147,7 +147,7 @@ COMMON_SOURCES += \
   $(AMRLIB)/fs.f \
   $(AMRLIB)/zero2.f \
   $(AMRLIB)/merge_shifts.f \
-  $(AMRLIB)/cholesky.f \
+  $(AMRLIB)/cholesky.f90 \
   $(AMRLIB)/solve.f \
   $(AMRLIB)/qmslopes.f \
   $(AMRLIB)/limiterBJ.f \

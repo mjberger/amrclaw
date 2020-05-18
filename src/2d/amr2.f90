@@ -640,8 +640,8 @@ program amr2
 
     call outtre (mstart,printout,nvar,naux)
     ! turn on for debugging, after initial time
-    !printout = .true.
-    printout = .false.
+    printout = .true.
+    !printout = .false.
 
     nplot = 0
     if (output_t0) then

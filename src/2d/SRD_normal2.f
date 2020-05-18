@@ -93,8 +93,8 @@ c THIS IS A TEST THAT ONLY USES INTERIOR VALS
 c NOT GOOD FOR MLTIPLE GRIDS TESTING FOR STABILITY
 
 c       form qMerge vals 
-        do 10 j = lwidth+1, mjtot-lwidth
-        do 10 i = lwidth+1, mitot-lwidth
+        do 10 j = lwidth/2, mjtot-lwidth/2
+        do 10 i = lwidth/2, mitot-lwidth/2
             k = irr(i,j)
             if (k .eq. -1) go to 10 ! no solid cells
             call getCellCentroid(lstgrd,i,j,xc,yc,xlow,ylow,dx,dy,k)
@@ -146,15 +146,17 @@ c    &                           xlow,ylow,dx,dy,koff)
         jend = min(mjtot-1,mjtot-lwidth/2)
         ist  = max(2,lwidth/2)
         iend = min(mitot-1,mitot-lwidth/2)
-        do 20 j = jst, jend
-        do 20 i = ist, iend
+        !! this only works if the first "real" cell only needs
+        !! info from 1 away. Otherwise need to copy more or make larger num ghost cells
+        do 20 j = jst+1, jend-1
+        do 20 i = ist+1, iend-1
             k = irr(i,j)
             if (k .eq. -1) go to 20 ! solid cells have no gradient
             if (k .eq. lstgrd) go to 20 ! wont need gradient for full cells
             if (ar(k) .gt. areaMin) go to 20 ! wont need gradient
             call getCellCentroid(lstgrd,i,j,xc,yc,
      &                           xlow,ylow,dx,dy,k)
-            if (IS_OUTSIDE(xc,yc)) go to 20  ! exterior cells dont need valnew
+            if (IS_OUTSIDE(xc,yc) .or. NOT_OK_GHOST(i,j)) go to 20  ! exterior cells dont need valnew
 
             !!!nco = 1 ! this means use 3 by 3 nhood to compute gradients of merging tiles
             !!nco = 2 ! this means use 5 by 5 nhood to compute gradients of merging tiles
@@ -329,8 +331,8 @@ c     need to look at some ghost cells because they may distribute
 c     to the last real cell
       !do 50 j = lwidth-1, mjtot-lwidth+2
       !do 50 i = lwidth-1, mitot-lwidth+2
-      do 50 j = lwidth, mjtot-lwidth
-      do 50 i = lwidth, mitot-lwidth
+      do 50 j = lwidth, mjtot-lwidth+1
+      do 50 i = lwidth, mitot-lwidth+1
           k = irr(i,j)
           if (k .eq. -1) then
              ! set valnew to 'robust' fake state
@@ -502,10 +504,10 @@ c
 
 !   initialize array with  most common case, overwritten below as needed
 
-      !do 20 j = lwidth/2, mjtot-lwidth/2
-      !do 20 i = lwidth/2, mitot-lwidth/2
-      do 20 j = lwidth+1, mjtot-lwidth
-      do 20 i = lwidth+1, mitot-lwidth
+      do 20 j = lwidth/2, mjtot-lwidth/2
+      do 20 i = lwidth/2, mitot-lwidth/2
+      !do 20 j = lwidth+1, mjtot-lwidth
+      !do 20 i = lwidth+1, mitot-lwidth
          k = irr(i,j)  
          if (k .eq. lstgrd) go to 20 ! flow cell is its own merged nhood
          if (k .eq. -1) go to 20 ! solid cell is its own merged nhood
@@ -607,8 +609,10 @@ c
         mioff = initVal
         mjoff = initVal
 
-        do j = lwidth+1, mjtot-lwidth
-        do i = lwidth+1, mitot-lwidth
+        !do j = lwidth+1, mjtot-lwidth
+        !do i = lwidth+1, mitot-lwidth
+        do j = lwidth, mjtot-lwidth+1
+        do i = lwidth, mitot-lwidth+1
            k = irr(i,j)
            if (k .eq. -1 .or. k .eq. lstgrd) cycle !default mi/mjoff works
 

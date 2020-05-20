@@ -31,6 +31,11 @@
       dimension rtri(3), stri(3), wtri(3)
       dimension rquad(4), squad(4), wquad(4)
 
+      logical IS_OUTSIDE
+
+      IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
+     .                   y .lt. ylower .or. y .gt. yupper)
+
 
       ! QUADRATURE RULE ON TRIANGLES
       ! This quadrature rule integrates quadratics exactly
@@ -50,12 +55,16 @@
 
 
       ! recompute the shifts
-      do 719 j = lwidth+1, mjtot-lwidth ! iterate over each cell in the grid
-      do 719 i = lwidth+1, mitot-lwidth ! iterate over each cell in the grid
+      !do 719 j = lwidth-1, mjtot-lwidth+2 ! iterate over each cell in the grid
+      !do 719 i = lwidth-1, mitot-lwidth+2 ! iterate over each cell in the grid
+      do 719 j = lwidth, mjtot-lwidth+1 ! iterate over each cell in the grid
+      do 719 i = lwidth, mitot-lwidth+1 ! iterate over each cell in the grid
        kirr = irr(i,j)
 
 
        if (kirr .eq. -1 .or. kirr .eq. lstgrd) cycle ! skip solid and whole cells
+       call getCellCentroid(lstgrd,i,j,xc,yc,xlow,ylow,dx,dy,kirr)
+       if (IS_OUTSIDE(xc,yc)) cycle
 
           shiftmxx = 0.d0
           shiftmxy = 0.d0

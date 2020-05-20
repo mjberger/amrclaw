@@ -259,17 +259,17 @@ c     call symcheck(q,irr,mitot,mjtot,nvar,lwidth)
 c  postprocess for stability of cut cells. c
 c  do it in conserved variables for conservation purposes, (but maybe prim better?)
 c
-         if (numCut .gt. 0)  then
-            if (ismp .eq. 1) then
-              call srd_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,
-     .                           dx,dy,lwidth,xlow,ylow,istage,
-     .                           ncount,numHoods,mptr,ffluxlen,gfluxlen)
+c        if (numCut .gt. 0)  then
+c           if (ismp .eq. 1) then
+c             call srd_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,
+c    .                           dx,dy,lwidth,xlow,ylow,istage,
+c    .                           ncount,numHoods,mptr,ffluxlen,gfluxlen)
 c           else if (ismp .eq. 2) then
 c              call drd_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,
 c    .                            dx,dy,lwidth,xlow,ylow,istage,
 c    .                            ncount,numHoods,mptr)
-            endif
-         endif
+c           endif
+c        endif
 
          if (istage .eq. 2) then  
             q = 0.5d0*(q + qold)
@@ -321,7 +321,7 @@ c     # output fluxes for debugging purposes:
 
 c
 c     estimate new time step for next round. even if not used will give cfl 
-      if (vtime .and. istage .eq. mstage) then
+cc    if (vtime .and. istage .eq. mstage) then
 c        speedmax = 0.d0
 c        do 140 j = lwidth+1, mjtot-lwidth
 c        do 140 i = lwidth+1, mitot-lwidth
@@ -345,9 +345,9 @@ c           endif
 c140     continue
 c        effh = dx*dy/(2.d0*dx+2.d0*dy)
 c        dtnewn = cflcart* effh / speedmax
-          call estdt(q,irr,mitot,mjtot,nvar,dx,dy,dtnewn,lwidth,
-     &               aux,naux,cfl)
-      endif
+cc        call estdt(q,irr,mitot,mjtot,nvar,dx,dy,dtnewn,lwidth,
+cc   &               aux,naux,cfl)
+cc    endif
 
 c     symmetry check across y = 2 for debugging
 c     write(*,*)"calling symcheck after srd  stage ",istage

@@ -45,6 +45,10 @@ c get start time for more detailed timing by level
 c  mjb adapted june 8, 2019 for multistage RK methods.
 c  loop over all grids, each stage, and copy ghost cells
 c  to avoid needing so many
+c
+c  mjb adapted May 18, 2020 to do SRD call after all grdis updated and new
+c ghost cell values copied in
+
       do istage = 1, mstage
 
       hx   = hxposs(level)
@@ -66,22 +70,17 @@ c We want to do this regardless of the threading type
 !$OMP&                   node,rnode,numgrids,listgrids,istage),
 !$OMP&            SCHEDULE (dynamic,1)
 !$OMP&            DEFAULT(none)
+      levSt = listStart(level)
       do j = 1, numgrids(level)
-         !mptr   = listgrids(j)
-         levSt = listStart(level)
          mptr   = listOfGrids(levSt+j-1)
-         !write(*,*)"old ",listgrids(j)," new",mptr
-         nx     = node(ndihi,mptr) - node(ndilo,mptr) + 1
-         ny     = node(ndjhi,mptr) - node(ndjlo,mptr) + 1
-         mitot  = nx + 2*nghost
-         mjtot  = ny + 2*nghost
+         mitot  = node(ndihi,mptr) - node(ndilo,mptr) + 1 + 2*nghost
+         mjtot  =  node(ndjhi,mptr) - node(ndjlo,mptr) + 1 + 2*nghost
          locnew = node(store1,mptr)
          locaux = node(storeaux,mptr)
          time   = rnode(timemult,mptr)
 c     
           call bound(time,nvar,nghost,alloc(locnew),mitot,mjtot,mptr,
      1               alloc(locaux),naux)
-
        end do
 !$OMP END PARALLEL DO
       call system_clock(clock_finishBound,clock_rate)
@@ -89,13 +88,6 @@ c
       timeBound = timeBound + clock_finishBound - clock_startBound
       timeBoundCPU=timeBoundCPU+cpu_finishBound-cpu_startBound
       
-c
-c save coarse level values if there is a finer level for wave fixup
-      if (level+1 .le. mxnest) then
-         if (lstart(level+1) .ne. null) then
-            call saveqc(level+1,nvar,naux)
-         endif
-      endif
 c
       dtlevnew = rinfinity
 c     cfl_level = 0.d0    !# to keep track of max cfl seen on each level
@@ -114,38 +106,96 @@ c
 !$OMP&            SHARED(listOfGrids,listStart,levSt,vtime,delt)
 !$OMP&            SCHEDULE (DYNAMIC,1)
 !$OMP&            DEFAULT(none)
+      levSt = listStart(level)
       do j = 1, numgrids(level)
-         !mptr   = listgrids(j)
-         levSt = listStart(level)
          mptr = listOfGrids(levSt+j-1)
-         nx     = node(ndihi,mptr) - node(ndilo,mptr) + 1
-         ny     = node(ndjhi,mptr) - node(ndjlo,mptr) + 1
-         mitot  = nx + 2*nghost
-         mjtot  = ny + 2*nghost
+         mitot  = node(ndihi,mptr) - node(ndilo,mptr) + 1 + 2*nghost
+         mjtot  = node(ndjhi,mptr) - node(ndjlo,mptr) + 1 + 2*nghost
 c
          call par_advanc(mptr,mitot,mjtot,nvar,naux,dtnew,vtime,
      &                   istage,mstage)
 
-
-c        update for one stage so that bc's set properly
-c        for second stage, but then will take it off
-c        when average them
+c        update for oneeach stage so that bc's set properly
+c        for next  stage. will take it off when later
 c
          rnode(timemult,mptr) = rnode(timemult,mptr)+delt
-         if (istage .eq. mstage) then
-!$OMP CRITICAL (newdt)
-          dtlevnew = dmin1(dtlevnew,dtnew)
-!$OMP END CRITICAL (newdt)    
-         endif
-
-         if (istage .eq. 2) then  ! fix for more than 2 stage RK  
-            ! grid has been updated in time for each stage. subtract one for 2 stage method
-            rnode(timemult,mptr)  = rnode(timemult,mptr)-delt
-         endif
-
       end do
 !$OMP END PARALLEL DO
 c
+c     next set of boundary conditions
+      call system_clock(clock_startBound,clock_rate)
+      call cpu_time(cpu_startBound)
+c redo ghost cells (one level only, no refinement) before SRD
+c
+!$OMP PARALLEL DO PRIVATE(j,locnew, locaux, mptr,nx,ny,mitot,
+!$OMP&                    mjtot,time,levSt),
+!$OMP&            SHARED(level, nvar, naux, alloc, intrat, delt,
+!$OMP&                   listOfGrids,listStart,nghost,
+!$OMP&                   node,rnode,numgrids,listgrids,istage),
+!$OMP&            SCHEDULE (dynamic,1)
+!$OMP&            DEFAULT(none)
+      levSt = listStart(level)
+      do j = 1, numgrids(level)
+         mptr   = listOfGrids(levSt+j-1)
+         mitot  = node(ndihi,mptr) - node(ndilo,mptr) + 1 + 2*nghost
+         mjtot  = node(ndjhi,mptr) - node(ndjlo,mptr) + 1 + 2*nghost
+         locnew = node(store1,mptr)
+         locaux = node(storeaux,mptr)
+         time   = rnode(timemult,mptr)
+c     
+          call bound(time,nvar,nghost,alloc(locnew),mitot,mjtot,mptr,
+     1               alloc(locaux),naux)
+
+       end do
+!$OMP END PARALLEL DO
+
+      call system_clock(clock_finishBound,clock_rate)
+      call cpu_time(cpu_finishBound)
+      timeBound = timeBound + clock_finishBound - clock_startBound
+      timeBoundCPU=timeBoundCPU+cpu_finishBound-cpu_startBound
+
+!$OMP PARALLEL DO PRIVATE(j,locnew, locaux, mptr,nx,ny,mitot,
+!$OMP&                    mjtot,time,levSt),
+!$OMP&            SHARED(level, nvar, naux, alloc, intrat, delt,
+!$OMP&                   listOfGrids,listStart,nghost,
+!$OMP&                   node,rnode,numgrids,listgrids,istage),
+!$OMP&            SCHEDULE (dynamic,1)
+!$OMP&            DEFAULT(none)
+      levSt = listStart(level)
+      do j = 1, numgrids(level)
+         mptr   = listOfGrids(levSt+j-1)
+         mitot  = node(ndihi,mptr) - node(ndilo,mptr) + 1 + 2*nghost
+         mjtot  = node(ndjhi,mptr) - node(ndjlo,mptr) + 1 + 2*nghost
+         locnew = node(store1,mptr)
+         locaux = node(storeaux,mptr)
+         time   = rnode(timemult,mptr)
+         locirr = node(permstore,mptr)
+         locncount = locirr + mitot*mjtot
+         locnumHoods = locncount + mitot*mjtot
+         lstgrd = node(lstptr,mptr)
+         xlow = rnode(cornxlo,mptr) - nghost*hx
+         ylow = rnode(cornylo,mptr) - nghost*hy
+         call srd_cellMerge(alloc(locnew),nvar,alloc(locirr),mitot,
+     &                     mjtot,lstgrd,hx,hy,nghost,xlow,ylow,istage,
+     &                     alloc(locncount),alloc(locnumHoods),mptr)
+         if (istage .eq. mstage) then ! set new time step
+            call estdt(alloc(locnew),alloc(locirr),mitot,mjtot,nvar,
+     &                 hx,hy,dtnew,nghost,aux,naux,cfl)
+!$OMP CRITICAL (newdt)
+          dtlevnew = dmin1(dtlevnew,dtnew)
+!$OMP END CRITICAL (newdt)    
+            ! grid has been updated in time for each stage. subtract off so
+            ! only one update. Done this way to be able to tell that grids
+            ! updated in case of refinement, or
+            rnode(timemult,mptr)  = rnode(timemult,mptr)-(mstage-1)*delt
+         endif
+      end do
+!$OMP END PARALLEL DO
+
+      end do  ! end loop over each stage
+
+c   --------- done with everything at this level --------------
+c     final clock updates
       call system_clock(clock_finish,clock_rate)
       call cpu_time(cpu_finish)
       ! both stages count towards number of cell updates
@@ -154,7 +204,6 @@ c
       timeStepgrid = timeStepgrid +clock_finish-clock_startStepgrid
       timeStepgridCPU=timeStepgridCPU+cpu_finish-cpu_startStepgrid      
 c
-      end do  ! end loop over each stage
 
       return
       end

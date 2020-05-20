@@ -1,18 +1,16 @@
 c
 c ---------------------------------------------------------------------
 c
-       subroutine SRD_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,
+       subroutine SRD_cellMerge(q,nvar,irr,mitot,mjtot,lstgrd,
      .                      dx,dy,lwidth,xlow,ylow,istage,
-     .                      ncount,numHoods,mptr,ffluxlen,gfluxlen)
+     .                      ncount,numHoods,mptr)
 
        use amr_module
        implicit double precision (a-h, o-z)
 
        include "cuserdt.i"
        dimension q(nvar,mitot,mjtot),  irr(mitot,mjtot)
-       dimension qx(nvar,mitot,mjtot), qy(nvar,mitot,mjtot)
        dimension gradmx(nvar,mitot,mjtot), gradmy(nvar,mitot,mjtot)
-       dimension ffluxlen(mitot+1,mjtot+1),gfluxlen(mitot+1,mjtot+1)
 
        dimension valnew(nvar,mitot,mjtot)
        dimension qMerge(nvar,mitot,mjtot), numHoods(mitot,mjtot)
@@ -24,6 +22,7 @@ c
        character c2
 
        logical IS_OUTSIDE, NOT_OK_GHOST
+       logical OUT_OF_RANGE
        logical quad, nolimiter,verbose
        common /order2/ ssw, quad, nolimiter
        integer omp_get_max_threads
@@ -49,6 +48,9 @@ c never use cells from exterior to the domain for SRD
      .                     i .gt. mitot-2 .or.
      .                     j .lt. 3 .or. 
      .                     j .gt. mjtot-2)
+
+      OUT_OF_RANGE(i,j) = (i .lt. 1 .or. i .gt. mitot .or.
+     &                     j .lt. 1 .or. j .gt. mjtot)
 
 c :::::::::::::;:::
 c
@@ -81,19 +83,19 @@ c     first make neighborhoods - need count for each cells, and width (nhood abo
 c     nCount is size of neighborhood, numHoods is number of merged nhoods each cells is in
       call makeNHood(ncount,irr,numHoods,
      .               mitot,mjtot,lwidth,lstgrd,xlow,ylow,dx,dy,istage,
-     .               mptr,ffluxlen,gfluxlen,areaMin)
+     .               mptr,areaMin)
 
       call merge_shifts(irr,mitot,mjtot,lwidth,dx,dy,xlow,ylow,lstgrd,
      .                  numHoods,ncount)
 
 
 c       form qMerge vals 
-        do 10 j = lwidth+1, mjtot-lwidth
-        do 10 i = lwidth+1, mitot-lwidth
+        do 10 j = lwidth/2, mjtot-lwidth/2
+        do 10 i = lwidth/2, mitot-lwidth/2
             k = irr(i,j)
             if (k .eq. -1) go to 10 ! no solid cells
             call getCellCentroid(lstgrd,i,j,xc,yc,xlow,ylow,dx,dy,k)
-            if (IS_OUTSIDE(xc,yc) .or. NOT_OK_GHOST(i,j)) then 
+            if (IS_OUTSIDE(xc,yc) .or. OUT_OF_RANGE(i,j)) then 
               qMerge(:,i,j) = rinfinity ! to make sure we dont use it
               go to 10 
             endif
@@ -138,7 +140,7 @@ c    &                           xlow,ylow,dx,dy,koff)
      &                      mioff,mjoff)
 
         call qmslopes(irr,mitot,mjtot,lwidth,dx,dy,xlow,ylow,lstgrd,
-     &                numHoods,ncount,
+     &                numHoods,ncount,areaMin,
      &                mioff,mjoff,qMerge,nvar,gradmx,gradmy)
 c
 c      apply limiter if requested. Go over all neighbors, do BJ
@@ -180,10 +182,10 @@ c     dont bother looking at ghost cells further away
 c     these ghost cells will be set next stage.
 c     need to look at some ghost cells because they may distribute
 c     to the last real cell
-      !do 50 j = lwidth-1, mjtot-lwidth+2
-      !do 50 i = lwidth-1, mitot-lwidth+2
-      do 50 j = lwidth, mjtot-lwidth
-      do 50 i = lwidth, mitot-lwidth
+      do 50 j = lwidth-1, mjtot-lwidth+2
+      do 50 i = lwidth-1, mitot-lwidth+2
+      !do 50 j = lwidth, mjtot-lwidth
+      !do 50 i = lwidth, mitot-lwidth
           k = irr(i,j)
           if (k .eq. -1) then
              ! set valnew to 'robust' fake state
@@ -196,7 +198,7 @@ c     to the last real cell
           endif
           call getCellCentroid(lstgrd,i,j,xc,yc,
      &                         xlow,ylow,dx,dy,k)
-          if (IS_OUTSIDE(xc,yc) .or. NOT_OK_GHOST(i,j)) then
+          if (IS_OUTSIDE(xc,yc) .or. OUT_OF_RANGE(i,j)) then
              valnew(:,i,j) = qMerge(:,i,j)  ! copy what came in  
              go to 50 
           endif
@@ -217,7 +219,7 @@ c     to the last real cell
 c            now contribute to neighboring cell
              koff = irr(i+ioff,j+joff)
              call getCellCentroid(lstgrd,i+ioff,j+joff,xcn,ycn,
-     &                            xlow,ylow,dx,dy,koff)
+     &                           xlow,ylow,dx,dy,koff)
              qm(:) = qMerge(:,i,j) + 
      .               (xcn-xcentMerge(k))*gradmx(:,i,j) +
      .               (ycn-ycentMerge(k))*gradmy(:,i,j)
@@ -253,13 +255,12 @@ c
       subroutine makeNHood(ncount,irr,
      .                     numHoods,mitot,mjtot,lwidth,lstgrd,xlow,ylow,
      .                     dx,dy,istage,mptr,
-     .                     ffluxlen,gfluxlen,areaMin)
+     .                     areaMin)
 
       use amr_module
       implicit double precision (a-h, o-z)
 
       dimension numHoods(mitot,mjtot)
-      dimension ffluxlen(mitot+1,mjtot+1),gfluxlen(mitot+1,mjtot+1)
       dimension ncount(mitot,mjtot), irr(mitot,mjtot)
       logical  IS_OUTSIDE, firstTimeThru
       logical debug/.false./
@@ -316,7 +317,7 @@ c     2 cells to a side for a merging neighborhood
 
          ! set ioff,joff to neighbor cell in most normal direction
          ! to cut cell boundary
-         call getAdjCell(i,j,k,ioff,joff,ffluxlen,gfluxlen,
+         call getAdjCell(i,j,k,ioff,joff,
      &                   mitot,mjtot,dx,dy)
                   
          koff = irr(i+ioff,j+joff)
@@ -334,13 +335,14 @@ c     2 cells to a side for a merging neighborhood
               endif
          endif
  
-        if (vqmerge > areaMin) then
+        if (vqmerge >= areaMin) then
            ncount(i,j) = 1  ! this subroutine wont work if need > 1
            maxnco = max(maxnco,nco)
            go to 10
         else   ! redo with larger neighborhood
-           write(*,909)i,j,ioff,joff
- 909       format("cell ",2i4," not large enough w/ nhbor",2i4)
+           write(*,909)i,j,ioff,joff,vqmerge,areaMin
+ 909       format("cell ",2i4," not large enough w/ nhbor",2i4,
+     .            " vqmerge ",e15.7," areamin r", e15.7)
            works = .false.
         endif
             
@@ -354,10 +356,10 @@ c
 
 !   initialize array with  most common case, overwritten below as needed
 
-      !do 20 j = lwidth/2, mjtot-lwidth/2
-      !do 20 i = lwidth/2, mitot-lwidth/2
-      do 20 j = lwidth+1, mjtot-lwidth
-      do 20 i = lwidth+1, mitot-lwidth
+      do 20 j = lwidth/2, mjtot-lwidth/2
+      do 20 i = lwidth/2, mitot-lwidth/2
+      !do 20 j = lwidth+1, mjtot-lwidth
+      !do 20 i = lwidth+1, mitot-lwidth
          k = irr(i,j)  
          if (k .eq. lstgrd) go to 20 ! flow cell is its own merged nhood
          if (k .eq. -1) go to 20 ! solid cell is its own merged nhood
@@ -439,8 +441,9 @@ c
      .                       j .lt. 3 .or. 
      .                       j .gt. mjtot-2)
 
-        OUT_OF_RANGE(i,j) = (i .lt. 1 .or. i .gt. mitot .or.
-     .                       j .lt. 1 .or. j .gt. mjtot)
+
+        OUT_OF_RANGE(i,j) =  (i .lt. 1 .or. i .gt. mitot .or.
+     .                        j .lt. 1 .or. j .gt. mjtot)
 
 
         ! to get same as previous behavior uncomment next line
@@ -458,8 +461,10 @@ c
         mioff = initVal
         mjoff = initVal
 
-        do j = lwidth+1, mjtot-lwidth
-        do i = lwidth+1, mitot-lwidth
+        !do j = lwidth+1, mjtot-lwidth
+        !do i = lwidth+1, mitot-lwidth
+        do j = lwidth-1, mjtot-lwidth+2
+        do i = lwidth-1, mitot-lwidth+2
            k = irr(i,j)
            if (k .eq. -1 .or. k .eq. lstgrd) cycle !default mi/mjoff works
 

@@ -1,18 +1,16 @@
 c
 c ---------------------------------------------------------------------
 c
-       subroutine SRD_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,
+       subroutine SRD_cellMerge(q,nvar,irr,mitot,mjtot,lstgrd,
      .                      dx,dy,lwidth,xlow,ylow,istage,
-     .                      ncount,numHoods,mptr,ffluxlen,gfluxlen)
+     .                      ncount,numHoods,mptr)
 
        use amr_module
        implicit double precision (a-h, o-z)
 
        include "cuserdt.i"
        dimension q(nvar,mitot,mjtot),  irr(mitot,mjtot)
-       dimension qx(nvar,mitot,mjtot), qy(nvar,mitot,mjtot)
        dimension gradmx(nvar,mitot,mjtot), gradmy(nvar,mitot,mjtot)
-       dimension ffluxlen(mitot+1,mjtot+1),gfluxlen(mitot+1,mjtot+1)
 
        dimension valnew(nvar,mitot,mjtot)
        dimension qMerge(nvar,mitot,mjtot), numHoods(mitot,mjtot)
@@ -81,7 +79,7 @@ c     first make neighborhoods - need count for each cells, and width (nhood abo
 c     nCount is size of neighborhood, numHoods is number of merged nhoods each cells is in
       call makeNHood(ncount,irr,numHoods,
      .               mitot,mjtot,lwidth,lstgrd,xlow,ylow,dx,dy,istage,
-     .               mptr,ffluxlen,gfluxlen,areaMin)
+     .               mptr,areaMin)
 
        if (verbose) then
           totmass =  bigconck(q,irr,mitot,mjtot,lwidth,nvar)
@@ -402,13 +400,12 @@ c
       subroutine makeNHood(ncount,irr,
      .                     numHoods,mitot,mjtot,lwidth,lstgrd,xlow,ylow,
      .                     dx,dy,istage,mptr,
-     .                     ffluxlen,gfluxlen,areaMin)
+     .                     areaMin)
 
       use amr_module
       implicit double precision (a-h, o-z)
 
       dimension numHoods(mitot,mjtot)
-      dimension ffluxlen(mitot+1,mjtot+1),gfluxlen(mitot+1,mjtot+1)
       dimension ncount(mitot,mjtot), irr(mitot,mjtot)
       logical  IS_OUTSIDE, firstTimeThru
       logical debug/.false./
@@ -465,7 +462,7 @@ c     2 cells to a side for a merging neighborhood
 
          ! set ioff,joff to neighbor cell in most normal direction
          ! to cut cell boundary
-         call getAdjCell(i,j,k,ioff,joff,ffluxlen,gfluxlen,
+         call getAdjCell(i,j,k,ioff,joff,
      &                   mitot,mjtot,dx,dy)
                   
          koff = irr(i+ioff,j+joff)

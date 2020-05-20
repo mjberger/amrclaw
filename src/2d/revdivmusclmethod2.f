@@ -397,7 +397,7 @@ c          but result applied to conserved
 c          call orig_divcorn(q,divcoef,mitot,mjtot,dx,dy,mptr,nvar)
          call divcorn(q,qold,divcoef,mitot,mjtot,dx,dy,mptr,nvar,lstgrd,
      &                  xlow,ylow,irr,nghost,qx,qy,
-     &                  alldivf,alldivg,)
+     &                  alldivf,alldivg)
            do 580 j = 2, mjtot-1
            do 580 i = 2, mitot-1
            if (irr(i,j) .eq. -1) cycle
@@ -441,13 +441,13 @@ c
      &                lstgrd,'from my_method',
      &                lwidth,mitot-lwidth+1,lwidth,mjtot-lwidth+1)
 
-       if (numCut .gt. 0)  then
-          if (ismp .eq. 1) then
-            call srd_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,
-     .                         dx,dy,lwidth,xlow,ylow,istage,
-     .                         ncount,numHoods,mptr,ffluxlen,gfluxlen)
-          endif
-       endif
+c      if (numCut .gt. 0)  then
+c         if (ismp .eq. 1) then
+c           call srd_cellMerge(q,nvar,irr,mitot,mjtot,qx,qy,lstgrd,
+c    .                         dx,dy,lwidth,xlow,ylow,istage,
+c    .                         ncount,numHoods,mptr,ffluxlen,gfluxlen)
+c         endif
+c      endif
 
 c     # output fluxes for debugging purposes:
       if (debug) then
@@ -477,10 +477,10 @@ c     # output fluxes for debugging purposes:
 c
 c compute max speed for variable time stepping
 c
-      if (vtime) then
-         call estdt(q,irr,mitot,mjtot,nvar,dx,dy,dtnewn,lwidth,
-     &              aux,naux,cfl)
-      endif
+c     if (vtime) then
+c        call estdt(q,irr,mitot,mjtot,nvar,dx,dy,dtnewn,lwidth,
+c    &              aux,naux,cfl)
+c     endif
 c
       return
       end

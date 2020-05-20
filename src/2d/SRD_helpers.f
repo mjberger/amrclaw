@@ -26,12 +26,11 @@ c
 c
 c ------------------------------------------------------------------------
 c 
-      subroutine getAdjCell(i,j,k,ioff,joff,ffluxlen,gfluxlen,
+      subroutine getAdjCell(i,j,k,ioff,joff,
      .                      mitot,mjtot,dx,dy)
 
       use amr_module
       implicit double precision (a-h, o-z)
-      dimension ffluxlen(mitot+1,mjtot+1),gfluxlen(mitot+1,mjtot+1)
       dimension rl(4),iset(4),jset(4)
       data iset/-1, 1, 0, 0/
       data jset/0, 0, -1, 1/
@@ -40,18 +39,18 @@ c
 c  for cell i,j return offsets for most normal neighbor
 c  either look at normal direction, or full edge lengths
       
-      rl(1) = ffluxlen(i,j)/dy
-      rl(2) = ffluxlen(i+1,j)/dy
-      rl(3) = gfluxlen(i,j)/dx
-      rl(4) = gfluxlen(i,j+1)/dx
+c     rl(1) = ffluxlen(i,j)/dy
+c     rl(2) = ffluxlen(i+1,j)/dy
+c     rl(3) = gfluxlen(i,j)/dx
+c     rl(4) = gfluxlen(i,j+1)/dx
 
 c take max over all and thats the neighbor
-      ispot = 1
-      do index = 2, 4
-         if (rl(index) .gt. rl(ispot)) ispot = index  ! always positive
-      end do
-      ioff = iset(ispot)
-      joff = jset(ispot)
+c     ispot = 1
+c     do index = 2, 4
+c        if (rl(index) .gt. rl(ispot)) ispot = index  ! always positive
+c     end do
+c     ioff = iset(ispot)
+c     joff = jset(ispot)
 
 
 !!    will need to check that i+ioff,j+joff is inside
@@ -85,12 +84,12 @@ c     skip it
            iin = 4
         endif
       endif
-      if (ispot .ne. iin) then
-         write(*,*)" tests for adjacent cell differ for i,j = ",i,j
+c     if (ispot .ne. iin) then
+c        write(*,*)" tests for adjacent cell differ for i,j = ",i,j
          ! trust this latter one
          ioff = iset(iin)
          joff = jset(iin)
-      endif
+c     endif
 
       return
       end

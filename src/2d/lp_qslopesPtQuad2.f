@@ -1,8 +1,8 @@
 c
 c ---------------------------------------------------------------------
 c
-       subroutine qslopes(qp,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,
-     &                    hx,hy,xlow,ylow,mptr,nvar) 
+       subroutine lp_qslopesPtQuad2(qp,qx,qy,mitot,mjtot,irr,lstgrd,
+     &                              lwidth,hx,hy,xlow,ylow,mptr,nvar) 
       use amr_module
       implicit double precision(a-h,o-z)
 
@@ -135,8 +135,14 @@ c         endif
             go to 110    ! leave 0 gradient
          endif
 
+         !nToUse = nTerms
+         !if (nToUse .eq. 5 .and. newend .lt. 7) then
+         !   nToUse = 2
+         !endif
+         if (igradChoice .eq. 1) nTerms = 2
+         if (igradChoice .eq. 2) nTerms = 5
          nToUse = nTerms
-         if (nToUse .eq. 5 .and. newend .lt. 7) then
+         if (igradChoice .eq. 2 .and. newend .lt. 7) then 
             nToUse = 2
          endif
 

@@ -24,16 +24,16 @@ OVERWRITE ?= True                   # False ==> make a copy of OUTDIR first
 # Environment variable FC should be set to fortran compiler, e.g. gfortran
 
 # Compiler flags can be specified here or set as an environment variable
-FFLAGS ?= -g -C -CB -CU -fpe0 -ftrapuv 
+#FFLAGS ?= -g -C -CB -CU -fpe0 -ftrapuv 
 #FFLAGS ?= -O2 -C -CB -CU -fpe0 -ftrapuv -qopenmp  -mcmodel=large
-#FFLAGS ?= -g -fbounds-check -ffpe-trap=invalid,overflow,zero 
+FFLAGS ?= -g -fbounds-check -ffpe-trap=invalid,overflow,zero 
 
 # ---------------------------------
 # package sources for this program:
 # ---------------------------------
 
 #AMRLIB = $(CLAW)/amrclaw/src/2d
-AMRLIB = /home/berger/amrclaw-amrcart/src/2d
+AMRLIB = /Users/berger/amrclaw-amrcart/src/2d
 include $(AMRLIB)/Makefile.amr_2d
 
 # ---------------------------------------
@@ -45,8 +45,6 @@ include $(AMRLIB)/Makefile.amr_2d
 EXCLUDE_MODULES = \
 
 EXCLUDE_SOURCES = \
-  $(AMRLIB)/AG_qslopes.f \
-  $(AMRLIB)/AG_slopes.f \
 
 # ----------------------------------------
 # List of custom sources for this program:
@@ -61,19 +59,20 @@ SOURCES = \
   bc2amr.f90 \
   channelInit.f \
   bound.f90 \
-  $(AMRLIB)/SRD_quadratic.f \
   $(AMRLIB)/vrm_llf.f \
+  $(AMRLIB)/mymethod.f \
   $(AMRLIB)/vrmc_llf.f \
-  $(AMRLIB)/lp_qslopesWithGhostAvgQuadratic.f \
-  $(AMRLIB)/slopes.f \
+  $(AMRLIB)/SRD_cellMerge.f \
   $(AMRLIB)/fixed_vector_lim_allineq.f \
   $(AMRLIB)/fixed2_Simplex_allineq.f \
   outtec.f \
   dumptec.f \
 
 #  $(AMRLIB)/SRD_normalWithGhostQuadratic.f \
+#  $(AMRLIB)/SRD_quadratic.f \
+#  $(AMRLIB)/lp_qslopesWithGhostAvgQuadratic.f \
 #  $(AMRLIB)/lp_qslopesPtQuad2.f \
-# $(AMRLIB)/SRD_normal2.f \
+#  $(AMRLIB)/SRD_normal2.f \
 #  $(AMRLIB)/both_vector_lim_allineq.f \
 #  $(AMRLIB)/lp_qslopesWithGhostQuadratic.f \
 

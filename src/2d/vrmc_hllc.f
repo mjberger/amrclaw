@@ -4,8 +4,8 @@ c
       subroutine vrmc(qr,ql,rx,ixmin,ixmax,iflip,msize)
 
       implicit double precision (a-h,o-z)
-      common /userdt/ cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold,pwconst
+      include "cuserdt.i"
+
       dimension qr(4,msize),ql(4,msize)
       dimension rx(4,msize), rlx(4), rrx(4), stateR(4), stateL(4)
       dimension rhor(msize),ur(msize),pr(msize),utr(msize)

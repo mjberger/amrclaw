@@ -4,7 +4,9 @@
       implicit real*8 (a-h,o-z)
       character(len=25) fname
 c
+      logical nolimiter, quad
       common /RKmethod/ coeff(5), mstage
+      common /order2/ ssw, quad, nolimiter
       include "cuserdt.i"
 c
       iunit = 7
@@ -14,7 +16,7 @@ c     # comment lines starting with #:
       call opendatafile(iunit, fname)
 
       read(7,*) mstage
-      write(*,*) "will use RK scheme with ", mstage," stages"
+      write(*,*) "will use evolution scheme with ", mstage," stages"
 
       coeff = 0.d0 
       if (mstage .eq. 1) then
@@ -63,15 +65,30 @@ c     # comment lines starting with #:
      &           lpChoice
 
 
-      read(7,*) nTerms
-      write(*,*) "Use ",nTerms," terms in cell gradient"
-      write(outunit,*) "Use ", nTerms," terms in cell gradient"
+      !read(7,*) nTerms
+      !write(*,*) "Use ",nTerms," terms in cell gradient"
+      !write(outunit,*) "Use ", nTerms," terms in cell gradient"
 
-      read(7,*) numMergeTerms
-      write(*,*) "Use ",numMergeTerms," terms in tile gradient"
-      write(outunit,*) "Use ", numMergeTerms," terms in tile gradient"
-      write(*,*)" 2 terms = 1st order gradient, 5 = 2nd order"
-      write(outunit,*)" 2 terms = 1st order gradient, 5 = 2nd order"
+      !read(7,*) numMergeTerms
+      !write(*,*) "Use ",numMergeTerms," terms in tile gradient"
+      !write(outunit,*) "Use ", numMergeTerms," terms in tile gradient"
+      !write(*,*)" 2 terms = 1st order gradient, 5 = 2nd order"
+      !write(outunit,*)" 2 terms = 1st order gradient, 5 = 2nd order"
+
+      read(7,*) igradChoice
+      write(*,*)" Use ",igradCoice," choice for gradient"
+      write(*,*)" 0=none, 1=1st order, 2=ptwise quad.,3=cell avg.quad."
+      write(outunit,*)" Use ",igradCoice," choice for gradient"
+      write(outunit,*)" 0 = none, 1=1st order, 2=ptwise quad., ",
+     &                " 3 = cell avg.quad."
+      if (igradChoice .eq. 0) then
+         if (ssw .ne. 0) then
+            write(*,*)" ssw = ",ssw," resetting to 0 to match ",
+     &                " igradChoice =  ", igradChoice
+            ssw = 0.d0
+            nolimiter = .true. ! might as well since no gradients
+         endif
+      endif
 
       iprob = 19
       write(*,*)"Setprob is setting iprob = ",iprob

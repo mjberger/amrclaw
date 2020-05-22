@@ -24,17 +24,17 @@ OVERWRITE ?= True                   # False ==> make a copy of OUTDIR first
 # Environment variable FC should be set to fortran compiler, e.g. gfortran
 
 # Compiler flags can be specified here or set as an environment variable
-FFLAGS ?= -g -C -CB -CU -fpe0 -ftrapuv 
+3FFLAGS ?= -g -C -CB -CU -fpe0 -ftrapuv 
 #FFLAGS ?=  -C -CB -CU -fpe0 -ftrapuv -mcmodel=large  -g -qopenmp
 #FFLAGS ?=  -C -CB -CU -fpe0 -ftrapuv -O1 -qopenmp
-#FFLAGS ?= -g -fbounds-check -ffpe-trap=invalid,overflow,zero -fopenmp
+FFLAGS ?= -fopenmp -g -fbounds-check -ffpe-trap=invalid,overflow,zero 
 
 # ---------------------------------
 # package sources for this program:
 # ---------------------------------
 
 #AMRLIB = $(CLAW)/amrclaw/src/2d
-AMRLIB = /home/berger/amrclaw-amrcart/src/2d
+AMRLIB = /Users/berger/amrclaw-amrcart/src/2d
 include $(AMRLIB)/Makefile.amr_2d
 
 # ---------------------------------------
@@ -60,16 +60,17 @@ SOURCES = \
   dumpBndry.f \
   outtec.f \
   bc2amr.f90 \
-  $(AMRLIB)/slopes.f \
-  $(AMRLIB)/SRD_quadratic.f \
   $(AMRLIB)/vrm_llf.f \
   $(AMRLIB)/vrmc_llf.f \
-  $(AMRLIB)/mymethod.f \
-  $(AMRLIB)/qslopesWithGhostAvgQuadratic.f \
+  $(AMRLIB)/revdivmusclmethod2.f \
   $(AMRLIB)/fixed2_Simplex_allineq.f \
   $(AMRLIB)/fixed_vector_lim_allineq.f \
 
+#  $(AMRLIB)/mymethod.f \
 #  $(AMRLIB)/lp_qslopesPtQuad2.f \
+#  $(AMRLIB)/qslopesWithGhostAvgQuadratic.f \
+#  $(AMRLIB)/slopes.f \
+#  $(AMRLIB)/SRD_quadratic.f \
 #  $(AMRLIB)/SRD_normal2.f \
 #  $(AMRLIB)/SRD_normalWithGhostQuadratic.f \
 #  $(AMRLIB)/revdivmusclmethod2.f \

@@ -4,8 +4,7 @@ c
       subroutine vrm(qr,ql,rx,ixmin,ixmax,iflip,msize)
 
       implicit double precision (a-h,o-z)
-      common /userdt/ cfl,gamma,gamma1,xprob,yprob,alpha,Re,iprob,
-     .                ismp,gradThreshold,pwconst
+      include "cuserdt.i"
 
 
       parameter ( psmall = 1d-07 , rsmall = 1d-07)

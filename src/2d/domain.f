@@ -92,11 +92,10 @@ c
               lstgrd = node(lstptr,mptr)
               call countCellType(alloc(locirr),mitot,mjtot,nghost,
      1                    numSolid,numCut,numFull,lstgrd)
-c             # added cfl to call to estdt so call.i isnt needed in estdt:
               if (numSolid .eq. nx*ny) go to 59
               call estdt(alloc(locnew),alloc(locirr),
      1                   mitot,mjtot,nvar,dx,dy,dtgrid,nghost,
-     2                   alloc(locaux),naux,cfl)
+     2                   alloc(locaux),naux)
               dt = dmin1(dt,dtgrid)
  59           mptr   = node(levelptr,mptr)
             if (mptr .ne. 0) go to 60

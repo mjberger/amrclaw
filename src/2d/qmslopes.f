@@ -40,14 +40,8 @@
 
       dimension mioff(mitot,mjtot), mjoff(mitot,mjtot)
 
-       logical IS_GHOST, IS_OUTSIDE, NOT_OK_GHOST
+       logical IS_OUTSIDE
        logical OUT_OF_RANGE
-
-       IS_GHOST(i,j) = (i .le. lwidth .or. i .gt. mitot-lwidth .or.
-     .                  j .le. lwidth .or. j .gt. mjtot-lwidth)
-
-       NOT_OK_GHOST(i,j) = (i .lt. 3 .or. i .gt. mitot-2 .or.
-     .                      j .lt. 3 .or. j .gt. mjtot-2)
 
        IS_OUTSIDE(x,y) = (x .lt. xlower .or. x .gt. xupper .or.
      .                    y .lt. ylower .or. y .gt. yupper)

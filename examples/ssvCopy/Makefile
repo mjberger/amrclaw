@@ -63,19 +63,19 @@ SOURCES = \
   bc2amr.f90 \
   bound.f90 \
   mymethod.f \
-  $(AMRLIB)/SRD_quadratic.f \
   $(AMRLIB)/vrm_llf.f \
   $(AMRLIB)/vrmc_llf.f \
-  $(AMRLIB)/lp_qslopesWithGhostAvgQuadratic.f \
-  $(AMRLIB)/slopes.f \
   $(AMRLIB)/fixed_vector_lim_allineq.f \
   $(AMRLIB)/fixed2_Simplex_allineq.f \
   outtec.f \
   dumptec.f \
 
+#  $(AMRLIB)/lp_qslopesWithGhostAvgQuadratic.f \
+#  $(AMRLIB)/slopes.f \
 #  mymethod.f \
 #  $(AMRLIB)/revdivmusclmethod2.f \
 #  $(AMRLIB)/SRD_normal2.f \
+#  $(AMRLIB)/SRD_quadratic.f \
 #  $(AMRLIB)/SRD_normalWithGhostQuadratic.f \
 #  $(AMRLIB)/lp_qslopesPtQuad2.f \
 

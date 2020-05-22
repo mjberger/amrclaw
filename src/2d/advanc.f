@@ -70,8 +70,8 @@ c We want to do this regardless of the threading type
 !$OMP&                   node,rnode,numgrids,listgrids,istage),
 !$OMP&            SCHEDULE (dynamic,1)
 !$OMP&            DEFAULT(none)
-      levSt = listStart(level)
       do j = 1, numgrids(level)
+         levSt = listStart(level)
          mptr   = listOfGrids(levSt+j-1)
          mitot  = node(ndihi,mptr) - node(ndilo,mptr) + 1 + 2*nghost
          mjtot  =  node(ndjhi,mptr) - node(ndjlo,mptr) + 1 + 2*nghost
@@ -106,8 +106,8 @@ c
 !$OMP&            SHARED(listOfGrids,listStart,levSt,vtime,delt)
 !$OMP&            SCHEDULE (DYNAMIC,1)
 !$OMP&            DEFAULT(none)
-      levSt = listStart(level)
       do j = 1, numgrids(level)
+         levSt = listStart(level)
          mptr = listOfGrids(levSt+j-1)
          mitot  = node(ndihi,mptr) - node(ndilo,mptr) + 1 + 2*nghost
          mjtot  = node(ndjhi,mptr) - node(ndjlo,mptr) + 1 + 2*nghost
@@ -134,8 +134,8 @@ c
 !$OMP&                   node,rnode,numgrids,listgrids,istage),
 !$OMP&            SCHEDULE (dynamic,1)
 !$OMP&            DEFAULT(none)
-      levSt = listStart(level)
       do j = 1, numgrids(level)
+         levSt = listStart(level)
          mptr   = listOfGrids(levSt+j-1)
          mitot  = node(ndihi,mptr) - node(ndilo,mptr) + 1 + 2*nghost
          mjtot  = node(ndjhi,mptr) - node(ndjlo,mptr) + 1 + 2*nghost
@@ -154,15 +154,16 @@ c
       timeBound = timeBound + clock_finishBound - clock_startBound
       timeBoundCPU=timeBoundCPU+cpu_finishBound-cpu_startBound
 
-!$OMP PARALLEL DO PRIVATE(j,locnew, locaux, mptr,nx,ny,mitot,
-!$OMP&                    mjtot,time,levSt),
-!$OMP&            SHARED(level, nvar, naux, alloc, intrat, delt,
-!$OMP&                   listOfGrids,listStart,nghost,
-!$OMP&                   node,rnode,numgrids,listgrids,istage),
+!$OMP PARALLEL DO PRIVATE(j,locnew, locaux, mptr,nx,ny,lstgrd,xlow,ylow,
+!$OMP&                    mitot,mjtot,time,levSt,locirr,locncount,
+!$OMP&                    locnumHoods),
+!$OMP&            SHARED(level, nvar, naux, alloc, intrat, delt,dtnew,
+!$OMP&                   listOfGrids,listStart,nghost,istage,mstage,
+!$OMP&                   dtlevnew,node,rnode,numgrids,listgrids,hx,hy),
 !$OMP&            SCHEDULE (dynamic,1)
 !$OMP&            DEFAULT(none)
-      levSt = listStart(level)
       do j = 1, numgrids(level)
+         levSt = listStart(level)
          mptr   = listOfGrids(levSt+j-1)
          mitot  = node(ndihi,mptr) - node(ndilo,mptr) + 1 + 2*nghost
          mjtot  = node(ndjhi,mptr) - node(ndjlo,mptr) + 1 + 2*nghost
@@ -180,7 +181,7 @@ c
      &                     alloc(locncount),alloc(locnumHoods),mptr)
          if (istage .eq. mstage) then ! set new time step
             call estdt(alloc(locnew),alloc(locirr),mitot,mjtot,nvar,
-     &                 hx,hy,dtnew,nghost,aux,naux,cfl)
+     &                 hx,hy,dtnew,nghost,alloc(locaux),naux)
 !$OMP CRITICAL (newdt)
           dtlevnew = dmin1(dtlevnew,dtnew)
 !$OMP END CRITICAL (newdt)    
@@ -286,10 +287,6 @@ c
             locsvf = node(ffluxptr,mptr)
             locsvq = locsvf + nvar*lenbc
             locx1d = locsvq + nvar*lenbc
-c           call qad(alloc(locnew),mitot,mjtot,nvar,
-c    1               alloc(locsvf),alloc(locsvq),lenbc,
-c    2               intratx(level-1),intraty(level-1),hx,hy,
-c    3               naux,alloc(locaux),alloc(locx1d),delt,mptr)
          endif
 
 c        # See if the grid about to be advanced has gauge data to output.

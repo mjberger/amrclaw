@@ -1,8 +1,8 @@
 c
 c ---------------------------------------------------------------------
 c
-       subroutine qslopes(qp,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,
-     &                    hx,hy,xlow,ylow,mptr,nvar) 
+       subroutine lp_qslopesWithGhostAvgQuadratic(qp,qx,qy,mitot,mjtot,
+     &                     irr,lstgrd,lwidth,hx,hy,xlow,ylow,mptr,nvar) 
       use amr_module
       implicit double precision(a-h,o-z)
 
@@ -133,6 +133,13 @@ c         endif
             qx(:,ix0,iy0) = 0.d0
             qy(:,ix0,iy0) = 0.d0
             go to 110    ! leave 0 gradient
+         endif
+
+         if (igradChoice .eq. 3) then
+            nTerms = 5 ! ptwise quadratic
+         else
+            write(*,*)" shouldnt be here"
+            stop
          endif
 
          nToUse = nTerms

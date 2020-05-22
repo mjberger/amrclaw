@@ -2,7 +2,7 @@ c
 c-----------------------------------------------------------------------
 c
        subroutine estdt(val,irr,mitot,mjtot,nvar,dx,dy,dtgrid,
-     1                  lwidth,aux,naux,cfl)
+     1                  lwidth,aux,naux)
 c
        use amr_module, only : rinfinity
        implicit double precision (a-h, o-z)

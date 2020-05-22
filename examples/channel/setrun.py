@@ -38,7 +38,7 @@ def setrun(claw_pkg='amrclaw'):
     #------------------------------------------------------------------
 
     probdata = rundata.new_UserData(name='probdata',fname='setprob.data')
-    probdata.add_param('mstage ',1, 'RK method order (coeffs set in setprob)')
+    probdata.add_param('mstage ',2, 'RK method order (coeffs set in setprob)')
     probdata.add_param('ismp',    1,  ' stabilization method')
     ## 1 = SRD
     ## 2 = DRD
@@ -53,6 +53,7 @@ def setrun(claw_pkg='amrclaw'):
     probdata.add_param('ghost_ccg',  False,  ' use ghost cells in cutcell/tile gradients')
     probdata.add_param('limitTile',  1, ' 1 = BJ, 2 = LP')
     probdata.add_param('lpChoice',   2, ' 1 = restrictive, 2 = relaxed, if LP limiter use')
+    probdata.add_param('igradChoice', 3, ' 0=none, 1=1storder, 2=ptwise quad,3=cellavg quad')
 
 
     #------------------------------------------------------------------

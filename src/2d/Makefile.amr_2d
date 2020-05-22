@@ -38,8 +38,6 @@ COMMON_SOURCES += \
   $(AMRLIB)/outtec.f \
   $(AMRLIB)/dumpBndry.f \
   $(AMRLIB)/zeroin.f \
-  $(AMRLIB)/p19fn.f \
-  $(AMRLIB)/p19tru.f \
   $(AMRLIB)/auxcoarsen.f \
   $(AMRLIB)/fixcapaq.f \
   $(AMRLIB)/estdt.f \

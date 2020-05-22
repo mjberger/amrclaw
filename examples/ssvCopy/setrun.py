@@ -52,9 +52,7 @@ def setrun(claw_pkg='amrclaw'):
     probdata.add_param('ghost_ccg',  False,  ' use ghost cells in cutcell/tile gradients')
     probdata.add_param('limitTile',  1, ' 1 = BJ, 2 = LP')
     probdata.add_param('lpChoice',   2,  ' 1 = restrictive, 2 = relaxed, if LP limiter used')
-    #probdata.add_param('nTerms',     5,  ' 2 = first order cell gradient, 5 = second order')
-    #probdata.add_param('numMergeTerms', 5,' 2 = first order tile gradient, 5 = second order')
-    probdata.add_param('igradChoice', 0,' 0 = no grad, 1=1st order, 2=ptwise quad, 3=cellavg quad')
+    probdata.add_param('igradChoice', 2,' 0 = no grad, 1=1st order, 2=ptwise quad, 3=cellavg quad')
 
 
     #------------------------------------------------------------------

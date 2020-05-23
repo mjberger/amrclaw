@@ -14,11 +14,13 @@ COMMON_MODULES += \
 COMMON_SOURCES += \
   $(AMRLIB)/qinit.f \
   $(AMRLIB)/setprob.f \
+  $(AMRLIB)/bound.f90 \
+  $(AMRLIB)/bc2amr.f90 \
+  $(AMRLIB)/dumptec.f \
+  $(AMRLIB)/outtec.f \
   $(AMRLIB)/setaux.f90 \
   $(AMRLIB)/amr2.f90 \
-  $(AMRLIB)/bc2amr.f90 \
   $(AMRLIB)/advanc.f \
-  $(AMRLIB)/bound.f90 \
   $(AMRLIB)/checkPhys.f \
   $(AMRLIB)/cellsClose.f \
   $(AMRLIB)/SRD_helpers.f \
@@ -33,8 +35,6 @@ COMMON_SOURCES += \
   $(AMRLIB)/addneighbors.f \
   $(AMRLIB)/makep.f \
   $(AMRLIB)/isig.f \
-  $(AMRLIB)/dumptec.f \
-  $(AMRLIB)/outtec.f \
   $(AMRLIB)/dumpBndry.f \
   $(AMRLIB)/zeroin.f \
   $(AMRLIB)/estdt.f \
@@ -90,7 +90,7 @@ COMMON_SOURCES += \
   $(AMRLIB)/lp_qslopesPtQuad2.f \
   $(AMRLIB)/qmslopes.f \
   $(AMRLIB)/mnslopes.f \
-  $(AMRLIB)/limiterBJ.f \
+  $(AMRLIB)/limitCellBJ.f \
   $(AMRLIB)/auxcoarsen.f \
   $(AMRLIB)/fixcapaq.f \
   $(AMRLIB)/colate2.f \

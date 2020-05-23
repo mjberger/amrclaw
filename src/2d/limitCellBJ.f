@@ -11,25 +11,25 @@ c
        dimension qp(nvar,mitot,mjtot),qx(nvar,mitot,mjtot),
      &           qy(nvar,mitot,mjtot),irr(mitot,mjtot)
 
-      logical quad
+      logical quad, nolimiter
       common /order2/ ssw, quad, nolimiter
       include "cuserdt.i"
 
-      logical   prflag, enufNbor, out_of_range, almost_outside
+      logical   prflag, OUT_OF_RANGE
 
-       dimension dumax(nvar),dumin(nvar),phimin(nvar)
-       dimension graddot(nvar),alpha(nvar),recon(nvar)
-       logical ALL_NBORS_EXIST, IS_GHOST 
+      dimension dumax(nvar),dumin(nvar),phimin(nvar)
+      dimension graddot(nvar),alpha(nvar),recon(nvar)
+      logical ALL_NBORS_EXIST, IS_GHOST 
 
-       IS_GHOST(i,j) = (i .le. lwidth .or. i .gt. mitot-lwidth .or.
-     .                  j .le. lwidth .or. j .gt. mjtot-lwidth)
-
-
-      out_of_range(i,j) = ((i .lt. 1) .or. (j.lt. 1) .or.
-     .                (i .gt. mitot) .or. (j.gt. mjtot))
+      IS_GHOST(i,j) = (i .le. lwidth .or. i .gt. mitot-lwidth .or.
+     .                 j .le. lwidth .or. j .gt. mjtot-lwidth)
 
 
-      ALL_NBORS_EXIST(i,j) = (i .gt. 1 .and. i .lt.mitot .and.
+      OUT_OF_RANGE(i,j) = ((i .lt. 1) .or. (i.gt. mitot) .or.
+     .                     (j .lt. 1) .or. (j.gt. mjtot))
+
+
+      ALL_NBORS_EXIST(i,j) = (i .gt. 1 .and. i .lt. mitot .and.
      .                        j .gt. 1 .and. j .lt. mjtot)
 
 c
@@ -72,11 +72,11 @@ c        write(*,900) i,j,qx(1,i,j),qy(1,i,j)
 
           do 31 joff =  -nco, nco
           do 31 ioff =  -nco, nco
-c           if (ioff .eq. 0 .and. joff .eq. 0) go to 31
-            if (out_of_range(i+ioff,j+joff)) go to 31
+            if (ioff .eq. 0 .and. joff .eq. 0) go to 31
+            if (OUT_OF_RANGE(i+ioff,j+joff)) go to 31
 c           call getCellCentroid(lstgrd,i,j,xcent,ycent,xlow,
 c    .                         ylow,hx,hy,k)
-c           if (out_of_range(xcent,ycent)) go to 31
+c           if (OUT_OF_RANGE(xcent,ycent)) go to 31
 c           if (IS_GHOST(i,j)) go to 31
             koff = irr(i+ioff,j+joff)
             if (koff .eq. -1) go to 31
@@ -89,7 +89,7 @@ c           if (IS_GHOST(i,j)) go to 31
           do 32 joff = -nco, nco
           do 32 ioff = -nco, nco
 c            if (ioff .eq. 0 .and. joff .eq. 0) go to 32 ! no eqn to solve
-             if (out_of_range(i+ioff,j+joff)) go to 32
+             if (OUT_OF_RANGE(i+ioff,j+joff)) go to 32
 c            if (IS_GHOST(i,j)) go to 32
              koff = irr(i+ioff,j+joff)
              if (koff .eq. -1) go to 32
@@ -118,9 +118,10 @@ c        write(*,901) qx(1,i,j),qy(1,i,j)
  901     format(8x,2e15.7)
 
          go to 30 ! skip testing for positivity at quadrature points for now
+         ! only testing at neighboring cells above
 
       ! check for positivity
-      if(irr(i,j) .eq. lstgrd) then
+      if (irr(i,j) .eq. lstgrd) then
          alpha = 1.d0
 
          diffx = hx/2.d0

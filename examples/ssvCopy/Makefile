@@ -26,7 +26,7 @@ OVERWRITE ?= True                   # False ==> make a copy of OUTDIR first
 # Compiler flags can be specified here or set as an environment variable
 #FFLAGS ?= -g -C -CB -CU -fpe0 -ftrapuv 
 #FFLAGS ?= -O2 -C -CB -CU -fpe0 -ftrapuv -qopenmp  -mcmodel=large
-FFLAGS ?= -g -fopenmp  -fbounds-check -ffpe-trap=invalid,overflow,zero 
+FFLAGS ?= -g -fbounds-check -ffpe-trap=invalid,overflow,zero 
 
 # ---------------------------------
 # package sources for this program:

@@ -20,11 +20,11 @@ c
 
 
       if (igradChoice .eq. 1 .or. igradChoice .eq. 2) then
-         call lp_qslopesPtQuad2(qp,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,
-     &                   hx,hy,xlow,ylow,mptr,nvar)
+         call qslopesPtQuad2(qp,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,
+     &                       hx,hy,xlow,ylow,mptr,nvar)
       else if (igradChoice .eq. 3) then
-         call lp_qslopesWithGhostAvgQuadratic(qp,qx,qy,mitot,mjtot,irr,
-     &                   lstgrd,lwidth,hx,hy,xlow,ylow,mptr,nvar)
+         call qslopesWithGhostAvgQuadratic(qp,qx,qy,mitot,mjtot,irr,
+     &                       lstgrd,lwidth,hx,hy,xlow,ylow,mptr,nvar)
       else if (igradChoice .eq. 0) then
          write(*,*)"should not be here  should have set ssw = 0"
       else

@@ -76,9 +76,9 @@ c     # comment lines starting with #:
       !write(outunit,*)" 2 terms = 1st order gradient, 5 = 2nd order"
 
       read(7,*) igradChoice
-      write(*,*)" Use ",igradCoice," choice for gradient"
+      write(*,*)" Use ",igradChoice," choice for gradient"
       write(*,*)" 0=none, 1=1st order, 2=ptwise quad.,3=cell avg.quad."
-      write(outunit,*)" Use ",igradCoice," choice for gradient"
+      write(outunit,*)" Use ",igradChoice," choice for gradient"
       write(outunit,*)" 0 = none, 1=1st order, 2=ptwise quad., ",
      &                " 3 = cell avg.quad."
       if (igradChoice .eq. 0) then

@@ -3,8 +3,8 @@ c -----------------------------------------------------------
 c
 c barth jespersen on cut cells and on their neighbors
 c
-      subroutine limiterBJ(qp, qx, qy, mitot, mjtot, irr, nvar, hx, hy,
-     .                    lwidth, lstgrd, xlow, ylow)
+      subroutine limitCellBJ(qp,qx,qy,mitot,mjtot,irr,nvar,hx,hy,
+     .                    lwidth,lstgrd,xlow,ylow)
        
        use amr_module
        implicit double precision(a-h,o-z)

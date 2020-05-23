@@ -1,8 +1,8 @@
 c
 c ---------------------------------------------------------------------
 c
-       subroutine lp_qslopesPtQuad2(qp,qx,qy,mitot,mjtot,irr,lstgrd,
-     &                              lwidth,hx,hy,xlow,ylow,mptr,nvar) 
+       subroutine qslopesPtQuad2(qp,qx,qy,mitot,mjtot,irr,lstgrd,
+     &                           lwidth,hx,hy,xlow,ylow,mptr,nvar) 
       use amr_module
       implicit double precision(a-h,o-z)
 
@@ -164,10 +164,10 @@ c        changed code to directly do second order diff in one direction on full 
                yn = ylow + (iyn-.5d0)*hy
             endif
 c     # code treating q as pt.wise values
-            delx = xn - x0
-            dely = yn - y0
-            a(irow,1) = delx
-            a(irow,2) = dely
+              delx = xn - x0
+              dely = yn - y0
+              a(irow,1) = delx
+              a(irow,2) = dely
             if (nToUse .eq. 5) then
 c            # code doing quadratic but pointwise not cell averaged right
               a(irow,3) = (xn-x0)**2
@@ -262,26 +262,26 @@ c  if cut cell add ghost cell state  (but not used for limiting?)
            endif
 c
 
-              do 30 it = 1, irow
-                 do 30 jt = 1, nToUse
-                    at(jt,it) = a(it,jt)
- 30              continue
+          do 30 it = 1, irow
+          do 30 jt = 1, nToUse
+             at(jt,it) = a(it,jt)
+ 30       continue
 
-                 do 50 it = 1, nToUse
-                    do 50 jt = 1, nToUse
-                       c(it,jt) = 0.d0
-                       do m = 1, nvar
-                          d(it,m)  = 0.d0
-                       end do
-                       do 45 kt = 1, irow
-                          c(it,jt) = c(it,jt) + at(it,kt)*a(kt,jt)
-                          do m = 1, nvar
-                             d(it,m) = d(it,m) + at(it,kt)*b(kt,m)
-                          end do
- 45                    continue
- 50                 continue
-            
-c     
+          do 50 it = 1, nToUse
+             do 50 jt = 1, nToUse
+                c(it,jt) = 0.d0
+                do m = 1, nvar
+                   d(it,m)  = 0.d0
+                end do
+                do 45 kt = 1, irow
+                   c(it,jt) = c(it,jt) + at(it,kt)*a(kt,jt)
+                   do m = 1, nvar
+                      d(it,m) = d(it,m) + at(it,kt)*b(kt,m)
+                   end do
+ 45             continue
+ 50       continue
+
+c
         if (.not. adj_reg) then
 
 c       do linear fit
@@ -352,8 +352,8 @@ c     # at*a = c. solve at*b = d, aw = b.  reuse b.
 c
  60       continue
         endif ! irreg for nterms 2 or 5      
-
-           endif
+              
+         endif
 
 c          write(*,401) ix0,iy0,(qx(m,ix0,iy0),qy(m,ix0,iy0),m=1,4)
  401      format("cell ",2i5,  " orig lsq grad ",/,4(2e15.7,/))
@@ -361,7 +361,18 @@ c          write(*,401) ix0,iy0,(qx(m,ix0,iy0),qy(m,ix0,iy0),m=1,4)
 c       should we limit?
  109    if (nolimiter)  go to 110
 
-c
+        ! BJ called at end on entire patch
+        if (limiterTile .eq. 2) then
+           num_neighb = newend-1 ! dont count cell itself
+           count_cells = count_cells + 1
+           call limitCellLP(qp,qx,qy,mitot,mjtot,irr,lstgrd,
+     &                      lwidth,hx,hy,xlow,ylow,mptr,nvar,
+     &                      nlist,num_neighb,my_iters,ix0,iy0,x0,y0)
+           num_iters = num_iters + my_iters
+           max_iters = max(max_iters, my_iters)
+        endif
+
+        if (.false.) then
           center_x = x0
           center_y = y0
 c         if (added_neighbor) then
@@ -438,18 +449,28 @@ c                 stop
              endif
 
           end do   ! do m=1,4
+          endif
 c  
  110  continue
 
-      if (count_cells > 0) then
-         avg_iters = dble(tot_iters)/dble(count_cells)
-      else
-         avg_iters = 0
+      if (nolimiter) go to 120
+
+      if (limitTile .eq. 1) then
+         call limitCellBJ(qp,qx,qy,mitot,mjtot,irr,nvar,hx,hy,
+     &                    lwidth,lstgrd,xlow,ylow)
       endif
-      write(21,*) "Avg_no_of_iters", avg_iters
-      write(23,*) "Max_no_of_iters", max_iters
+
+      if (limitTile .eq. 2) then
+        if (count_cells > 0) then
+          avg_iters = dble(tot_iters)/dble(count_cells)
+        else
+          avg_iters = 0
+        endif
+        write(21,*) "Avg_no_of_iters", avg_iters
+        write(23,*) "Max_no_of_iters", max_iters
+      endif
 c
-      if (prflag) then
+ 120  if (prflag) then
          write(21,*)' qx '
          do 180 i = 2, mitot-1
          do 180 j = 2, mjtot-1

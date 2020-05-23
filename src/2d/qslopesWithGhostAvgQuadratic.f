@@ -1,8 +1,8 @@
 c
 c ---------------------------------------------------------------------
 c
-       subroutine lp_qslopesWithGhostAvgQuadratic(qp,qx,qy,mitot,mjtot,
-     &                     irr,lstgrd,lwidth,hx,hy,xlow,ylow,mptr,nvar) 
+       subroutine qslopesWithGhostAvgQuadratic(qp,qx,qy,mitot,mjtot,
+     &                  irr,lstgrd,lwidth,hx,hy,xlow,ylow,mptr,nvar) 
       use amr_module
       implicit double precision(a-h,o-z)
 
@@ -388,7 +388,18 @@ c          write(*,401) ix0,iy0,(qx(m,ix0,iy0),qy(m,ix0,iy0),m=1,4)
 c       should we limit?
  109    if (nolimiter)  go to 110
 
-c
+        ! BJ called at end on entire patch
+        if (limiterTile .eq. 2) then
+           num_neighb = newend-1 ! dont count cell itself
+           count_cells = count_cells + 1
+           call limitCellLP(qp,qx,qy,mitot,mjtot,irr,lstgrd,
+     &                      lwidth,hx,hy,xlow,ylow,mptr,nvar,
+     &                      nlist,num_neighb,my_iters,ix0,iy0,x0,y0)
+           num_iters = num_iters + my_iters
+           max_iters = max(max_iters, my_iters)
+        endif
+
+        if (.false.) then
           center_x = x0
           center_y = y0
 c         if (added_neighbor) then
@@ -466,18 +477,28 @@ c                 stop
              endif
 
           end do   ! do m=1,4
+          endif
 c  
  110  continue
 
-      if (count_cells > 0) then
-         avg_iters = dble(tot_iters)/dble(count_cells)
-      else
-         avg_iters = 0
+      if (nolimiter) go to 120
+
+      if (limitTile .eq. 1) then
+         call limitCellBJ(qp,qx,qy,mitot,mjtot,irr,nvar,hx,hy,
+     &                    lwidth,lstgrd,xlow,ylow)
       endif
-      write(21,*) "Avg_no_of_iters", avg_iters
-      write(23,*) "Max_no_of_iters", max_iters
+
+      if (limitTile .eq. 2) then
+        if (count_cells > 0) then
+          avg_iters = dble(tot_iters)/dble(count_cells)
+        else
+          avg_iters = 0
+        endif
+        write(21,*) "Avg_no_of_iters", avg_iters
+        write(23,*) "Max_no_of_iters", max_iters
+      endif
 c
-      if (prflag) then
+ 120  if (prflag) then
          write(21,*)' qx '
          do 180 i = 2, mitot-1
          do 180 j = 2, mjtot-1

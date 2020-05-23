@@ -86,11 +86,12 @@ COMMON_SOURCES += \
   $(AMRLIB)/solve.f \
   $(AMRLIB)/slopes.f \
   $(AMRLIB)/qslopes.f \
-  $(AMRLIB)/lp_qslopesWithGhostAvgQuadratic.f \
-  $(AMRLIB)/lp_qslopesPtQuad2.f \
+  $(AMRLIB)/qslopesWithGhostAvgQuadratic.f \
+  $(AMRLIB)/qslopesPtQuad2.f \
   $(AMRLIB)/qmslopes.f \
   $(AMRLIB)/mnslopes.f \
   $(AMRLIB)/limitCellBJ.f \
+  $(AMRLIB)/limitCellLP.f \
   $(AMRLIB)/auxcoarsen.f \
   $(AMRLIB)/fixcapaq.f \
   $(AMRLIB)/colate2.f \

@@ -88,7 +88,8 @@ c
 c  work in primitive variables 
 c
       call vctoprm(q,q,mitot,mjtot,nvar)
-      if (ssw .ne. 0.d0) then
+      !if (ssw .ne. 0.d0) then  ssw IS OLD VAR
+      if (igradChoice .ne. 0) then
          call slopes(q,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,dx,dy,
      &               xlow,ylow,nvar,mptr)
       if (numCut .gt. 0) 
@@ -437,9 +438,9 @@ c
          endif
  917   continue
 
-       call checkPhys(q,irr,mitot,mjtot,mptr,istage,
-     &                lstgrd,'from my_method',
-     &                lwidth,mitot-lwidth+1,lwidth,mjtot-lwidth+1)
+c      call checkPhys(q,irr,mitot,mjtot,mptr,istage,
+c    &                lstgrd,'from my_method',
+c    &                lwidth,mitot-lwidth+1,lwidth,mjtot-lwidth+1)
 
 c      if (numCut .gt. 0)  then
 c         if (ismp .eq. 1) then

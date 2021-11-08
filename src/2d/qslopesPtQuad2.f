@@ -362,7 +362,7 @@ c       should we limit?
  109    if (nolimiter)  go to 110
 
         ! BJ called at end on entire patch
-        if (limiterTile .eq. 2) then
+        if (limitTile .eq. 2) then
            num_neighb = newend-1 ! dont count cell itself
            count_cells = count_cells + 1
            call limitCellLP(qp,qx,qy,mitot,mjtot,irr,lstgrd,

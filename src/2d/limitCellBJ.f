@@ -99,7 +99,7 @@ c            if (IS_GHOST(i,j)) go to 32
               diffy = yc-ycent
               graddot  = qx(:,i,j)*diffx + qy(:,i,j)*diffy
               recon = qp(:,i,j) + graddot
-                do m = 1,4
+                do m = 1, nvar
                    if (graddot(m) > 1.d-10) then
                       alpha(m) = min(1.d0, dumax(m)/graddot(m))
                    else if (graddot(m) < -1.d-10) then
@@ -109,7 +109,9 @@ c            if (IS_GHOST(i,j)) go to 32
                    endif
                 end do
                 if (recon(1) .le. 0.d0) alpha(1) = 0.d0
-                if (recon(4) .le. 0.d0) alpha(4) = 0.d0
+                if (nvar .eq. 4) then
+                  if (recon(4) .le. 0.d0) alpha(4) = 0.d0
+                endif
                 phimin = min(phimin, alpha)
   32      continue
           qx(:,i,j) = qx(:,i,j)*phimin(:)
@@ -132,7 +134,9 @@ c        write(*,901) qx(1,i,j),qy(1,i,j)
 
 
          if (recon(1) .le. 0.d0) alpha(1) = 0.d0
-         if (recon(4) .le. 0.d0) alpha(4) = 0.d0
+         if (nvar .eq. 4) then
+           if (recon(4) .le. 0.d0) alpha(4) = 0.d0
+         endif
 
          diffx = -hx/2.d0
          diffy = 0.
@@ -141,7 +145,9 @@ c        write(*,901) qx(1,i,j),qy(1,i,j)
 
 
          if (recon(1) .le. 0.d0) alpha(1) = 0.d0
-         if (recon(4) .le. 0.d0) alpha(4) = 0.d0
+         if (nvar .eq. 4) then
+           if (recon(4) .le. 0.d0) alpha(4) = 0.d0
+         endif
 
          diffx = 0.d0
          diffy = hy/2.d0
@@ -150,7 +156,9 @@ c        write(*,901) qx(1,i,j),qy(1,i,j)
 
 
          if (recon(1) .le. 0.d0) alpha(1) = 0.d0
-         if (recon(4) .le. 0.d0) alpha(4) = 0.d0
+         if (nvar .eq. 4) then
+           if (recon(4) .le. 0.d0) alpha(4) = 0.d0
+         endif
 
          diffx = 0.d0
          diffy = -hy/2.d0
@@ -159,12 +167,18 @@ c        write(*,901) qx(1,i,j),qy(1,i,j)
 
 
          if (recon(1) .le. 0.d0) alpha(1) = 0.d0
-         if (recon(4) .le. 0.d0) alpha(4) = 0.d0
+         if (nvar .eq. 4) then
+           if (recon(4) .le. 0.d0) alpha(4) = 0.d0
+         endif
 
 
 
          qx(1,i,j) = qx(1,i,j)*alpha(1)
-         qy(4,i,j) = qy(4,i,j)*alpha(4)
+         qy(1,i,j) = qy(1,i,j)*alpha(1)
+         if (nvar .eq. 4) then
+           qx(4,i,j) = qx(4,i,j)*alpha(4)
+           qy(4,i,j) = qy(4,i,j)*alpha(4)
+         endif
       else
       ! positivity at quadrature points is required, midpoints because p is always = 1.
          do 510 kside=1,6
@@ -184,11 +198,17 @@ c        write(*,901) qx(1,i,j),qy(1,i,j)
 
               alpha = 1.d0
               if (recon(1) .le. 0.d0) alpha(1) = 0.d0
-              if (recon(4) .le. 0.d0) alpha(4) = 0.d0
+              if (nvar .eq. 4) then
+                if (recon(4) .le. 0.d0) alpha(4) = 0.d0
+              endif
 
 
               qx(1,i,j) = qx(1,i,j)*alpha(1)
-              qy(4,i,j) = qy(4,i,j)*alpha(4)
+              qy(1,i,j) = qy(1,i,j)*alpha(1)
+              if (nvar .eq. 4) then
+                qx(4,i,j) = qx(4,i,j)*alpha(4)
+                qy(4,i,j) = qy(4,i,j)*alpha(4)
+              endif
               if (poly(kside+2,1,k).eq.-11.) exit
  510      continue
       endif

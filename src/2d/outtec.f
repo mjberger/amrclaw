@@ -22,6 +22,12 @@ c
       logical ghostOut
       logical isAllSolid,checkIfAllSolid
       character ch
+
+      ! fake vals to output linear advection in same format
+      ! as euler and use same tecplot layouts
+      ufake = 0.d0
+      vfake = 0.d0
+      prfake = 1.d0
 c
 c     first count to see if any non solid cells on grid
 c     tecplot doesnt like zeroes
@@ -42,7 +48,9 @@ c     tecplot doesnt like zeroes
       ylowb = ylow - nghost*dy
 
       ! output primitive variables, not conserved
-      call vctoprm(q,qp,mitot,mjtot,nvar)
+      if (nvar .eq. 4) then
+         call vctoprm(q,qp,mitot,mjtot,nvar)
+      endif
 c
        qx = 0.d0
        qy = 0.d0
@@ -141,10 +149,16 @@ c
      .                                   (yc-ycen)*qy(ivar,i,j)
          end do
 
-         write(14,102) xc,yc,(valprim(ivar),ivar=1,nvar),
-     &                  xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
-     &                  kirr,volFrac,mptr
- 102     format(8e25.15,5i8,1e10.2,i5)
+         if (nvar .eq. 4) then
+            write(14,102) xc,yc,(valprim(ivar),ivar=1,nvar),
+     &                     xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
+     &                     kirr,volFrac,mptr
+ 102        format(8e25.15,5i8,1e10.2,i5)
+         else  ! assuming nvar 1 for linear advection
+            write(14,102) xc,yc,valprim(ivar),ufake,vfake,prfake
+     &                     xcen,ycen,ncount(i,j),numHoods(i,j),i,j,
+     &                     kirr,volFrac,mptr
+         endif
         end do
 
  15    continue

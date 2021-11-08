@@ -28,7 +28,7 @@ c
       else if (igradChoice .eq. 0) then
          write(*,*)"should not be here  should have set ssw = 0"
       else
-         write(*,*)"unrecognized gradient choice",igradsChoice
+         write(*,*)"unrecognized gradient choice",igradChoice
          write(*,*)"should test in setprob and stop there"
          stop
       endif

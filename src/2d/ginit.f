@@ -62,8 +62,8 @@ c :::::::::::::::::::::::::::::::::::::::;::::::::::::::::::::
                 locaux = 1
               endif
               node(storeaux,mptr) = locaux
-              ! get space for irr, and for ncount and numhoods too
-              node(permstore,mptr) = igetsp(3*mitot*mjtot) 
+              ! get space for irr, and for ncount, numhoods, volMerge  too
+              node(permstore,mptr) = igetsp(4*mitot*mjtot) 
               locirr = node(permstore,mptr)
               call setirr(mitot,mjtot,mptr,quad,
      &                    gradThreshold,alloc(locirr))
@@ -92,6 +92,19 @@ c
      &               lstgrd,alloc(locirr))
 
 c
+          if (preMerge) then
+             istage = -1  ! fake stage val for debug printing
+             xlow = corn1 - nghost*hx
+             ylow = corn2 - nghost*hy
+             locncount = locirr + mitot*mjtot
+             locnumHoods = locncount + mitot*mjtot
+             locvolMerge = locnumHoods + mitot*mjtot
+             call srd_cellMerge(alloc(loc),nvar,alloc(locirr),
+     &                mitot,mjtot,lstgrd,hx,hy,nghost,xlow,ylow,
+     &                istage,alloc(locncount),alloc(locnumHoods),
+     &                alloc(locvolMerge),mptr)
+          endif
+
           mptr  = node(levelptr, mptr)
       if (mptr .ne. 0) go to 10
 c

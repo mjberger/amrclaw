@@ -1,9 +1,6 @@
-      subroutine qmslopes(irr,mitot,mjtot,lwidth,dx,dy,xlow,ylow,
-     . lstgrd, numHoods, ncount,areaMin,
-     & mioff, mjoff,
-     . qMerge, 
-     . nvar,
-     . qmx,qmy)
+      subroutine qmslopes(volMerge,irr,mitot,mjtot,lwidth,dx,dy,
+     &                    xlow,ylow,lstgrd, numHoods, ncount,areaMin,
+     &                    mioff, mjoff,qMerge,nvar,qmx,qmy)
 
 ! !   INPUTS:
 ! !   REQUIRED GRID DATA
@@ -27,6 +24,7 @@
       implicit double precision (a-h, o-z)
 
       dimension irr(mitot,mjtot), numHoods(mitot,mjtot)
+      dimension volMerge(mitot,mjtot)
       dimension rtri(3), stri(3), wtri(3)
       dimension rquad(4), squad(4), wquad(4)
 
@@ -130,7 +128,7 @@
                     !volMerge(koff) = dx * dy / numHoods(i+ioff, j+joff)
                     cvm = dx * dy / numHoods(i+ioff, j+joff)
                  else
-                    cvm = volMerge(koff) ! off vol merge
+                    cvm = volMerge(i+ioff,j+joff) ! off vol merge
                  endif
 
 

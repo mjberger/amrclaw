@@ -9,6 +9,7 @@ c
       implicit double precision (a-h,o-z)
 
       logical  rest
+      integer kget,k,locirr
 
 c ## indexing into mcapa assumes cell volume is in mcapa location
       iadd(ivar,i,j)  = loc + ivar - 1 + nvar*((j-1)*mitot+i-1)
@@ -45,18 +46,20 @@ c
          ar(-1) = 0.d0        ! so solid cells dont count
 c
          if (mcapa .eq. 0) then
-           do 50 j  = nghost+1, mjtot-nghost
-           do 50 i  = nghost+1, mitot-nghost
+           do  j  = nghost+1, mjtot-nghost
+           do  i  = nghost+1, mitot-nghost
               k =  kget(mitot,mjtot,i,j,alloc(locirr)) 
               area = ar(k)
               totmass = totmass + area*alloc(iadd(1,i,j)) 
- 50           continue
+            end do
+            end do
           else
 c          # with capa array:
-           do 60 j  = nghost+1, mjtot-nghost
-           do 60 i  = nghost+1, mitot-nghost
+           do  j  = nghost+1, mjtot-nghost
+           do  i  = nghost+1, mitot-nghost
               totmass = totmass + alloc(iadd(1,i,j))*alloc(iaddaux(i,j)) 
- 60           continue
+           end do
+           end do
           endif
 c
        mptr = node(levelptr,mptr)
@@ -77,7 +80,10 @@ c
 c ----------------------------------------------
 c
       integer function kget(mitot,mjtot,i,j,irr)
-      dimension irr(mitot,mjtot)
+
+      integer i,j,mitot,mjtot
+      integer irr(mitot,mjtot)
+
       kget = irr(i,j)
       return 
       end

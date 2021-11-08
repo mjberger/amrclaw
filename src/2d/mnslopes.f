@@ -1,7 +1,8 @@
 c
 c ---------------------------------------------------------------------
 c
-       subroutine mnslopes(irr,mitot,mjtot,lwidth,dx,dy,xlow,ylow,
+       subroutine mnslopes(irr,mitot,mjtot,lwidth,dx,dy,
+     &                     xlow,ylow,
      &                    lstgrd,numHoods,ncount,areaMin,mioff,mjoff,
      &                    qMerge,nvar,qmx,qmy)
 

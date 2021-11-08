@@ -17,6 +17,7 @@ c      regular(i,j) = ((i.gt. lwidth).and.(i.le.mitot-lwidth).and.
 c    &                 (j.gt. lwidth).and.(j.le.mjtot-lwidth))
 
 c
+!!   ssw is old var. Now use igradChoice, in cuserdt.i
 c      # ssw = slope switch (1. for slopes, 0 for donor cell 0 slopes)
 c      # now set in amrcart
 c
@@ -26,7 +27,8 @@ c   qp contains the primitive variables
 c
 
 c
-       if (ssw .eq. 0.d0) go to 99
+       !if (ssw .eq. 0.d0) go to 99
+       if (igradChoice .eq. 0) go to 99
 c
        do 10 j = 1, mjtot
        do 10 i = 2, mitot-1
@@ -55,7 +57,8 @@ c
          du   = dmin1(dabs(dupc),dabs(dumc))
          du   = dmin1(2.d0*du, .5d0*dabs(ducc))
 c
-         fl = dmax1(0.d0,dsign(1.d0, dupc*dumc))*ssw
+         !fl = dmax1(0.d0,dsign(1.d0, dupc*dumc))*ssw
+         fl = dmax1(0.d0,dsign(1.d0, dupc*dumc))
          qx(m,i,j) = du*dsign(1.d0,ducc)*fl/hx
  11    continue
  10    continue
@@ -82,7 +85,8 @@ c
           du   = dmin1(dabs(dupc),dabs(dumc))
           du   = dmin1(2.d0*du, .5d0*dabs(ducc))
 c
-          fl = dmax1(0.d0,dsign(1.d0, dupc*dumc))*ssw
+          !fl = dmax1(0.d0,dsign(1.d0, dupc*dumc))*ssw
+          fl = dmax1(0.d0,dsign(1.d0, dupc*dumc))
           qy(m,i,j) = du*dsign(1.d0,ducc)*fl/hy
  20    continue
 c

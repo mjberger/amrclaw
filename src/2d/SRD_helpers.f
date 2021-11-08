@@ -94,6 +94,189 @@ c     endif
       return
       end
 
+c
+c ------------------------------------------------------------------------
+c 
+      subroutine getAdjVERTCell(i,j,k,ioff,joff,
+     .                      mitot,mjtot,dx,dy)
+
+      use amr_module
+      implicit double precision (a-h, o-z)
+      dimension rl(4),iset(4),jset(4)
+      data iset/-1, 1, 0, 0/
+      data jset/0, 0, -1, 1/
+
+
+c  for cell i,j return offsets for most normal neighbor
+c  either look at normal direction, or full edge lengths
+      
+c     rl(1) = ffluxlen(i,j)/dy
+c     rl(2) = ffluxlen(i+1,j)/dy
+c     rl(3) = gfluxlen(i,j)/dx
+c     rl(4) = gfluxlen(i,j+1)/dx
+
+c take max over all and thats the neighbor
+c     ispot = 1
+c     do index = 2, 4
+c        if (rl(index) .gt. rl(ispot)) ispot = index  ! always positive
+c     end do
+c     ioff = iset(ispot)
+c     joff = jset(ispot)
+
+
+!!    will need to check that i+ioff,j+joff is inside
+!!    domain and valid, but for cylinder case for now
+c     skip it
+
+!     test if above algorithm is same as max component of normal
+      do 20 kside=1,6
+         if (poly(kside+2,1,k).eq.-11.) then
+            x1 = poly(kside,1,k)
+            y1 = poly(kside,2,k)
+            x2 = poly(kside+1,1,k)
+            y2 = poly(kside+1,2,k)
+            go to 25
+         endif
+ 20   continue
+ 25   continue
+      rlen = dsqrt((y2-y1)**2+(x2-x1)**2)
+      alf = (y2-y1)/rlen
+      beta = (x1-x2)/rlen
+        if (beta .lt. 0.d0) then
+           iin = 3
+        else
+           iin = 4
+        endif
+c     if (ispot .ne. iin) then
+c        write(*,*)" tests for adjacent cell differ for i,j = ",i,j
+         ! trust this latter one
+         ioff = iset(iin)
+         joff = jset(iin)
+c     endif
+
+      return
+      end
+c
+c ------------------------------------------------------------------------
+c 
+      subroutine getAdjHorizCell(i,j,k,ioff,joff,
+     .                      mitot,mjtot,dx,dy)
+
+      use amr_module
+      implicit double precision (a-h, o-z)
+      dimension rl(4),iset(4),jset(4)
+      data iset/-1, 1, 0, 0/
+      data jset/0, 0, -1, 1/
+
+
+c  for cell i,j return offsets for most normal neighbor
+c  either look at normal direction, or full edge lengths
+      
+c     rl(1) = ffluxlen(i,j)/dy
+c     rl(2) = ffluxlen(i+1,j)/dy
+c     rl(3) = gfluxlen(i,j)/dx
+c     rl(4) = gfluxlen(i,j+1)/dx
+
+c take max over all and thats the neighbor
+c     ispot = 1
+c     do index = 2, 4
+c        if (rl(index) .gt. rl(ispot)) ispot = index  ! always positive
+c     end do
+c     ioff = iset(ispot)
+c     joff = jset(ispot)
+
+
+!!    will need to check that i+ioff,j+joff is inside
+!!    domain and valid, but for cylinder case for now
+c     skip it
+
+!     test if above algorithm is same as max component of normal
+      do 20 kside=1,6
+         if (poly(kside+2,1,k).eq.-11.) then
+            x1 = poly(kside,1,k)
+            y1 = poly(kside,2,k)
+            x2 = poly(kside+1,1,k)
+            y2 = poly(kside+1,2,k)
+            go to 25
+         endif
+ 20   continue
+ 25   continue
+      rlen = dsqrt((y2-y1)**2+(x2-x1)**2)
+      alf = (y2-y1)/rlen
+      beta = (x1-x2)/rlen
+        if (beta .lt. 0.d0) then
+           iin = 2
+        else
+           iin = 1
+        endif
+c     if (ispot .ne. iin) then
+c        write(*,*)" tests for adjacent cell differ for i,j = ",i,j
+         ! trust this latter one
+         ioff = iset(iin)
+         joff = jset(iin)
+c     endif
+
+      return
+      end
+
+!--c
+!--c -------------------------------------------------------------------------
+!--c
+!--      subroutine limitTileCellBJ(qmerge,gradmx,gradmy,
+!--     &                           irr,nvar,mitot,mjtot,
+!--     &                           nborList,nborCount,i,j)
+!--
+!--       use amr_module
+!--       implicit double precision (a-h,o-z)
+!--
+!--       dimension qmerge(nvar,mitot,mjtot), irr(mitot,mjtot)
+!--       dimension gradmx(nvar,mitot,mjtot), gradmy(nvar,mitot,mjtot)
+!--
+!--       dimension dumax(nvar),dumin(nvar),phimin(nvar),graddot(nvar)
+!--       dimension alpha(nvar),recon(nvar)
+!--       dimension nborList(25,2)
+!--
+!--          
+!--            ! find max and min needed for BJ limiting. Use all nbors used in gradient comp
+!--       eps = 1d-4
+!--       dumax = 0.d0 
+!--       dumin = 0.d0
+!--       do 31 ico = 1, nborCount
+!--          inbor = nborList(ico,1)
+!--          jnbor = nborList(ico,2)
+!--          dumax = max(dumax,qmerge(:,inbor,jnbor)-qmerge(:,i,j))
+!--          dumin = min(dumin,qmerge(:,inbor,jnbor)-qmerge(:,i,j))
+!-- 31    continue
+!--
+!--       phimin = 1.d0
+!--       do 32 ico = 1, nborCount
+!--          inbor = nborList(ico,1)
+!--          jnbor = nborList(ico,2)
+!--          diffx = xcentMerge(inbor,jnbor)-xcentMerge(i,j)
+!--          diffy = ycentMerge(inbor,jnbor)-ycentMerge(i,j)
+!--          graddot  = gradmx(:,i,j)*diffx + gradmy(:,i,j)*diffy
+!--          do m = 1,nvar
+!--             if (graddot(m) > 0.d0) then
+!--                alpha(m) = min(1.d0, dumax(m)/graddot(m))
+!--             else if (graddot(m) < 0.d0) then
+!--                alpha(m) = min(1.d0, dumin(m)/graddot(m))
+!--             else
+!--                alpha(m) = 1.d0
+!--             endif
+!--          end do
+!--
+!--! one last check for positivity
+!--          recon = qMerge(:,i,j) + graddot  
+!--          xymomsq = recon(2)**2+recon(3)**2
+!--          press = .4d0*(recon(4)-0.5d0*xymomsq/recon(1))
+!--          if (recon(1).le.eps .or. press.le.eps) alpha = 0.d0
+!--          phimin = min(phimin, alpha)
+!-- 32    continue
+!--       gradmx(:,i,j) = gradmx(:,i,j)*phimin(:)
+!--       gradmy(:,i,j) = gradmy(:,i,j)*phimin(:)
+!--
+!--       return 
+!--       end
 !--c
 !--c -------------------------------------------------------------------------
 !--c
@@ -221,7 +404,7 @@ c         write(*,900) i,j,gradmx(1,i,j),gradmy(1,i,j)
                 diffx = xcn - xcentMerge(k)
                 diffy = ycn - ycentMerge(k)
                 graddot  = gradmx(:,i,j)*diffx + gradmy(:,i,j)*diffy
-                  do m = 1,4
+                  do m = 1, nvar
                      if (graddot(m) > 0.d0) then
                         alpha(m) = min(1.d0, dumax(m)/graddot(m))
                      else if (graddot(m) < 0.d0) then

@@ -3,7 +3,7 @@ c ---------------------------------------------------------------------
 c
        subroutine SRD_cellMerge(q,nvar,irr,mitot,mjtot,lstgrd,
      .                      dx,dy,lwidth,xlow,ylow,istage,
-     .                      ncount,numHoods,mptr)
+     .                      ncount,numHoods,volMerge,mptr)
 
        use amr_module
        implicit double precision (a-h, o-z)
@@ -15,6 +15,7 @@ c
        dimension valnew(nvar,mitot,mjtot)
        dimension qMerge(nvar,mitot,mjtot), numHoods(mitot,mjtot)
        dimension nCount(mitot,mjtot)
+       dimension volMerge(mitot,mjtot)
        dimension mioff(mitot,mjtot),mjoff(mitot,mjtot)
        dimension fakeState(nvar), qm(nvar), rhs(5,nvar)
        dimension a(5,5),b(5),db(nvar)
@@ -59,19 +60,21 @@ c      some initializations
        ! put in 'normal' values to prevent errors e.g. in converting to prim vars
        ! these fake vals are in conserved variables
        fakeState(1) = 1.4d0
-       fakeState(2) = 0.d0
-       fakeState(3) = 0.d0
-       fakeState(4) = 2.5d0 !(p/gm1, corresponding to fakestate in method)
+       if (nvar .eq. 4) then
+         fakeState(2) = 0.d0
+         fakeState(3) = 0.d0
+         fakeState(4) = 2.5d0 !(p/gm1, corresponding to fakestate in method)
+       endif
 
 c     first make neighborhoods - need count for each cells, and width (nhood above)
 c     nCount is size of neighborhood, numHoods is number of merged nhoods each cells is in
-      call makeNHood(ncount,irr,numHoods,
+      call makeNHood(volMerge,ncount,irr,numHoods,
      .               mitot,mjtot,lwidth,lstgrd,xlow,ylow,dx,dy,istage,
      .               mptr,areaMin)
 
       if (igradChoice .eq. 3) then
-        call merge_shifts(irr,mitot,mjtot,lwidth,dx,dy,xlow,ylow,lstgrd,
-     .                  numHoods,ncount)
+        call merge_shifts(volMerge,irr,mitot,mjtot,lwidth,dx,dy,
+     &                    xlow,ylow,lstgrd,numHoods,ncount)
       endif
 
 
@@ -105,11 +108,11 @@ c
             ! get merged val. volmerge should have same weighting
             qMerge(:,i,j) = (ar(k)*q(:,i,j)/numHoods(i,j) +
      .            ar(koff)*q(:,i+ioff,j+joff)/numHoods(i+ioff,j+joff))/
-     .            volMerge(k)
+     .            volMerge(i,j)
  10     continue
 
         ! gradient of merging neighborhoods, initialized to 0. set using neighboring tiles
-        if (igradChoice .eq. 0.d0) then
+        if (igradChoice .eq. 0) then
            gradmx = 0.d0  ! so can use same code below with gradients
            gradmy = 0.d0
            go to 35   ! ssw = 0 means no slopes
@@ -122,11 +125,13 @@ c
         call makeMergeNHood(irr,lwidth,mitot,mjtot,lstgrd,dx,dy,
      &                      xlow,ylow,mptr,mioff,mjoff)
         if (igradChoice .eq. 3) then
-           call qmslopes(irr,mitot,mjtot,lwidth,dx,dy,xlow,ylow,lstgrd,
+           call qmslopes(volMerge,irr,mitot,mjtot,lwidth,dx,dy,
+     &                  xlow,ylow,lstgrd,
      &                numHoods,ncount,areaMin,
      &                mioff,mjoff,qMerge,nvar,gradmx,gradmy)
         else if (igradChoice .eq. 1 .or. igradChoice .eq. 2) then
-          call mnslopes(irr,mitot,mjtot,lwidth,dx,dy,xlow,ylow,lstgrd,
+          call mnslopes(irr,mitot,mjtot,lwidth,dx,dy,
+     &                  xlow,ylow,lstgrd,
      &                numHoods,ncount,areaMin,
      &                mioff,mjoff,qMerge,nvar,gradmx,gradmy)
         endif
@@ -197,9 +202,11 @@ c     to the last real cell
              qm(:) = qMerge(:,i,j) + 
      .               (xc-xcentMerge(k))*gradmx(:,i,j) +
      .               (yc-ycentMerge(k))*gradmy(:,i,j)
-             pr = .4d0*(qm(4)- 0.5d0*(qm(2)**2+qm(3)**2)/qm(1))
-             if (qm(1) .le. 0.d0 .or. pr .le. 0.d0) then
-                 qm(:) = qMerge(:,i,j)  ! is this conservative
+             if (nvar .eq. 4) then
+                pr = .4d0*(qm(4)- 0.5d0*(qm(2)**2+qm(3)**2)/qm(1))
+                if (qm(1) .le. 0.d0 .or. pr .le. 0.d0) then
+                    qm(:) = qMerge(:,i,j)  ! is this conservative
+                endif
              endif
 
              valnew(:,i,j) = valnew(:,i,j) + qm(:)/numHoods(i,j)
@@ -223,16 +230,18 @@ c
        q = valnew
 c
 c      check positivity
-       call checkPhys(q,irr,mitot,mjtot,mptr,istage,lstgrd,
-     .                   'from SRD_merge',lwidth+1,mitot-lwidth,
-     .                   lwidth+1,mjtot-lwidth)
+       if (nvar .eq. 4) then
+          call checkPhys(q,irr,mitot,mjtot,mptr,istage,lstgrd,
+     .                      'from SRD_merge',lwidth+1,mitot-lwidth,
+     .                      lwidth+1,mjtot-lwidth)
+       endif
 
        return
        end
 c
 c ----------------------------------------------------------------------------
 c
-      subroutine makeNHood(ncount,irr,
+      subroutine makeNHood(volMerge,ncount,irr,
      .                     numHoods,mitot,mjtot,lwidth,lstgrd,xlow,ylow,
      .                     dx,dy,istage,mptr,
      .                     areaMin)
@@ -240,6 +249,7 @@ c
       use amr_module
       implicit double precision (a-h, o-z)
 
+      dimension volMerge(mitot,mjtot)
       dimension numHoods(mitot,mjtot)
       dimension ncount(mitot,mjtot), irr(mitot,mjtot)
       logical  IS_OUTSIDE, firstTimeThru
@@ -365,14 +375,13 @@ c
          endif
 
          ! save info 
-         volMerge(k) = vmerge
+         volMerge(i,j) = vmerge
          xcentMerge(k) = xcent/vmerge
          ycentMerge(k) = ycent/vmerge
              
  20   continue
 
       if (debug) then
-        volMerge(lstgrd) = dx*dy
         xcentMerge(lstgrd) = 0.d0
         ycentMerge(lstgrd) = 0.d0
         write(*,*)"makeNhood "
@@ -388,7 +397,7 @@ c
             else
                ch = "+"
                write(*,888)ch,i,j,ncount(i,j),numHoods(i,j),
-     &                   xcentMerge(k),ycentMerge(k),volMerge(k)
+     &                   xcentMerge(k),ycentMerge(k),volMerge(i,j)
  888        format(A1,4i4,3e15.7)
             endif
         end do

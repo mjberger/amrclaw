@@ -31,7 +31,9 @@ c
 
       ! need ghost cells to avoid zero divides
       call bound(time,nvar,nghost,val,mitot,mjtot,mptr,aux,naux)
-      call vctoprm(val,primval,mitot,mjtot,nvar)
+      if (nvar .eq. 4) then
+         call vctoprm(val,primval,mitot,mjtot,nvar)
+      endif
 c
       do 20 i=nghost+1,mitot-nghost
       write(outunit,*)

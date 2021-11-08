@@ -38,9 +38,16 @@ c
 
 c     reconstruct
       rhob = qp(1,i,j) + xdif*qx(1,i,j) + ydif*qy(1,i,j)
-      ub   = qp(2,i,j) + xdif*qx(2,i,j) + ydif*qy(2,i,j)
-      vb   = qp(3,i,j) + xdif*qx(3,i,j) + ydif*qy(3,i,j)
-      pb   = qp(4,i,j) + xdif*qx(4,i,j) + ydif*qy(4,i,j)
+      if (nvar .eq. 4) then
+        ub   = qp(2,i,j) + xdif*qx(2,i,j) + ydif*qy(2,i,j)
+        vb   = qp(3,i,j) + xdif*qx(3,i,j) + ydif*qy(3,i,j)
+        pb   = qp(4,i,j) + xdif*qx(4,i,j) + ydif*qy(4,i,j)
+      else
+        ! fake values so can use same plotting scripts as euler for bndry
+        ub = 0.d0
+        vb = 0.d0
+        pb = 1.d0
+      endif
 
 c     compute distance from (0,0) by default. 
 c     copy to local example directory for something better

@@ -78,9 +78,11 @@ c      endif
 
        ! in primitive variables
        fakeState(1) = 1.4d0
-       fakeState(2) = 0.d0
-       fakeState(3) = 0.d0
-       fakeState(4) = 1.0d0
+       if (nvar .eq. 4) then
+         fakeState(2) = 0.d0
+         fakeState(3) = 0.d0
+         fakeState(4) = 1.0d0
+       endif
 
 c
       ar(-1) = 1.d0   ! fake value for solid area to avoid zero divides
@@ -120,7 +122,8 @@ c           yhigh = ylow + mjtot*dy
 c           call pphysbdlin(xlow,xhigh,ylow,yhigh,level,mitot,mjtot,
 c    &                      nvar,q,time,dx,dy,qx,qy,irr,lstgrd)
 c        endif
-      if (ssw .ne. 0.d0) then   ! recalc slopes at each stage
+      !! OLD VARif (ssw .ne. 0.d0) then   ! recalc slopes at each stage
+      if (igradChoice .ne. 0) then   ! recalc slopes at each stage
          call slopes(q,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,dx,dy,
      &               xlow,ylow,nvar,mptr)
          call qslopes(q,qx,qy,mitot,mjtot,irr,lstgrd,lwidth,dx,dy,

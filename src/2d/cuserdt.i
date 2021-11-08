@@ -1,6 +1,6 @@
 
-       logical ghost_ccg, pwconst 
+       logical ghost_ccg, pwconst, preMerge
        integer limitTile
        common /userdt/cflcart,gamma,gamma1,xprob,yprob,iprob,
      &                ismp,gradThreshold,pwconst,ghost_ccg,limitTile,
-     &                lpChoice,igradChoice
+     &                lpChoice,igradChoice,preMerge

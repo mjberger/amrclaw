@@ -1,8 +1,5 @@
-      subroutine merge_shifts(irr,mitot,mjtot,lwidth,hx,hy,xlow,ylow,
-     . lstgrd,
-     . numHoods,
-!    . mi, mj, ncount, 
-     . ncount) 
+      subroutine merge_shifts(volMerge,irr,mitot,mjtot,lwidth,hx,hy,
+     &                        xlow,ylow,lstgrd,numHoods,ncount) 
 
 ! !   INPUTS:
 ! !   REQUIRED GRID DATA
@@ -73,7 +70,7 @@
           x0 = xcentMerge(kirr)
           y0 = ycentMerge(kirr)
 
-          arr = volMerge(kirr)
+          arr = volMerge(i,j)
 
 
 !         do 340 ic = 1, nc(kirr) ! iterate over each cell in the neighborhood

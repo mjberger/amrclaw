@@ -125,6 +125,7 @@ c
 c     next set of boundary conditions
       call system_clock(clock_startBound,clock_rate)
       call cpu_time(cpu_startBound)
+
 c redo ghost cells (one level only, no refinement) before SRD
 c
 !$OMP PARALLEL DO PRIVATE(j,locnew, locaux, mptr,nx,ny,mitot,
@@ -156,7 +157,7 @@ c
 
 !$OMP PARALLEL DO PRIVATE(j,locnew, locaux, mptr,nx,ny,lstgrd,xlow,ylow,
 !$OMP&                    mitot,mjtot,time,levSt,locirr,locncount,
-!$OMP&                    locnumHoods),
+!$OMP&                    locnumHoods,locvolMerge),
 !$OMP&            SHARED(level, nvar, naux, alloc, intrat, delt,dtnew,
 !$OMP&                   listOfGrids,listStart,nghost,istage,mstage,
 !$OMP&                   dtlevnew,node,rnode,numgrids,listgrids,hx,hy),
@@ -173,12 +174,14 @@ c
          locirr = node(permstore,mptr)
          locncount = locirr + mitot*mjtot
          locnumHoods = locncount + mitot*mjtot
+         locvolMerge = locnumHoods + mitot*mjtot
          lstgrd = node(lstptr,mptr)
          xlow = rnode(cornxlo,mptr) - nghost*hx
          ylow = rnode(cornylo,mptr) - nghost*hy
          call srd_cellMerge(alloc(locnew),nvar,alloc(locirr),mitot,
      &                     mjtot,lstgrd,hx,hy,nghost,xlow,ylow,istage,
-     &                     alloc(locncount),alloc(locnumHoods),mptr)
+     &                     alloc(locncount),alloc(locnumHoods),
+     &                     alloc(locvolMerge),mptr)
          if (istage .eq. mstage) then ! set new time step
             call estdt(alloc(locnew),alloc(locirr),mitot,mjtot,nvar,
      &                 hx,hy,dtnew,nghost,alloc(locaux),naux)
@@ -281,6 +284,7 @@ c
          locirr = node(permstore,mptr)
          locncount = locirr + mitot*mjtot
          locnumHoods = locncount + mitot*mjtot
+         locvolMerge = locnumHoods + mitot*mjtot
 c
          if (node(ffluxptr,mptr) .ne. 0) then
             lenbc  = 2*(nx/intratx(level-1)+ny/intraty(level-1))
@@ -315,8 +319,8 @@ c    6                 alloc(locncount),alloc(locnumHoods),vtime,istage)
          call mymethod(alloc(locnew),alloc(locold),mitot,mjtot,nghost,
      1                 delt,dtnew,hx,hy,nvar,xlow,ylow,mptr,naux,
      2                 alloc(locaux),alloc(locirr),node(lstptr,mptr),
-     3                 alloc(locncount),alloc(locnumHoods),vtime,
-     4                 istage,time)
+     3                 alloc(locncount),alloc(locnumHoods),
+     4                 vtime,istage,time)
          else if (dimensional_split .eq. 1) then
 c           # Godunov splitting
             write(6,*)"this option not supported"
